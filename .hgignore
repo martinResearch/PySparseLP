@@ -3,6 +3,7 @@ latex/*.aux
 latex/*.blg
 latex/*.bbl
 latex/*.ddf
+latex/*.gz
 *.avi
 *.pyc
 *.bak

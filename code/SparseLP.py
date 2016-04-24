@@ -4,8 +4,9 @@ import time
 import scipy.sparse
 import scipy.ndimage
 import sys
-from LP_primaldual import LP_primalDual,LP_admm,LP_admm2,LP_admmBlockDecomposition
-
+from ADMM import *
+from ChambollePockPreconditionedPrimalDual import *
+from ADMMBlocks import *
 
 
 def csr_matrix_append_row(A,n,cols,vals):
@@ -43,7 +44,7 @@ def empty_csr_matrix():
 	A.indptr=A.indptr[-1:]	
 	return A
 
-class LinearProgramHelper():
+class SparseLP():
 	def __init__(self):
 		# start writing the linear program 
 
@@ -201,6 +202,10 @@ class LinearProgramHelper():
 		bu=self.upperbounds
 		
 		return types,bl,bu
+		
+		
+	def getVariablesIndices(self,name):
+		return  self.variables_dict[name]
 		
 
 	def addVariablesArray(self,shape,lowerbounds,upperbounds,costs=0,name=None):
@@ -421,7 +426,7 @@ class LinearProgramHelper():
 	          x0=None,nb_iter=10000,\
 	          max_time=None,callbackFunc=None,\
 	          nb_iter_plot=10,\
-	          plotSolution=None,groundTruth=None,groundTruthIndices=None,frequency_update_active_set=20):
+	          plotSolution=None,groundTruth=None,groundTruthIndices=None,frequency_update_active_set=2000000):
 		
 		
 		if not(self.Ainequalities is None) and self.Ainequalities.shape[0]>0:
@@ -470,7 +475,13 @@ class LinearProgramHelper():
 			if not (self.B_lower is None):
 				print 'you need to convert your lp to a one side inequality system using convertToOnesideInequalitySystem'
 				raise
-			sol=scipy.optimize.linprog(self.costsvector, A_ub=Aineq.toarray(), b_ub=self.B_upper, A_eq=Aeq.toarray(), b_eq=Beq, 
+			if Aeq is None:
+				A_eq=None
+				b_eq=None
+			else:
+				A_eq=Aeq.toarray()
+				b_eq=Beq
+			sol=scipy.optimize.linprog(self.costsvector, A_ub=Aineq.toarray(), b_ub=self.B_upper, A_eq=A_eq, b_eq=b_eq, 
 			                        bounds=np.column_stack((self.lowerbounds,self.upperbounds)), 
 			                        method='simplex')
 			if not sol['success']:
@@ -498,7 +509,7 @@ class LinearProgramHelper():
 		                #self.lowerbounds,self.upperbounds,\
 		                #x0=x0,callbackFunc=callbackFunc,max_time=max_time)
 		elif method=="ChambollePock"	:	
-			x,best_integer_solution=LP_primalDual(self,\
+			x=LP_primalDual(self,\
 			      simplex=self.simplex,
 		              x0=x0,alpha=1,theta=1,nb_iter=nb_iter,\
 			      nb_iter_plot=nb_iter_plot,\

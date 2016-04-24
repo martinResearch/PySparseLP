@@ -28,7 +28,7 @@
 
 %+Abstract
 \begin{abstract}
-    There is abstract text that you should replace with your own. 
+    This document describes the linear program solvers algorithms implemented in the associated Python code. Most existing solvers use the simplex or interior point method and do not scale to very large as their complexity is a least quadratic with number of variables \cite{NocedalWright2006}. We present some methods to approximatively solve large problems. This are very naive algorithms written by a non-specialist of the linear programming domain and that come with no convergence guaranties.
 \end{abstract}
 %-Abstract
 
@@ -38,76 +38,19 @@
 
 \section{Introduction}
 
+The complexity of state-of-the-art LP
+solvers (i.e. Interior-Point method and Primal, Dual Simplex methods) is still at least quadratic inthe number of variables or constraints \cite{NocedalWright2006}.
+The quadratic complexity comes from the need to solve each linear system exactly in both simplex and interior point method.
 
 \section{Generic LP solvers}
- \subsection{Off the shelf solvers}
-\subsubsection{Mosek}
-
-we try simplex , dual simplex and interior point methods on some of the constraints. For each method we plot the curve of the primal and dual energies if available at each iteration. Unfortunately I haven't been able to access to the primal objective for dual primal-dual simplex in the callback. It seems like the simplex methods do not not scale linearly with the number of pixel and with the number of constraint when combining constraints, but instead increases much faster han linearly (need to plot more explicit curves).
-We cannot display curve for the mean square error with respect to the optimal solutions as MOSEK do not give access to intermediate results. From \url{https://mosek.com/support/faq}: "Since MOSEK performs a lot of transformations on the problem before starting to solve it, the intermediate solution values may make little sense in the context of the user-specified problem. These solution values are not made available."
-
-
-
-according to "An Interior-Point Method for Large-Scale
-`1-Regularized Least Squares" by Seung-Jean Kim: 
-"Standard interior-point methods are
-implemented in general purpose solvers including [34],
-which can readily handle small and medium size problems.
-Standard methods cannot handle large problems in which there
-are fast algorithms for the matrix-vector operations with
-and . Specialized interior-point methods that exploit such
-algorithms can scale to large problems, as demonstrated in
-[8], [27]. High-quality implementations of specialized interior-
-point methods include [5] and [50], which
-use iterative algorithms, such as the conjugate gradients (CG)
-or LSQR algorithm [42], to compute the search step"
-
-When testin on my problem the interior point method seems t be the fastest, howver a lot a time is spend in setting up the problem (presolve + reordering). I have been able to gain speed by canceling this preprocessing step , bu there is still a lot a time spend in some preprocessing operation which i do not know what they correspond to (i contacted the support)
-\subsubsection{other solvers}
-\begin{itemize}
-\item GLPK
-\url{http://www.gnu.org/software/glpk/}, try with moderate size problem (ones that can be solve in less than 10 seconds by mosek and it is extramly slow, take more that a few minutes) i do not know how to choose an interior point method using the python-glpk binding. 
-Tried to use it through pyGlpk, Pulp, but could not understand how to load a file?
-Instead of using the binding i can use directly the command line tool glpsol using mps files. 
-\item Coin-Or simplex linear solver , clp can easily be called in command line with a mps file or using CyLP. installatio nusing \verb!sudo apt-get install coinor-clp!
-\url{https://github.com/coin-or/CyLP}(did not manage to insall CyLP, and got the cbc executable while install python package pulp in /usr/local/lib/python2.7/dist-packages/pulp/solverdir/cbc-64)
-\item LPsolve
-\url{http://sourceforge.net/projects/lpsolve/}
-implemented a revisezd simplex method , which is likely to be as slow or slower than the mosek one, which is already too slow. Works with mps file in the command line using the command \verb!lp_solve!
-\item Lipsol \url{http://www.caam.rice.edu/~zhang/lipsol/}
-interior point method in matlab with some fortran subroutines. Uses cholseky decomposition at each iteration (does it reuse info from previous factorization in order to do a cholesky update ? i seems like it does). I am struggle to compile the mex file for octave (mkoctfile
-is designed first to work with VC++, and not MinGW)
-\item 
-PCLP \url{http://www.cmap.polytechnique.fr/commands/pclp.html} the download link is broken
-\item GABP (gaussian belief propagation can be use as internal routine in a interior point methods, however it is written in matlab with loops and the examples are not factorized into reusable function...). Gaussian BP is aslo implemented in c+= in the grahlab linbrary , but i d'ont see a lp solver based on it in the library. \url{http://www.cs.cmu.edu/~bickson/gabp/}
-\item PDCGM 
-\url{http://www.maths.ed.ac.uk/~gondzio/software/pdcgm.html}
-in Fortran and cannot find download button...
-\item hopdm \url{http://www.maths.ed.ac.uk/~gondzio/software/get_hopdm.html}
-could contact the author of the library Jacek Gondzio (he wrote a paper on using the structure of the LP \cite{Gondzio2003})
-I tried to compile the fortran code available here \url{http://www.maths.ed.ac.uk/~gondzio/software/get_hopdm.html}, but i am getting an error with seconds.o. I need to delete the file and add a definition\\ \verb!# define uS_PER_SECOND (1000l * 1000l) ! in the seconds.c file and comment some lines in mytime.f , it then compile , but cannot execute MPS generated by mosek , i had to create my own MPS file writer . My problem are too big , need to run  \verb!csh Two2four! in the command line and change the variable INTSZ as said in hmain2.f and uncomment the part following "for computers with  128 MB of virtual memory". After testing with the convexity constraint on a binary image of size 
-\item OOPS
-\url{http://www.maths.ed.ac.uk/~gondzio/parallel/solver.html}
-alose by Jacek Gondzio uses the structure of the problem.
-can be download as part of SML \url{http://www.maths.ed.ac.uk/ERGO/sml/}, but i may need to write a lot of code to use it as i want to keep the structure (unless my vertical block decomposition is enough). 
-\url{http://www.maths.ed.ac.uk/~gondzio/software/hopdm.html}
-\item A matlab implementation of interior point without equality constraints \url{http://statweb.stanford.edu/~candes/acm113/Handouts/sumt.pdf}. The newton step require to solve a linear system, could do it approxiamtively using some iterative method ? 
-\item a primal dual interior point in matlab \url{http://research.cs.wisc.edu/math-prog/lpbook/matlab/pathfollow.m}
-but use a chleski decomposition which might way too expensive with my matrix, coule replace by conjugate gradient or Successive over relaxation ? .
-
-et des methodes de points interieurs en matlab ? chercher mes mails precedents
-
-\item CBC (coin or) allows to solve integer program saved in MPS format (need to change LO to LI et UP to UI in the mps file for integer variables). implements among other heuristic the feasibility pump
-
-\end{itemize}
-
 \subsection{Dual Gradient Ascent and Dual Coordinate Ascend}
 
-we perform coordinate ascend in the dual
-we express the Linear program in the slack form
+We perform coordinate ascend in the dual. 
+
+We first express the Linear program in the slack form
 
 \begin{equation}
-\mathbf{x}^*=argmin_x \mathbf{c}^t\mathbf{x} ~  s.t.~  Ax=\mathbf{b}, \mathbf{l}\leq \mathbf{x}\leq \mathbf{u} 
+\mathbf{x}^*=argmin_x \mathbf{c}^t\mathbf{x} ~  s.t.~  A\mathbf{x}=\mathbf{b}, \mathbf{l}\leq \mathbf{x}\leq \mathbf{u} 
 \end{equation}
 this can be rewritten as 
 \begin{equation}
@@ -117,19 +60,19 @@ with
 \begin{equation}
 L(\mathbf{x},\mathbf{y})=\mathbf{c}^t\mathbf{x}+\mathbf{y}^t(A\mathbf{x}-\mathbf{b})
 \end{equation}
-we can try to solve the dual problem
+We can try to solve the dual problem
 \begin{equation}
-\mathbf{y}^*=argmax_{\mathbf{y}}min_xL(\mathbf{x},\mathbf{y})
+\mathbf{y}^*=argmax_{\mathbf{y}}min_{\mathbf{x}}L(\mathbf{x},\mathbf{y})
 \end{equation}
-we denote $f(\mathbf{y})=min_{\mathbf x}L(\mathbf{x},\mathbf{y})$ the dual function, we have $\mathbf{y}^*=argmax_{\mathbf{y}}f(\mathbf{y})$ i.e. we want to maximise $f$. $f$ is concave and piecewise linear and we do coordinate ascend.
+We denote $f(\mathbf{y})=min_{\mathbf x}L(\mathbf{x},\mathbf{y})$ the dual function, we have $\mathbf{y}^*=argmax_{\mathbf{y}}f(\mathbf{y})$ i.e. we want to maximise $f$. The function $f$ is concave and piecewise linear and we will maximize it using coordinate ascend.
 
-given a line search direction $\mathbf{d}$ (along a single coordinate in cas of coordinate ascent, and along the gradient for gradient ascent) we compute the optimal step by solving the 1D problem
+Given a line search direction $\mathbf{d}$ (along a single coordinate in cas of coordinate ascent, and along the gradient for gradient ascent) we compute the optimal step by solving the 1D problem
 \begin{equation}
 \alpha^*=argmax_\alpha f(\mathbf{y}+\alpha \mathbf{d})
 \end{equation}
-with $\mathbf{e}_i$ the vector that zeros every but a one at location $i$.
-Then we update $\mathbf{y}$ using $\mathbf{y}\leftarrow \mathbf{y}+\alpha^* \mathbf{d}$
-the function $h(\alpha)=f(\mathbf{y}+\alpha \mathbf{d})$ is concave piecewise linear
+with $\mathbf{e}_i$ the vector that has zeros everywhere but a one at location $i$.
+Then we update $\mathbf{y}$ using $\mathbf{y}\leftarrow \mathbf{y}+\alpha^* \mathbf{d}$. 
+The function $h(\alpha)=f(\mathbf{y}+\alpha \mathbf{d})$ is concave piecewise linear
 and we can compute its maximum as follows:
 \begin{equation}
 \bar{\mathbf{c}}(\alpha)=(\mathbf{c}^t+\mathbf{y}^tA+\alpha \mathbf{d}^tA)^t
@@ -149,7 +92,7 @@ Let $s=\{j|\mathbf{e}_{j}\neq 0\}$
 for all $j$ in $S$. Let $\mathbf{v}=\mathbf{c}+\mathbf{y}^tA$.
 The sign of 
  $\bar{\mathbf{c}}(\alpha)[j]$ changes  when 
-$ \mathbf{v}[j]+\alpha\mathbf{e}[j]=0$ i.e. when
+$ \mathbf{v}[j]+\alpha\mathbf{e}[j]=0$ i.e. When
 $\alpha= -\mathbf{v}[j]/ \mathbf{e}[j]$ 
  let $\mathbf{a}$ be the vector with $\mathbf a[j]=-\mathbf{v}[j]/ \mathbf{e}[j]$
 
@@ -163,31 +106,29 @@ h'(\alpha)=-\mathbf{d}^t\mathbf{b}+ \sum_{j,\mathbf{a}[j]<\alpha}min(\mathbf{e}[
 \end{equation}
 
 The function $h'(\alpha)$ is decreasing piecewise constant and can be efficiently computed by sorting the entries in $\mathbf{a}$ and performing left and right cumulative sums.
-We then look for $\alpha*$ such that $h'(\alpha*)=0$. If there is a interval for which $h'(\alpha)=0$ then we choose $\alpha*$ by sampling a uniform distribution in that interval or by choosing the middle value.
+We then look for $\alpha^*$ such that $h'(\alpha^*)=0$. If there is a interval for which $h'(\alpha)=0$ then we choose $\alpha^*$ by sampling a uniform distribution in that interval or by choosing the middle value.
 
 
 The coordinate ascent method generalizes easily to the inequality form of the LP by enforcing positive of the dual variables associated to inequalities after each update.
-The gradient ascent formulation is hard to apply to the inequality form as (maybe one should use projected gradient ? )
+The gradient ascent formulation is hard to apply to the inequality form.
 
-In comparison with dual gradient ascent , the dual coordinate ascent method may seem to have some advantages:
+In comparison with dual gradient ascent, the dual coordinate ascent method may seem to have some advantages:
 \begin{itemize}
 \item invariant by individual rescaling of the rows of the constraints matrix $A$ along with the corresponding entry in $b$
 \item no step parameter
 \item the computational cost of computing the optimal step length depends on the number of non zeros in $\mathbf{e}$ , which  is small when we use coordinate ascent and the matrix $A$ is sparse
-\item we could prioritize coordinates that are the most promising and test less often dual variables associate to inactive  constraints.
+\item we could update coordinates that are the most promising and test less often dual variables associate to inactive  constraints.
 \item there is an explicit objective function beeing optimized and that can be use to compare solutions.
 \end{itemize}
 However it seems that the method  gets often stuck due to the non differentiability of the dual function.
 
 
 If we use a decreasing step length  schedule with the dual gradient ascent, it does not seem to converge well either, not sure why.
-maybe we could do some smoothing of the dual function by adding a small quadratic penalization $\|x\|^2$ ?
-The optimal step computation might be a but more difficult then? 
+Maybe we could do some smoothing of the dual function by adding a small quadratic penalization $\|{\mathbf{x}}\|^2$ to $L(\mathbf{x},\mathbf{y})$ with a weight that is decreased through iterations ?
+The optimal step computation might be a bit more difficult then? 
 maybe instead of taking the optimal step , we can take a random step length in the interval that increases the dual.
 
-A heuristic proposed in \cite{Wedelin2013,Wedelin1995} that is designed for problem where the matrix $A$ contain only binary entries consists in doing dual coordinate ascent and adding small  perturbation to the problem  by modifying the cost vector $c$ in order to obtain feasible integer solution in the primal.
-The method has the advantage that is does not require to solve the LP relaxation exactly to run a heuristic to get a integer feasible solution , and can find an feasible solution in a small amount of computation that needed to solve the relaxed LP. The paper \cite{Bastert2010} generalizes this method to more general matrices $A$ with non integer and non positive entries.
-However it does seem to consist in a simple dual coordinate ascent uses some knapsack solver to solve sub-problems (a bit difficulat to read :( )
+
 
 
 
@@ -205,9 +146,9 @@ this can be rewritten as
 adapting the algorithm in \cite{Chambolle2011}  we get
 \begin{eqnarray}
 \mathbf{x}^{k+1}&=&proj_{[\mathbf{l},\mathbf{u}]} (\mathbf{x}^k-T(A_i^T\mathbf{y}_i^k+A_e^T\mathbf{y}_e^k+\mathbf{c}))\\
-z^k&=&(1+\theta)x^{k+1}-\theta x^k\\
-\mathbf{y}_e^{k+1}&=&\mathbf{y}_e^k+\Sigma_e(A_e z^k-\mathbf{b}_e)\\
-\mathbf{y}_i^{k+1}&=&proj_{[0,+\infty)}(\mathbf{y}_i^k+\Sigma_i(A_i z^k-\mathbf{b}_i))
+\mathbf{z}^k&=&(1+\theta)\mathbf{x}^{k+1}-\theta \mathbf{x}^k\\
+\mathbf{y}_e^{k+1}&=&\mathbf{y}_e^k+\Sigma_e(A_e \mathbf{z}^k-\mathbf{b}_e)\\
+\mathbf{y}_i^{k+1}&=&proj_{[0,+\infty)}(\mathbf{y}_i^k+\Sigma_i(A_i \mathbf{z}^k-\mathbf{b}_i))
 \end{eqnarray}
 where $\theta\in[0,1]$ is an over-relaxation parameter and with the preconditioning diagonal matrices $T$,$\Sigma_i$ and $\Sigma_e$ defined by
 \begin{eqnarray}
@@ -216,110 +157,92 @@ T[j,j]&=&\big(\sum_i |A_e[i,j]|^{2-\alpha}+\sum_i A_i[j,j]^{2-\alpha}\big)^{-1}\
 \Sigma_e[i,i]&=&\big(\sum_j |A_e[i,j]|^{\alpha}\big)^{-1}
 \end{eqnarray}
 
-with $\alpha\in[0,2]$
-Some remarks : for some constraint some pixels are not part of any constraint and $T[i,i]$ is equal to $\infty$. This would be ok if $T$ what not multiplied by $c$ in the update of $x$ .
-It is a bit strange that $c$ is also multiplied by $T$ as it make the method not invariant by rescaling of $c$. Similarly the update of $x$ is not invariant by rescaling individual rows of $A_i$ or $A_e$
+with $\alpha\in[0,2]$.
+
+
+Some remarks : if a variables $x_i$ is  not part of any constraint other than the simple bound constraints then  $T[i,i]$ is equal to $\infty$. This would be ok if $T$ what not multiplied by $c$ in the update of $\mathbf{x}$ .
+It is a bit strange that $\mathbf{c}$ is also multiplied by $T$ as it make the method not invariant by rescaling of $\mathbf{c}$. Similarly the update of $\mathbf{x}$ is not invariant by rescaling individual rows of $A_i$ or $A_e$
 while the ones of $y_e$ and $y_i$ are if we take $\alpha=1$.
-Maybe we should try to rescale each row of $A_i$, $A_e$ and normalize $c$ ?
-in some region the labelling due to the data term is quite reliable, 
-it seem to be a wast of computational power to evaluate the update in theses region on $x$. Also some of the constraint are verified in these region and it is a wast of computational power to re-evaluate them at each iteration. Can we use sparse vectors and maybe add some auxiliary variables to avoid recalculation of values that do not change ? that would allows great speed-up by updating only near the border of the regions ?  
+Maybe we should try to rescale each row of $A_i$, $A_e$ and normalize $\mathbf{c}$ ?
+\subsubsection{accelerations}
+Some variable can be estimated quite reliably after a few iteration and do not change in the subsequent iterations and it seems to be a waste of computational power to evaluate the update on these variables at each iteration. We would be temped to keep these variables fixed for some iterations and same some computation in during these iterations. Also some of the constraint will keep being verified by these fixed variables and it is a waste of computational power to re-evaluate them at each iteration. Can we use sparse vectors and maybe add some auxiliary variables to avoid recalculation of values that do not change
 
 \subsection{Alternating Direction Method of Multipliers }
-
-we first follow the method presented in section 5.2 in  \cite{Boyd2010}.
-we reformulate the LP in the standard form 
+\subsection{Augmenting the positivity constraints}
+We first follow the method presented in section 5.2 in  \cite{Boyd2010}.
+Xe reformulate the LP in the standard form 
 \begin{equation}
-\mathop{min}_x c^tx \text{ s.t. } Ax=b, x\geq 0
+\mathop{min}_\mathbf{x} \mathbf{c}^t\mathbf{x} \text{ s.t. } A\mathbf{x}=\mathbf{b}, \mathbf{x}\geq 0
 \end{equation}
 
-in order to deal wit the constraints $Ax=b$ and $x\geq 0$ separatly we introduce copies of $x$ :
+In order to deal with the constraints $A\mathbf{x}=\mathbf{b}$ and $\mathbf{x}\geq 0$ separatly we introduce copies of $\mathbf{x}$ :
 
 \begin{equation}
-\mathop{min}_x c^tx \text{ s.t. } Ax=b, y\geq 0,x=y
+\mathop{min}_\mathbf{x} \mathbf{c}^t\mathbf{x} \text{ s.t. } A\mathbf{x}=\mathbf{b}, \mathbf{y}\geq 0,\mathbf{x}=\mathbf{y}
 \end{equation}
 
-we introduce mutlipliers for the constraints $x=y$
+We introduce mutlipliers $\mathbf{\lambda}$ for the constraints $\mathbf{x}=\mathbf{y}$
 \begin{equation}
-\mathop{min}_x \mathop{max}_{\lambda} c^tx +\lambda^t (x-y)+\gamma\|x-y\|^2 \text{ s.t } Ax=b,y\geq 0
+\mathop{min}_\mathbf{x} \mathop{max}_{\lambda} \mathbf{c}^t\mathbf{x} +\lambda^t (\mathbf{x}-\mathbf{y})+\gamma\|\mathbf{x}-\mathbf{y}\|^2 \text{ s.t } A\mathbf{x}=\mathbf{b},\mathbf{y}\geq 0
 \end{equation}
-using indicator functions we can rewrite it as 
+Using indicator function [.] that takes $0$ is the condition in the bracket is true and $\infty$ else we can rewrite it as 
 
 \begin{equation}
-\mathop{min}_x \mathop{max}_{\lambda} c^tx +\lambda^t (x-y)+\gamma\|x-y\|^2 + [Ax=b]+[y\geq 0]
+\mathop{min}_\mathbf{x} \mathop{max}_{\lambda} \mathbf{c}^t\mathbf{x} +\lambda^t (\mathbf{x}-\mathbf{y})+\gamma\|\mathbf{x}-\mathbf{y}\|^2 + [A\mathbf{x}=\mathbf{b}]+[\mathbf{y}\geq 0]
 \end{equation}
 
-we can now use the Alternating Direction Method of Multipliers (ADMM).
-We minimize with respect to $x$ that is quadratic under linear constraints ,then with respect to $y$ that is easy, then update the dual variables.
+We can now use the Alternating Direction Method of Multipliers (ADMM) method.
+We minimize with respect to $\mathbf{x}$ that is quadratic under linear constraints,then with respect to $\mathbf{y}$ that is easy, then update the dual variables.
 \begin{eqnarray}
-x_{t+1}&=&argmin_x  c^tx +\lambda_t^T (x-y_t)+\gamma\|x-y_t\|^2 \text{ s.t } Ax=b\\
-y_{t+1}&=&proj_{[0,\infty)} (x_{t+1}+\lambda/\gamma)\\
-\lambda_{t+1}&=&\lambda_{t+1}+\gamma(x_{t+1}-y_{t+1})
+\mathbf{x}_{t+1}&=&argmin_\mathbf{x} \mathbf{c}^t\mathbf{x} +\lambda_t^T (\mathbf{x}-\mathbf{y}_t)+\gamma\|\mathbf{x}-\mathbf{y}_t\|^2 \text{ s.t } A\mathbf{x}=\mathbf{b}\\
+\mathbf{y}_{t+1}&=&proj_{[0,\infty)} (\mathbf{x}_{t+1}+\lambda/\gamma)\\
+\lambda_{t+1}&=&\lambda_{t+1}+\gamma(\mathbf{x}_{t+1}-\mathbf{y}_{t+1})
 \end{eqnarray}
-we obtain $x_{t+1}$ by solving the linear equations system
+we obtain $\mathbf{x}_{t+1}$ by solving the linear equations system
 \begin{equation}
-\left[\begin{array}{cc}2\gamma I_d& A^T\\A&0 \end{array}\right]\left[\begin{array}{c}x_{t+1} \\ v\end{array}\right]=\left[\begin{array}{c}-c^t-\lambda_t^T +2\gamma y_t \\ b\end{array}\right]
+\left[\begin{array}{cc}2\gamma I_d& A^T\\A&0 \end{array}\right]\left[\begin{array}{c}\mathbf{x}_{t+1} \\ v\end{array}\right]=\left[\begin{array}{c}-c^t-\lambda_t^T +2\gamma \mathbf{y}_t \\ b\end{array}\right]
 \end{equation}
-with $v$ lagrange multipliers. 
-check equation is tutorial on ADMM by boyd , section ? 
-we solve severla linear problem with the same matrix, we may resuse some factorization (cholesky  ?) this problem may be too big to solve directly and we may have to use iterative solvers (cg of lbfgs),
-we can reuse previous solution as a warm start (section 4.3.3 in  \cite{Boyd2010}),  can we reuse history of previous linear system resolution to get a preconditionner (using lbfgd ? could use that implementation of lbfgs \url{http://www4.ncsu.edu/~ctk/darts/bfgswopt.m})? or maybe we can spend time calculating a good preconditionner that will be reuse across images (see discussion in section 4.2 in \cite{Boyd2010})? 
-what guaranties do we have if we do not solve the linear system accuratly ?
-this is brefly discussed in sections 3.4.4 and 4.3.2 in  \cite{Boyd2010}
+with $v$ lagrange multipliers.
+As we solve several linear problems with the same matrix, we may try to reuse some factorization (cholesky) but this problem may be too big to solve directly and we may have to use iterative solvers such as conjgate gradient.
+We could reuse the previous solution as a warm start (section 4.3.3 in  \cite{Boyd2010}),  we could try to compute a good preconditionner that will be reuse across problems (see discussion in section 4.2 in \cite{Boyd2010}) or reuse history of previous linear system resolutions to get a preconditionner. If we do not solve the linear system accuratly we may may loose convergence guaranties (this is briefly discussed in sections 3.4.4 and 4.3.2 in  \cite{Boyd2010}).
 
- we are doing two things simultaneously when solving this system : decreasing the energy and enforcing the constraints, and it is unclear to me what could be the tolerance on the constraints violation and how that tolerance compares to the one on the optimality condition. 
-
-unlike done in  \cite{Boyd2010}, we can also introduce mutlipliers for the constraints $Ax=b$ with augmented lagrangian term 
-\begin{equation}
-\mathop{min}_x \mathop{max}_{\lambda_1,\lambda_2} c^tx +\lambda_1^t(Ax-b)+ \gamma_1\|Ax-b\|^2+\lambda_2^t (x-y)+\gamma_2\|x-y\|^2 \text{ s.t } y\geq 0
-\end{equation}
-using this formulation  the update of $x$ is an unconsrained quadratic minimization , which may make the method more tolerant with approximate resolution of the linear system when updating $x$ as we could simply check sufficient decrease of the quadratic  energy (we do not have infinite energy for violated constraints)? 
-we can again use the Alternating Direction Method of Multipliers (ADMM).
-We minimize with respect to $x$ that is quadratic but this time without linear constraints ,then with respect to $y$ that is easy, then update the dual variables.
-
-
-
-when minimizing with respect to $x$ we use $n$ iteration of coordinate descent or other gradient descent with lambda fixed , or conjugate gradient, or diagonal quasi newton BFGS ? can we use preconditioned gradient descent at each iteration and reuse previous solution to precondition the new conjugate gradient ?
-maybe it is feasible with limited BFGS : we can reuse the history of the previous problem as the Hessian does not change? 
-
-If we do one step of gradient descent when minimizing with respect to $x$ , is it equivalent to chambolle-pock or the primal dual subgradient method in section \ref{primal-dual_subgradient}? 
-
-
- can we update $\gamma_1$ and $\gamma_2$ ?
-have a look at section 3.4.1 in  \cite{Boyd2010} for a method of adaptative penalty parameter.
  
-is there a way to make $\gamma_2$ dependent of the distance to the constraint at each iteration (null if we are far enough) without making it infinite if we are close to the constraint ?  update lambda with on step in the gradient direction and loop again. once we modified $\lambda$ we could use the accumulated quasi newton inverse matrix ? with $\lambda=0$ this is equivalent to the fixed penalization method 
+\subsection{Augmenting the linear equalities}
+unlike done in  \cite{Boyd2010}, we can also introduce mutlipliers for the linear equality constraints $A\mathbf{x}=\mathbf{b}$ with augmented lagrangian terms:
+\begin{equation}
+\mathop{min}_ \mathbf{x} \mathop{max}_{\lambda_1,\lambda_2} \mathbf{b}^t\mathbf{x} +\lambda_1^t(A\mathbf{x}-\mathbf{b})+ \gamma_1\|A\mathbf{x}-\mathbf{b}\|^2+\lambda_2^t (\mathbf{x}- \mathbf{y})+\gamma_2\|\mathbf{x}-\mathbf{y}\|^2 \text{ s.t }  \mathbf{y}\geq 0
+\end{equation}
+Using this formulation  the update of $\mathbf{x}$ is an unconstrained quadratic minimization problem which can be solved by solving a simple linear system
 
+However, in constract with the method in the previous section, approximate solution do not violate any constraints. This may make the method more tolerant with approximate resolution of the linear system when updating $\mathbf{x}$ as we could simply check sufficient decrease of the quadratic  energy. We can again use the Alternating Direction Method of Multipliers (ADMM).
+We minimize with respect to $\mathbf{x}$ that is quadratic but this time without linear constraints, then with respect to $\mathbf{y}$, which is easy, then update the dual variables.
+
+
+
+When minimizing with respect to $\mathbf{x}$ we use $n$ iteration of coordinate descent or other gradient descent with lambda fixed, or conjugate gradient, or diagonal quasi newton BFGS. 
+Like with the method in the previous section we solve many similar linear systems (on at each iteration) and we could try to reuse computation across iterations.
+
+
+Some questions:
+\begin{itemize}
+\item if we do one step of gradient descent when minimizing with respect to $\mathbf{x}$, is it then equivalent to chambolle-pock  ?
+ \item can we update $\gamma_1$ and $\gamma_2$ trough iteration?
+have a look at section 3.4.1 in  \cite{Boyd2010} for a method of adaptative penalty parameter.
+ \item is there a way to make $\gamma_2$ dependent of the distance to the constraint at each iteration (null if we are far enough) without making it infinite if we are close to the constraint ?  update lambda with on step in the gradient direction and loop again. once we modified $\lambda$ we could use the accumulated quasi newton inverse matrix ? with $\lambda=0$ this is equivalent to the fixed penalization method 
+\end{itemize}
 
 
 \section{Exploiting the structure}
 
-the previous solvers (Mosek's interior point and Chambolle pock)
-do not exploit much of the structure of the problem. They exploit the sparsity but not the structure(block , toepliz blocks etc)
- by duplicating some variables we can obtain subproblem that can be solve easily , for example linear system with tridiagonal matrices 
- that can be solved easily in linear time using the 
- Tridiagonal matrix algorithm (a.k.a as the Thomas algorithm )
- \url{http://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm}
- is is equivalent to use LU factorization of tridiagonal marices 
- ?
- \url{http://www.webpages.uidaho.edu/~barannyk/Teaching/LU_factorization_tridiagonal.pdf}
-doe the scipy.sparse.linalg.splu function is faster with tridiagonal matrices ? 
-
-\subsection{specialized interior point methods}
-
-we could exploit the fact that parts of the constraints matrix yield to tridiagonal block in the matrix that need to be inverted.
-could that be exploited by methods presented in \cite{Gondzio2003,Grothey2007}
-by duplicating variables and adding simple equality constraint between the duplicated variables we may be able to better exploit these structures like done in dual decomposition when decomposing into slave that use only pixel on the same row or columns and can be solved using dynamic programming in the dual decomposition method but could be solve using Thomas algorithm in the context of interior points?
-it seem like for my problem getting a feasible point is as hard as finding the minimum , and thus should is use interior point method or penalization methods ? or augmented Lagrangian methods ? 
-in comparison with the dual decomposition presented in the next section , these approach or augmented Lagrangian approaches  would have the disadvantage that we cannot solve sub-problems using combinatorial method (shortest path in a graph) but has advantage of using quadratic terms that may favour faster agreement of the slaves , and do not require a full decomposition of te problems ? 
- 
-
+the previous solvers do not exploit much of the structure of the problem. They exploit the sparsity but not the structure(block , toepliz blocks etc). By duplicating some variables using a dual decomposition method or an augmented Lagrangian method,  we can obtain sub-problems that can be solve easily: for example linear system with tridiagonal matrices 
+ that can be solved easily in linear time using the  Tridiagonal matrix algorithm a.k.a as the Thomas algorithm. 
 
 
 
 \subsection{ADMM with vertical matrix decomposition}
 \subsubsection{decomposition}
-We adapth the \textit{Global Variable Consensus With regularization} method  presented in section 7.1 in \cite{Boyd2010} to the linear program written in the standard form.
-suppose the problem writes 
+We adapte the \textit{Global Variable Consensus With regularization} method  presented in section 7.1 in \cite{Boyd2010} to the linear program written in the standard form.
+Suppose the problem writes 
 \begin{equation}
 min c^t x \text{ s.t.} Ax= b,x \geq 0 
 \end{equation}
@@ -350,18 +273,20 @@ y^{t+1}&=&proj_{[0,\infty)} (D\sum_i S_i^Tz_i^{t+1}-\gamma^{-1} \sum_i \lambda_i
 \lambda_i^{t+1}&=&\lambda_i^{t+1}+\gamma(z_i^{t+1}-S_iy^{t+1})
 \label{eqn:Generalized_Form_Consensus_Optimization}
 \end{eqnarray}
-with $D$ a diagonal matrix defined by $(\sum_Si^TS_i)^{-1}$ whose $k^{th}$ diagonal element is in the inverse of the number of time the $k^{th}$ element of $y$ as been copied in some $z_i$. The method do not have continuous behaviour when coefficients in $A$ make a very small change from 0 to a very small value ($S_i$ while change discontinuously). This will be a problem if we try to optimize $A$ to solve some task using a bilevel optimization method. In order to get something more "continuous" with respect to coefficient in $A$ maybe we could use a diagonal matrix to weight differently the penalization between  each pairs of copy, with a weights that increase to the sum of absolute values in the corresponding column in $A_i$ ?  we should do a similar gradual weighting when distributing the linear cost over sub-problems.
-
+with $D$ a diagonal matrix defined by $(\sum_i S_i^TS_i)^{-1}$ whose $k^{th}$ diagonal element is in the inverse of the number of time the $k^{th}$ element of $y$ as been copied in some $z_i$. 
 
 \subsubsection{solving subproblems}
 
-we need to solve systems with matrices $A_i^tA_i$
+At each iteration we need to solve $N$ linear system of the form:
+
+
+When we update $z_i$ we need to solve a linear systems with matrix $A_i^tA_i$
 \begin{itemize}
 \item 
 $A_i^tA_i$ small ((single scalar if $A_i$ a a single row matrix,)
-\item $A_i^tA_i$ of size $n$ by $n$ and band limited with width $k$: we can use a Cholesky decomposition (computation is suppose posed to be in $nk$ ) (equivalent to gaussian elimination ? ). If the system is tridiagonal  system can be solved in linear time using thomas algorithm, which is equivalent to Gaussian elimination , which might be what is implemented in scipy.sparse.linalg.spsolve ). Is using Cholesky decomposition different from using a max-product kalman filter (need reference here)? i cannot find references to the problem of estimating the MAP sequence of hidden state in Gaussian Hidden Markov model. I have some equation in my continuous MRF inference draft but no references.
+\item $A_i^tA_i$ of size $n$ by $n$ and band limited with width $k$: we can use a Cholesky decomposition (computation is suppose posed to be in $nk$ ). If the system is a  tridiagonal  system it can be solved in linear time using Thomas algorithm, which is equivalent to Gaussian elimination.
 
-\item  iterative solvers : conjugate gradient , jacobi, Gauss-Siedel , Sequential over relaxation. All these method might be a bit slow to diffuse information (could do a test on 1D unpainting). 
+\item  iterative solvers : conjugate gradient , jacobi, Gauss-Siedel , Sequential over relaxation. 
 
  \end{itemize}
 the inequality constraint $x\geq 0$ is easily impose on x by re-projection on the positive quartant ? 
@@ -373,250 +298,11 @@ Is there also a link for the combinatorial problem that can be solved using shor
 can we solve the 2D Poisson equation by decomposing into 1D horizontal and 1D vertical problems using ADMM ? 
 
 
-\subsubsection{using inequalities in subproblems}
+\section{Integer constraints}
 
-We can also decide to add constraints $x_i\geq 0$ in the sub-problems, we then get a quadratic program instead of a simple quadratic minimization under linear constraint.
-If a variable is use in  a single block and we use positivity constraint to solve the sub-problem for tha block, we can remove the copy of the variable from the vector $y$ and the associate positivity constraint.
-
-\begin{itemize}
-\item
- In some case this quadratic program can be solve efficiently using sort operations (when the polyhedron $A_ix=b_i, x_i\geq 0$ is a simplex ? see  \cite{Smith2011} for other polyhedrons ). 
- 
- \item  If we have part of the problem deriving from a LP relaxation of a binary pairwise MRF, we can split $A$ to get a different block for each factor.
- 
- The auxiliary variables used to encode pairwise configuration ($y_{ijkl}$ in\label{eqn:local_marginal_polytope})have positivity constraints,  we can remove copies of these variables from the vector $y$ in the ADMM formulation and their associated  positive constraints if we can enforce these positivity constraints in the sub-problem.  
- then the quadratic program can  be done in closed form for paiwise binary factors (see \cite{Smith2011}) (check if that is still true when we have quadratic term on $y_{ijl}$).
-  
-If  we have a binary MRF and we split the corresponding create matrix A (obtained by  LP relaxed formulation) with a block for each unary and each pairwise factor, this leads to a method similar to \cite{Smith2011}.  Our formulation is more  general than \cite{Smith2011}?
-
-Can all constraint be decompose into a small set of logical constraints such as OR , XOR etc ?
-have a look at AD3 too.
-
-The AD3 method with source code here
-\url{https://github.com/andre-martins/AD3} might be exactmy equivalent to my approach when using inequalities in the sub-problems and
-when using a LP that decompose into logical operations when restricted to integer values, which might be the case of most of the hrd constraints i 
-defined the section about constraints modelization
- 
- \item
-In some case it seems possible to solve exaclty  tridiagonal quadratic program with box constraints using a linear complexity algorithm (instead of nlog(n) that would provide an interior point method) dynamic programming \cite{Irving2015} (\url{https://github.com/otherlab/tridiagonal/blob/master/tridiagonal.tex}) 
-a method to solve exactly 1D total variation with quadratic data term in linear time  is given in \cite{Condat2013} (source code available)
-, are they links between the two approaches ? could we rewrite the 1D total variation problem as a tridiagonal quadratic program with box constraints by adding auxiliary variables ? 
-Actually  it seems like the dual of the 1D total variation denoising problem is a quadratic program with tridiagonal Hessian and bound constraints (see \cite{Tom2013}).
-is the taut-string method in \cite{Tom2013} equivalent to the method in \cite{Irving2015} ?
-can this be generalized to band limited matrices ? 
-could have a look at papers that fit splines to data  with bound constraints, as they may solve similar quadratic programs.
-
-
-\item 
-another approach that seem a bit more generic(not limited to tridiagonal matrices) would be to use the projected newton method to solve the sub-problems
- as explained in \cite{Tom2013}
- this is an active set method where each sub-problem can exploit the structure of the problem (cholesky decomposition linear if the matrix is bandlimited, and thus the sub-matrices are band limited ), but then i am not  sure why that would be better than an interior point method to solve the sub-problem (that also can be speed up using sparse Cholesky factorization at each  could we do only one step of projected newton for the sub-problems at each ADMM iteration? 
- for medium size factor (for example obtained by relaxing a single pairwise factor in a multi-label MRF) this might be still efficient. an alternative for these factor is to convert the multi-label pairwise factor into binary pairwise factors as suggested in \cite{Smith2011}.
- 
- 
-\item is there a method halfway between the exact solver for tridiagonal matrices and generic  projected newton for other sparse matrices ? are they kind of bound constrained Kalman filters ?  
-
-\item if $\gamma$ is small, we are tempted to solve the subproblem with $\gamma=0$ and use the solution to start an iterative projected newton or active set method.
-  maybe see \cite{Gupta2007}
- \end{itemize}
- 
- is putting inequality/positivity constraint in the sub-problem  better than than solving without this additional positivity constraint and let the positivity constraint on $y$ to do the job as we have $x_i=y, y\geq 0$ ?  we may udpate $y$ after each update of a single $x_i$ ? 
- 
-\subsection{preconditionning}
-solving
-\begin{equation}
-min c^t x \text{ s.t.} Ax= b,x \geq 0 
-\end{equation}
-is equivalent to solving
-\begin{equation}
-min c^t Ry \text{ s.t.} LARy= b,Ry \geq 0 
-\end{equation}
-with $L$ and $R$ invertible matrices and then
-taking $x=Ry$.
-We can write a wrapper around the function that the LP that reformulate the problem , solve the new LP and compute back $x$.
-Or maybe we can change the preconditionner through the  iterations ? could we interpret this as each iteration solving a new LP with a warm start from the previous LP ? 
-we can warm start the primal variable going back to $x$ and then to the new $y$, but can we warm start the dual varibales ? maybe we can find the expression by
-rewriting the augmented Lagrangian with the matrices $L$ and $R$ ? 
-
-
-
-\subsubsection{scheduling}
-
-we could update $y$ between each sub-problem (we can avoid doing a mean over all copies again by looping over all copies by subtracting old valu and add new value of the copies that have changed)
-we could maybe update the multiplicator between each sub-problems ? 
-can we use over relaxation on each sub-problem ? 
-if we update the $y$ between each sub-problem , maybe we can decide to prioritize some sub-problems over others, and maybe to use some sweeping scheduling ? 
-This approach makes sense only if we have partitioned the matrix into many blocks. we can then prioritize blocks that lead to large penalization with respect to the mean of the copied variables ? 
-need to ask Nikos if that has been done for dual decomposition.
-
-
-\section{Bad or untested methods}
-
-
-\subsection{subgradient with constraints}
-use to solve inequality form LP
-page 11 in \url{http://stanford.edu/class/ee364b/lectures/constr_subgrad_slides.pdf}
-matlab code available here \url{http://stanford.edu/class/ee364b/lectures/subgrad_method_matlab/subgrad_method_lp.m}
-
-Without equality constraints:
-
-\begin{eqnarray}
-g_k&=&\left\{
-\begin{array}{l}
-\alpha_k \mathbf{c}\text{ if }Ax\leq b\\
-\frac{Ax[i,:]x-b_i+\epsilon}{\|A[i,:]\|_2} A[i,:] \text{ with }i = argmax Ax- b\text{ else}
-\end{array}
-\right.\\
-\mathbf{x}^{k+1}&=&proj_{[\mathbf{l},\mathbf{u}]} (\mathbf{x}^k- g_k)\\
-\end{eqnarray}
-With $\epsilon=10^{-3}$ and $\alpha_k=1/k$
-This is a sort of projected sub-gradient where the projection on the convex valid set is done using the alternate projection method. It does an optimal step with the most violated constraint if any constraint is violated, otherwise a step in the direction of the linear function gradient. This is equivalent to alternate projection onto convex set method as long as we are outside the valid set and the gradient descent as soon as we are inside the valid set. I expect it to be very slow in comparison with primal-dual methods as it may spend a lot of time re-projecting in the valid set.
-
-
-\subsection{Subgradient of negative dual function}
-
-see boyd's lectures page 7 in \url{http://stanford.edu/class/ee364b/lectures/constr_subgrad_slides.pdf}
-slide titled 'subgradient method for constraint optimization'
-
-
-
-\subsection{ primal-dual subgradient algorithm}
-\label{primal-dual_subgradient}
-see boyd's lectures \url{http://stanford.edu/class/ee364b/lectures/primal_dual_subgrad_slides.pdf}
-matlab code available here \url{http://stanford.edu/class/ee364b/lectures/subgrad_method_matlab/primal_dual_lp.m}
-
-\begin{eqnarray}
-\mathbf{p}_k&=&proj_{[0,+\infty)}(A_i\mathbf{x}^{(k)}-\mathbf{b}))\\
-\mathbf{d}^k&=&(\mathbf{c}+A_i^tM^{(k)}(\lambda^{k}+\rho \mathbf{p}_k))\\
-\mathbf{x}^{(k+1)}&=&\mathbf{x}^{(k)}-\alpha_k \mathbf{d}_k\\
-\lambda_{k+1}&=&\lambda_k+\alpha_k \mathbf{p}_k
-\end{eqnarray}
-With $M^{k}$ a diagonal matrix with ones for elements corresponding to violated constraints.
-\begin{equation}
-M_{ii}^k=[a_i^tx^{k}>b_i]
-\end{equation}
-and $a_k=1/(k\|d_k,p_k\|_2)$
-this seems a bit strange to me that $\lambda_k$ keeps increasing and thus that it cannot forget progressively a constraint that has been violated in previous iterations but is no longer violated.
-Should we normalize each row of $A$ to get better convergence ? 
-
-\subsection{naive approach}
-
-reformulate the LP in the standard form 
-\begin{equation}
-\mathop{min}_x c^tx \text{ s.t. } Ax=b, x\geq 0
-\end{equation}
-replace the constraint by a quadratic penalization
-\begin{equation}
-\mathop{min}_x c^tx +\gamma\|Ax-b\|^2 \text{ s.t. }x\geq 0
-\end{equation}
-with a  large $\gamma$
-we can then use coordinate descent on x
-or descent along direction that correspond to lines of $A$ which may be equivalent to sequential orthogonal projection (but may require reprojection on $x\geq 0$ after each step or even in a line search)
-we can reparamterize the problem using $x=exp(t)$
-in order to get an unconstrained problem and use quasi newton , conjugate gradient or trust region ? 
-this should to differentiable iteration that could be used for bi-level optimization, but the line search might not be differentiable.
-We can also try to solve that problem using a truncated-newton interior point method using a barrier penality for the positivity constraint.
-we can easily adapt the method designed for l1 regularized least square in \cite{Kim2007} to our problem:
-
-\begin{equation}
-\phi_t(x)=t(c^tx +\gamma\|Ax-b\|^2) +\sum_i log(x_i)
-\end{equation}
-we find minimizer of $\phi_t(x)$ for an increasing sequence of $t$
-at each fixed $t$ we find a direction using approximated newton step direction obtained by solving the following system using preconditioned conjugate gradient, 
-\begin{equation}
-\bigtriangledown^2\phi_t(x)\delta_x=-\bigtriangledown \phi_t(x)
-\end{equation}
-with 
-\begin{equation}
-\bigtriangledown^2\phi_t(x)=2tA^tA+D
-\end{equation}
-with $D$ dioagonal marix with $D_{ii}=(1/x_i)^2$
-and the gradient writes
-\begin{equation}
-\bigtriangledown\phi_t(x)=t(c+2tA^t(Ax-b))-1./x
-\end{equation}
-Similarly to what is done in \cite{Kim2007}  we can use the diagonal preconditionner $2tdiag(A^tA)+D$, could we get the preconditioner using the previous cg iterations history?
-once we have the direction we do line search with backtracking and update $t$
-using the dual gap as done in  \cite{Kim2007}.
-Note that backtracking and the stopign crieterion in conjugate gradient may lead to undifferencialble updates for the finite iteration bilevel method
- Should have a look at papers cites in  \cite{Kim2007} 
- large part of the matlab code for \cite{Kim2007} , available here  \url{https://web.stanford.edu/~boyd/l1_ls/},
-  could be reused and easily reimplemented in python
-
-
-
-In order to enforce $Ax-b=0$ maybe we can use augmented Lagrangian instead of simple penalization 
-\begin{equation}
-\mathop{min}_x \mathop{max}_{\lambda_e} c^tx +\lambda_e^t(Ax-b)+ \gamma\|Ax-b\|^2\text{ s.t }x\geq 0
-\end{equation}
-we then perform dual ascent , where we need to solve exactly with respect to x at each iteration , or we can use method that use an approximate resolution of the primal subproblem using some iterative method (is this equivelent to primal-dual gradient if this use only one gradient step)
-
-use $n$ iteration of coordinate descent or other gradient descent with lambda fixed , or conjugate gradient, or diagonal quasi newton BFGS ?
-inequality constraint are easy to handle in coordinate descent but are harder to handle with gradient of conjugate gradient method...
-is reprojection sufficient ? maximum step length in the valid set ? 
-we could introduce multiplier for the inequalities too , denoted $ \lambda_i$
-we can add a quadratic term that penalize difference with previous solution 
-at each iteration with $\lambda_e$ fixed we minimize
-\begin{equation}
-\mathop{min}  c^tx +\lambda_e^t(Ax-b)+ \gamma\|Ax-b\|^2+ \lambda_i x + \gamma_x\|x-x_{t-1}\|^2
-\end{equation}
-
-with a coefficient that control the step length this parameter could be chosen dependent on the multiplier in order to allow bigger step for variables that are positive far from 0? 
-
-we could introduce multipliers for he inequality constraints
-\begin{equation}
-\mathop{min}_x \mathop{max}_{\lambda_e,\lambda_i} c^tx +\lambda_e^t(Ax-b)+ \gamma\|Ax-b\|^2+\lambda_i^t (x-x_p)+\gamma_i\|x-x_p\|^2 \text{ s.t } x_p\geq 0
-\end{equation}
-we can now do an alternate minimization with respect to $x$ that is quadratic and the with respect to $x_p$ that is easy.
-can we use preconditioned gradient descent at each iteration and reuse previous solution to precondition the new conjugate gradient ?
-maybe it is feasible with limited BFGS : we can reuse the hisotry of the previous problem as the Hessian does not change.
- 
-is there a way to make $\gamma_i$ dependent of the distance to the constraint at each iteration (null if we are far enough) without making it infinite if we are close to the constraint ? 
-maybe using \url{https://www.youtube.com/watch?v=9jcWM-TUQHk} ? 
-
-   update lambda with on step in the gradient direction and loop again.
-once we modified $\lambda$ we could use the accumulated quasi newton inverse matrix ? with $\lambda=0$ this is equivalent to the fixed penalization method described just above
-we shoul we use Lagrangians for the inequality too ? 
-this differs a bit from the dual gradient ascend as we have the quadratic term that avoid silly solutions ?  
-
-
-
-
-
-
-
-
-\subsection{truncated newton interior-point method}
-maybe i could have a look at the classical interior -point  methods described in 
-\url{http://users.ece.gatech.edu/~justin/l1magic/downloads/l1magic.pdf}
-and adapt it to my problem trying to exploit some structure in my matrices ? 
-
-introduction to barrier method , interior path: 
-http://stanford.edu/class/ee364a/lectures/barrier.pdf
-
-it seem like mosek spend a lot of time trying to find a feasible point 
-.
-  primal-dual interior point
-may be able to start from an infeasible point
-
-some code for the prmal-dual interior point here
-\url{http://research.cs.wisc.edu/math-prog/lpbook/matlab/pathfollow.m}
-might be slow ecause of chelesky factorization , 
-can we use trucated newton or other iterative method to solve approximativeley the system (sequential orthogonal projection, SOR etc)
-see \url{http://stanford.edu/class/ee364b/lectures/trunc_newton_slides.pdf}
-
-some interior point method are able to exploit not only he sparsity butthe structure of the constraints matrices
-maybe we can use the fact that the marices that encode directional derivatives are easily invertible (like exploited  in dual decomposition approaches) and one can invert system independalty for each row and column if variables are duplicated .
- 
-
-
-
-\subsection{other methods}
-maybe have a look at \cite{Evtushenko2005}
-
-
-
-
+A heuristic proposed in \cite{Wedelin2013,Wedelin1995} that is designed for problem where the matrix $A$ contain only binary entries consists in doing dual coordinate ascent and adding small  perturbation to the problem  by modifying the cost vector $c$ in order to obtain feasible integer solution in the primal.
+The method has the advantage that is does not require to solve the LP relaxation exactly to run a heuristic to get a integer feasible solution , and can find an feasible solution in a small amount of computation that needed to solve the relaxed LP. The paper \cite{Bastert2010} generalizes this method to more general matrices $A$ with non integer and non positive entries.
+However it does seem to consist in a simple dual coordinate ascent uses some knapsack solver to solve sub-problems (a bit difficulat to read :( )
 
 
 %\bibliographystyle{eg-alpha}

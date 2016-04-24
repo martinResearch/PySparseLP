@@ -19,4 +19,9 @@ latex/*.out
 *.pyc
 *~
 latex/*.ps
+code/*.o
+code/*.html
+code/*.cpp
+code/*.c
+code/*.so
 

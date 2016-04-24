@@ -1,3 +1,7 @@
+import numpy as np
+import scipy.sparse
+import time
+
 class chrono():
 	def __init__(self):
 		pass
@@ -5,6 +9,18 @@ class chrono():
 		self.start=time.clock() 
 	def toc(self):
 		return time.clock()-self.start 
+	
+	
+class check_decrease:
+	def __init__(self,val=None,tol=1e-10):
+		self.val=val
+		self.tol=tol
+	def set(self,val):
+		self.val=val
+	def add(self,val):
+		assert(self.val>=val-self.tol)
+		self.val=val
+		
 def convertToPySparseFormat(A):
 	#check symetric
 	assert((A-A.T).nnz==0)
@@ -93,6 +109,72 @@ def check_constraints(i,x_r,mask,Acsr,Acsc,b_lower,b_upper):
 			break
 	return violated
 
+
+
+class solutionStat():
+	
+	def __init__(self,c,AeqCSC,beq,AineqCSC,bineq,callbackFunc):
+		self.c=c
+		self.Aeq=AeqCSC
+		self.beq=beq
+		self.Aineq=Aineq
+		self.bineq=bineq
+		self.best_integer_solution_energy=np.inf
+		self.best_integer_solution=None
+		self.iprev=0
+		self.callbackFunc=callbackFunc
+		
+	def startTimer(self):
+		self.start = time.clock() 				
+		self.elapsed=	self.start
+		
+	
+		
+	def eval(self,x,i):
+		
+		self.prev_elapsed=self.elapsed
+		self.elapsed= (time.clock() - start)	
+		nb_iter_since_last_call=i-self.self.iprev
+		mean_iter_period=(elapsed-prev_elapsed)/nb_iter_since_last_call
+		
+		
+		energy1=self.c.dot(x)
+		max_violated_equality=0
+		max_violated_inequality=0
+		r_eq=(self.Aeq*x)-self.beq
+		r_ineq=(self.Aineq*x)-self.bineq			
+		if self.Aeq!=None:							
+			max_violated_equality=np.max(np.abs(r_eq))
+		if self.Aineq!=None: 
+			max_violated_inequality=np.max(r_ineq)
+	
+		xrounded=np.round(x)
+		energy_rounded=c.dot(xrounded)
+		nb_violated_equality_rounded=np.sum(np.abs(Aeq*xrounded-beq))
+		nb_violated_inequality_rounded=np.sum(np.maximum(Aineq*xrounded-bineq,0))	
+	
+		if nb_violated_equality_rounded==0 and nb_violated_inequality_rounded==0:
+			print '##########   found feasible solution with energy'+str(energy_rounded)
+			if energy_rounded<best_integer_solution_energy:
+				self.best_integer_solution_energy=energy_rounded
+				self.best_integer_solution=xrounded
+
+
+		print 'iter'+str(i)+": energy1= "+str(energy1) +  ' elaspsed '+str(elapsed)+' second'+\
+	              ' max violated inequality:'+str(max_violated_inequality)+\
+	              ' max violated equality:'+str(max_violated_equality)+\
+	              'mean_iter_period='+str(mean_iter_priod)+\
+	              'rounded : %f ineq %f eq'%(nb_violated_inequality_rounded,nb_violated_equality_rounded)
+			#'y_eq has '+str(100 * np.mean(y_eq==0))+' % of zeros '+\
+		#    'y_ineq has '+str(100 * np.mean(y_ineq==0))+' % of zeros '+\
+		self.iprev=i
+	
+		if self.callbackFunc!=None:
+	
+			self.callbackFunc(i,x,energy1,energy2,elapsed,max_violated_equality,max_violated_inequality,is_active_variable=is_active_variable)
+	
+		
+
 def save_arguments(filename):
 	"""Returns tuple containing dictionary of calling function's
 	   named arguments and a list of calling function's unnamed
@@ -111,3 +193,47 @@ def save_arguments(filename):
 	d={'module':module,'function_name':func_name,'args':args,'posargs':posargs}
 	with open(filename, 'wb') as f:				
 		pickle.dump(d,f)
+
+
+
+
+
+def preconditionConstraints(A,b,b2=None,alpha=2):
+	#alpha=2
+	ACopy=A.copy()
+	ACopy.data=np.abs(ACopy.data)**(alpha)
+	SumA=ACopy*np.ones((ACopy.shape[1]))
+	tmp=(SumA)**(1./alpha)
+	tmp[tmp==0]=1
+	diagSigmA=1/tmp
+	Sigma=scipy.sparse.diags([diagSigmA],[0]).tocsr()
+	Ap=Sigma*A
+	Ap.__dict__['blocks']=A.blocks
+	bp=Sigma*b
+	if b2==None:
+
+		return Ap,bp
+	else:
+		return Ap,bp,Sigma*b2
+
+
+
+def preconditionLPRight(c,Aeq,beq,lb,ub,x0,alpha=2):
+	#alpha=2
+	AeqCopy=Aeq.copy()
+	AeqCopy.data=np.abs(AeqCopy.data)**(alpha)
+	SumA=np.ones((AeqCopy.shape[0]))*AeqCopy
+	tmp=(SumA)**(1./alpha)
+	tmp[tmp==0]=1
+	diagR=1/tmp
+	R=scipy.sparse.diags([diagR],[0]).tocsr()
+
+	Aeq2=Aeq*R
+	beq2=beq
+	lb2=tmp*lb
+	ub2=tmp*ub
+	x02=tmp*x0
+	c2=c*R
+	Aeq2.__dict__['blocks']=Aeq.blocks
+
+	return R,c2,Aeq2,beq2,lb2,ub2,x02

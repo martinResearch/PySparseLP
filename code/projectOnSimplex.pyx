@@ -1,3 +1,18 @@
+# distutils: language = c++
+import numpy as np
+cimport numpy as np
+cimport numpy as cnp
+from libc.math cimport floor, ceil
+from scipy import sparse
+from scipy.sparse import diags
+cimport cython
+import scipy
+from numpy.math cimport INFINITY
+from libcpp.vector cimport vector
+from libcpp.set cimport set
+
+ctypedef np.int32_t cINT32
+ctypedef np.double_t cDOUBLE
 
 @cython.boundscheck(False)
 @cython.wraparound(False) 

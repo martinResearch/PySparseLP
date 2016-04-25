@@ -2,7 +2,7 @@
 
 This projet provides several python codes to solve sparse linear programs of the form
 
-                ![latex:\large $\mathbf{x}^*=argmin_\mathbf{x} \mathbf{c}^t\mathbf{x} ~  s.t.~  A_e\mathbf{x}=\mathbf{b_e},A_i\mathbf{x}\leq\mathbf{ b_i}, \mathbf{l}\leq \mathbf{x}\leq \mathbf{u}$ ](./images/LPproblem.svg)
+![latex:\large $\mathbf{x}^*=argmin_\mathbf{x} \mathbf{c}^t\mathbf{x} ~  s.t.~  A_e\mathbf{x}=\mathbf{b_e},A_i\mathbf{x}\leq\mathbf{ b_i}, \mathbf{l}\leq \mathbf{x}\leq \mathbf{u}$ ](./images/LPproblem.svg)
 
 
 The differents algorithms that are implemented are 
@@ -12,7 +12,7 @@ The differents algorithms that are implemented are
 * a first order primal-dual algorithm adapted from chambolle pock [2]
 * three methods based on the Alternating Direction Method of Multipliers [3]
 
-**Note** This method are not meant to be efficient method to solve generic linear programs. They are simple and quite naive methods i coded while exploring different possibilites to solve sparse linear programs.
+**Note** These methods are not meant to be efficient methods to solve generic linear programs. They are simple and quite naive methods i coded while exploring different possibilites to solve sparse linear programs.
 
 
 This project also provides: 
@@ -41,8 +41,15 @@ could try to solve the LP from [5]
 The Sparse Inverse Covariance Estimation aims to find
 a sparse matrix B that approximate the inverse of Covariance matrix A.
 
-![latex:\large $B^*=argmmin_B \|B\|_1~ s.t.~ \|AB-I_d\|_\infty\leq \lambda$](./images/sparce_inv_covariance.svg)
+![latex:\large $B^*=argmin_B \|B\|_1~ s.t.~ \|A\times B-I_d\|_\infty\leq \lambda$](./images/sparse_inv_covariance.svg)
 
+let denot f the fonction that take a matrix as an input an yield the vector of coefficient of the matrix in  row-major order.
+let b=f(B) we have f(AB)=Mb with M=kron(A,I_d)
+the problem rewrites
+![latex: \large $ min_{b,c} \sum_i c_i ~s.t~ -b\leq c,~b\leq c,~-\lambda\leq M b-f(I_d)\leq +\lambda$](./images/lp_sparse_inv_covariance.svg)
+
+
+we can use this scikit-learn example [here](http://scikit-learn.org/stable/auto_examples/covariance/plot_sparse_cov.html) to generate the data 
 
 ##
 test data can be obtained from  
@@ -63,7 +70,7 @@ but need
 * document the active-set *hack* for the chambole pock method.
 
 
-* ceate a cython binding for LPsparse [1] using scipy.sparse matrices for the interface and adding the possibility to compute the convergence curve yt providing the problem solution to the solvr to compute error curves.
+* create a cython binding for LPsparse [1] using scipy.sparse matrices for the interface and adding the possibility to compute the convergence curve yt providing the problem solution to the solvr to compute error curves.
 
 * implemente method [4]
 

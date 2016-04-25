@@ -16,6 +16,7 @@ The differents algorithms that are implemented are
 
 
 This project also provides: 
+
 * a python class that  make is easier to building LP programs from python, 
 * methods to convert between the different common forms of LP (slack form , standard form etc), 
 * methods to export to standard file formats (MPS)

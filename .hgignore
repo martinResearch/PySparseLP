@@ -1,0 +1,27 @@
+syntax: glob
+latex/*.aux
+latex/*.blg
+latex/*.bbl
+latex/*.ddf
+latex/*.gz
+*.avi
+*.pyc
+*.bak
+latex/*.dvi
+latex/*.log
+latex/*.pdf
+latex/*.bak
+latex/*.toc
+latex/*.bb
+latex/*.tex.Backup*
+latex/*.out
+
+*.pyc
+*~
+latex/*.ps
+code/*.o
+code/*.html
+code/*.cpp
+code/*.c
+code/*.so
+

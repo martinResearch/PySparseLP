@@ -34,15 +34,15 @@ using pip
 we can use it to solve a binary image segmentation problem with Potts regularization.
 
 ![latex: \large $min_s c^ts + \sum_{(i,j)\in E}  |s_i-s_j| ~s.t. ~0 \leq s\leq 1$](./images/segmentation.svg)
+
 with E the list of indices of pairs of neighboring pixels and c a cost vector that is obtain from color distribution models of the two regions.
 This poblem can be rewritten as a linear progamme by adding an auxilay variable d_ij for each edge with the constraints
+
 ![latex: \large $min_s c^ts + \sum_{(i,j)\in E}  d_{ij} ~s.t. ~0 \leq s\leq 1, d_{ij}\geq s_j-s_j, d_{ij}\geq s_i-s_i $](./images/segmentation_lp.svg)
  
-
-
 This problem can be more efficiently solved using graph-cuts but it is still interesting to compare the different generic LP solvers on this problem. 
 
-could try to solve the LP from [5]
+Instead of using a simple Potts model we could try to solve the LP from [5]
 
 ## Sparse inverse convariance matrix 
  

@@ -6,7 +6,7 @@ except ImportError:
 from distutils.extension import Extension
 from Cython.Build import cythonize
 
-
+import numpy as np
 
 my_modules=cythonize('code/*.pyx',annotate=True)
 

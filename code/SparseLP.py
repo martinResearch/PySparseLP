@@ -321,7 +321,7 @@ class SparseLP():
 		# take advantage of the snipy sparse marices to ease things
 
 
-		if lowerbounds==upperbounds:
+		if  type(lowerbounds)==type(0) or type(lowerbounds)==type(0.0) and  lowerbounds==upperbounds:
 			lowerbounds,upperbounds=self.convertBoundsToVectors((A.shape[0],),lowerbounds,upperbounds)
 			csr_matrix_append_rows(self.Aequalities,A.tocsr())
 			self.Bequalities=np.append(self.Bequalities,lowerbounds) 

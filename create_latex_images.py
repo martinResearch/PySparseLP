@@ -9,11 +9,20 @@
 
 import tempfile
 import shutil
+import sys
+
+for arg in sys.argv: 
+    print arg
 
 dirpath = tempfile.mkdtemp()
 # ... do stuff with dirpath
-
-texfile='./readme.md'
+print 'temporary directory for latex compilation = %s'%dirpath
+if len(sys.argv)==1:
+    texfile='./readme.md'
+elif len(sys.argv)==2: 
+    texfile=sys.argv[1]
+else:
+    raise Exception('wrong number of arguments')
 import re
 
 import os, requests
@@ -28,22 +37,25 @@ def formula_as_file( formula, file, negate=False,header='' ):
     latexfile.write('\\usepackage{wasysym}')  
     latexfile.write('\\usepackage{amssymb}')     
     latexfile.write('\n\\begin{document}')   
-    latexfile.write('$%s$'%formula)
+    latexfile.write('%s'%formula)
     latexfile.write('\n\\end{document}  ') 
     latexfile.close()
-    os.system( 'pdflatex -output-directory="%s" -aux_directory="%s" %s'%(dirpath,dirpath,laxtex_tmp_file) )
-    if file[-3:]=='svg':
+    os.system( 'pdflatex -output-directory="%s"  %s'%(dirpath,laxtex_tmp_file) )
+    if file.startswith('https://rawgithub.com') or file.startswith('https://raw.githack.com'):
+        file='./'+re.findall(r"""/master/(.*)""", file)[0]    
+    if file[-3:]=='svg': 
         os.system( 'pdf2svg %s %s'%(pdf_tmp_file,file) )
+    elif file[-3:]=='pdf':
+        shutil.copyfile(pdf_tmp_file,file)
     else:  
-        os.system( 'convert -density 600  %s -quality 90  %s'%(pdf_tmp_file,file) )
+        os.system( 'convert -density 100  %s -quality 90  %s'%(pdf_tmp_file,file) )
  
 
 raw = open(texfile)
 filecontent=raw.read()
 
-latex_equations= re.findall(r"""\[latex:(.*?)\]\((.*?)\)""", filecontent)
+latex_equations= re.findall(r"""[^\t]!\[latex:(.*?)\]\((.*?)\)""", filecontent)
 listname=set()
-print 'found %d equations'%len(latex_equations)
 for eqn in latex_equations:        
     if eqn[1] in listname:
         raise Exception('equation image file %s already used'%eqn[1])

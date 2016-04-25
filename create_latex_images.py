@@ -37,7 +37,7 @@ def formula_as_file( formula, file, negate=False,header='' ):
     latexfile.write('\\usepackage{wasysym}')  
     latexfile.write('\\usepackage{amssymb}')     
     latexfile.write('\n\\begin{document}')   
-    latexfile.write('%s'%formula)
+    latexfile.write(' %s'%formula)
     latexfile.write('\n\\end{document}  ') 
     latexfile.close()
     os.system( 'pdflatex -output-directory="%s"  %s'%(dirpath,laxtex_tmp_file) )
@@ -61,7 +61,9 @@ for eqn in latex_equations:
         raise Exception('equation image file %s already used'%eqn[1])
         
     listname.add(eqn[1])
+    print  'creating %s'%eqn[1] 
     formula_as_file(eqn[0],eqn[1])
+    print 'done'
     
-shutil.rmtree(dirpath)
+#shutil.rmtree(dirpath)
 print 'DONE'

@@ -2,7 +2,7 @@
 
 This projet provides several python codes to solve sparse linear programs of the form
 
-![latex:\large $ \mathbf{x}^*=argmin_\mathbf{x} \mathbf{c}^t\mathbf{x} ~  s.t.~  A_e\mathbf{x}=\mathbf{b_e},A_i\mathbf{x}\leq\mathbf{ b_i}, \mathbf{l}\leq \mathbf{x}\leq \mathbf{u}$ ](./images/LPproblem.svg)
+![latex:$\mathbf{x}^*=argmin_\mathbf{x} \mathbf{c}^t\mathbf{x} ~  s.t.~  A_e\mathbf{x}=\mathbf{b_e},A_i\mathbf{x}\leq\mathbf{ b_i}, \mathbf{l}\leq \mathbf{x}\leq \mathbf{u}$ ](./images/LPproblem.svg)
 
 
 The differents algorithms that are implemented are 
@@ -36,6 +36,9 @@ This problem can be more efficiently solved using graph-cuts but it is still int
 
 ## Sparse inverse convariance matrix 
  
+The Sparse Inverse Covariance Estimation aims to find
+a sparse matrix B that approximate the inverse of Covariance matrix A.
+![latex:\large $min B \|B\|_1 st \|AB-I_d\|_\infty\leq \lambda$](./images/sparce_inv_covariance.svg)
 
 
 ##

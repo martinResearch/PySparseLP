@@ -82,7 +82,7 @@ but we need to write
 
 * implement method [4]
 
-## References
+# References
 
 [1] Ian En-Hsu Yen,  Kai Zhong,  Cho-Jui Hsieh, Pradeep K Ravikumar, Inderjit S Dhillon *Sparse Linear Programming via Primal and Dual Augmented Coordinate Descent*, NIPS 2015
 

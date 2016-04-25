@@ -5,7 +5,7 @@ This projet provides several python codes to solve sparse linear programs of the
 ![latex:\large $\mathbf{x}^*=argmin_\mathbf{x} \mathbf{c}^t\mathbf{x} ~  s.t.~  A_e\mathbf{x}=\mathbf{b_e},A_i\mathbf{x}\leq\mathbf{ b_i}, \mathbf{l}\leq \mathbf{x}\leq \mathbf{u}$ ](./images/LPproblem.svg)
 
 
-The differents algorithms that are implemented are 
+The differents algorithms that are implemented are documented in the [pdf](./latex/SparseLinearProgramming.pdf): 
 
 * a dual coordinate ascent method with exact line search 
 * a dual gradient ascent with exact line search
@@ -38,7 +38,7 @@ we can use it to solve a binary image segmentation problem with Potts regulariza
 with E the list of indices of pairs of neighboring pixels and c a cost vector that is obtain from color distribution models of the two regions.
 This poblem can be rewritten as a linear progamme by adding an auxilay variable d_ij for each edge with the constraints
 
-![latex: \large $min_s c^ts + \sum_{(i,j)\in E}  d_{ij} ~s.t. ~0 \leq s\leq 1, d_{ij}\geq s_j-s_j, d_{ij}\geq s_i-s_i $](./images/segmentation_lp.svg)
+![latex: \large $min_s c^ts + \sum_{(i,j)\in E}  d_{ij} ~s.t. ~0 \leq s\leq 1, ~d_{ij}\geq s_j-s_j, ~d_{ij}\geq s_i-s_i $](./images/segmentation_lp.svg)
  
 This problem can be more efficiently solved using graph-cuts but it is still interesting to compare the different generic LP solvers on this problem. 
 
@@ -51,11 +51,11 @@ a sparse matrix B that approximate the inverse of Covariance matrix A.
 
 ![latex:\large $B^*=argmin_B \|B\|_1~ s.t.~ \|A\times B-I_d\|_\infty\leq \lambda$](./images/sparse_inv_covariance.svg)
 
-let denot f the fonction that take a matrix as an input an yield the vector of coefficient of the matrix in  row-major order.
+let denote f the fonction that take a matrix as an input an yield the vector of coefficient of the matrix in  row-major order.
 let b=f(B) we have f(AB)=Mb with M=kron(A,I_d)
 the problem rewrites
 
-![latex: \large $ min_{b,c} \sum_i c_i ~s.t.~ -b\leq c,~b\leq c,~-\lambda\leq M b-f(I_d)\leq +\lambda$](./images/lp_sparse_inv_covariance.svg)
+![latex: \large $ min_{b,c} \sum_i c_i ~s.t.~ -b\leq c,~b\leq c,~-\lambda\leq M b-f(I_d)\leq \lambda$](./images/lp_sparse_inv_covariance.svg)
 
 we can use this scikit-learn example [here](http://scikit-learn.org/stable/auto_examples/covariance/plot_sparse_cov.html) to generate the data 
 
@@ -78,10 +78,9 @@ but we need to write
 
 * document the active-set *hack* for the chambole pock method.
 
+* create a cython binding for LPsparse [1] using scipy.sparse matrices for the interface and adding the possibility to compute the convergence curve by providing the problem known solution to the solver.
 
-* create a cython binding for LPsparse [1] using scipy.sparse matrices for the interface and adding the possibility to compute the convergence curve yt providing the problem solution to the solvr to compute error curves.
-
-* implemente method [4]
+* implement method [4]
 
 ## References
 

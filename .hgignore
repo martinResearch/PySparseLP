@@ -9,7 +9,6 @@ latex/*.gz
 *.bak
 latex/*.dvi
 latex/*.log
-latex/*.pdf
 latex/*.bak
 latex/*.toc
 latex/*.bb

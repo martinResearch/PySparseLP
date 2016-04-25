@@ -6,7 +6,7 @@ import scipy.sparse
 import scipy.ndimage
 
 #@profile
-def LP_primalDual(LP,simplex=None,x0=None,\
+def ChambollePockPPDAS(LP,simplex=None,x0=None,\
                   alpha=1,theta=1,nb_iter=100,callbackFunc=None,max_time=None,\
                   nb_iter_plot=300,save_problem=False,
                   frequency_update_active_set=20
@@ -58,7 +58,7 @@ def LP_primalDual(LP,simplex=None,x0=None,\
 		
 
 	use_vec_sparsity=False
-	if x0!=None:
+	if not x0 is None:
 		x=xo.copy()
 	else:
 		x=np.zeros(c.size)
@@ -86,7 +86,7 @@ def LP_primalDual(LP,simplex=None,x0=None,\
 	if useColumnPreconditioning:
 		# constructing the preconditioning diagonal matrices  
 		tmp=0
-		if Aeq!=None:
+		if not Aeq is None:
 			print "Aeq shape="+str(Aeq.shape)
 	
 			assert(scipy.sparse.issparse(Aeq))  
@@ -97,7 +97,7 @@ def LP_primalDual(LP,simplex=None,x0=None,\
 			SumAeq=(np.ones((1,AeqCopy.shape[0]))*AeqCopy)  
 			tmp=tmp+SumAeq
 			#AeqT=Aeq.T
-		if Aineq!=None:     
+		if not Aineq is None:     
 			print "Aineq shape="+str(Aineq.shape)
 			assert(scipy.sparse.issparse(Aineq))
 			assert(Aineq.shape[1]==c.size)
@@ -120,7 +120,7 @@ def LP_primalDual(LP,simplex=None,x0=None,\
 		diagT=np.ones(x.shape)
 		
 		
-	if Aeq!=None:
+	if not Aeq is None:
 		AeqCopy=Aeq.copy()
 		AeqCopy.data=np.abs(AeqCopy.data)**(alpha)
 		SumAeq=AeqCopy*np.ones((AeqCopy.shape[1]))
@@ -131,7 +131,7 @@ def LP_primalDual(LP,simplex=None,x0=None,\
 		y_eq=np.zeros(Aeq.shape[0])
 		del AeqCopy
 		del SumAeq
-	if Aineq!=None:  
+	if not Aineq is None:  
 		AineqCopy=Aineq.copy()
 		AineqCopy.data=np.abs(AineqCopy.data)**(alpha)
 		SumAineq=AineqCopy*np.ones((AineqCopy.shape[1])) 
@@ -205,7 +205,7 @@ def LP_primalDual(LP,simplex=None,x0=None,\
 		
 		#Update he primal variables
 		
-		if Aeq!=None:				
+		if not Aeq is None:				
 			if use_vec_sparsity:
 				yeq_sparse=scipy.sparse.coo_matrix(y_eq).T
 				d=d+(yeq_sparse*Aeq).toarray().ravel()#faster when few constraint are activated
@@ -225,7 +225,7 @@ def LP_primalDual(LP,simplex=None,x0=None,\
 				#d+=y_eq*Aeq# strangley this does not work, give wrong results
 				
 
-		if Aineq!=None: 			
+		if not Aineq is None: 			
 			if use_vec_sparsity:
 				yineq_sparse=scipy.sparse.coo_matrix(y_ineq).T
 				d=d+(yineq_sparse*Aineq).toarray().ravel()#faster when few constraint are activated
@@ -255,7 +255,7 @@ def LP_primalDual(LP,simplex=None,x0=None,\
 			# update d for the variables that where inactive
 			
 			d=c+y_ineq*AineqCSR
-			if Aeq!=None:
+			if not Aeq is  None:
 				d+=y_eq*AeqCSR
 			
 			#tmp=np.minimum(x-lb,np.maximum(diagT*d,0))+np.minimum(ub-x,np.maximum(-diagT*d,0))
@@ -270,7 +270,7 @@ def LP_primalDual(LP,simplex=None,x0=None,\
 			
 			# update list active constraints
 			# ideally find largest values in duals steps diagSigma_ineq*r_ineq
-			if Aeq!=None:
+			if not Aeq is None:
 				r_eq=(AeqCSC*x3)-beq
 			r_ineq=(AineqCSC*x3)-bineq	
 			#tmp=np.abs(diagSigma_ineq*r_ineq)*((y_ineq>0) | (diagSigma_ineq*r_ineq>0 ))
@@ -278,7 +278,7 @@ def LP_primalDual(LP,simplex=None,x0=None,\
 			is_active_inequality_constraint= (r_ineq>-0.2) | (y_ineq>0)
 			list_active_inequality_constraints,=np.nonzero(is_active_inequality_constraint)
 			
-			if Aeq!=None:
+			if not Aeq is None:
 				tmp=np.abs(diagSigma_eq*r_eq)
 				is_active_equality_constraint=tmp>1e-6
 				list_active_equality_constraints,=np.nonzero(is_active_equality_constraint)
@@ -290,11 +290,11 @@ def LP_primalDual(LP,simplex=None,x0=None,\
 			
 			#subAeqCSC=AeqCSC[list_active_equality_constraints,:]
 			#subAeqCSC=AeqCSR[list_active_equality_constraints,:].tocsc()
-			if Aeq!=None:
+			if not Aeq is None:
 				r_eq_active=r_eq[list_active_equality_constraints]
 			#subAineqCSC=AineqCSC[list_active_inequality_constraints,:]
 			#subAineqCSC=AineqCSR[list_active_inequality_constraints,:].tocsc()
-			if Aeq!=None:
+			if not Aeq is None:
 				subAeqCSR=AeqCSR[list_active_equality_constraints,:]
 				subAeqCSC2=subAeqCSR.tocsc()[:,list_active_variables]
 				subAeqCSR2=subAeqCSC2.tocsr()
@@ -341,7 +341,7 @@ def LP_primalDual(LP,simplex=None,x0=None,\
 		
 		if use_vec_sparsity:
 			x3_sparse=scipy.sparse.coo_matrix(x3).T
-		if Aeq!=None:
+		if not Aeq is None:
 			if use_vec_sparsity:
 				r_eq=(Aeq*x3_sparse).toarray().ravel()-beq
 			else:	
@@ -355,7 +355,7 @@ def LP_primalDual(LP,simplex=None,x0=None,\
 				r_eq_active+=subAeqCSC2*diff_active_x3
 				#r_eq=r_eq+increment.toarray().ravel()
 						
-		if Aineq!=None: 			
+		if not Aineq is None: 			
 			if use_vec_sparsity:
 				r_ineq=(Aineq*x3_sparse).toarray().ravel()-bineq
 			else:
@@ -373,14 +373,14 @@ def LP_primalDual(LP,simplex=None,x0=None,\
 			if not Aineq is None:
 				y_ineq[list_active_inequality_constraints]=active_y_ineq
 				r_ineq=(AineqCSC*x)-bineq
-			if Aeq!=None:
+			if not Aeq is None:
 				r_eq=(AeqCSC*x)-beq
 			
 			
 			prev_elapsed=elapsed
 			elapsed= (time.clock() - start)	
 			mean_iter_priod=(elapsed-prev_elapsed)/10
-			if max_time!=None and elapsed>max_time:
+			if (not max_time is None) and elapsed>max_time:
 				break			
 			energy1=c.dot(x)
 			
@@ -406,11 +406,11 @@ def LP_primalDual(LP,simplex=None,x0=None,\
 			
 			max_violated_equality=0
 			max_violated_inequality=0
-			if Aeq!=None:
+			if not Aeq is None:
 				energy1+=y_eq.T.dot(Aeq*x-beq)
 				energy2-=y_eq.dot(beq)
 				max_violated_equality=np.max(np.abs(r_eq))
-			if Aineq!=None:    
+			if not Aineq is None:    
 				energy1+=y_ineq.T.dot(Aineq*x-bineq)
 				energy2-=y_ineq.dot(bineq)
 				max_violated_inequality=np.max(r_ineq)
@@ -421,11 +421,11 @@ def LP_primalDual(LP,simplex=None,x0=None,\
 			#xrounded=greedy_round(x,c,Aeq,beq,Aineq,np.full(bineq.shape,-np.inf),bineq,lb.copy(),ub.copy(),callbackFunc=callbackFunc)
 			
 			energy_rounded=c.dot(xrounded)
-			if Aeq!=None:
+			if not Aeq is None:
 				nb_violated_equality_rounded=np.sum(np.abs(Aeq*xrounded-beq))
 			else:
 				nb_violated_equality_rounded=0
-			if Aineq!=None:	
+			if not Aineq is None:	
 				nb_violated_inequality_rounded=np.sum(np.maximum(Aineq*xrounded-bineq,0))	
 			else:
 				nb_violated_inequality_rounded=0
@@ -445,20 +445,20 @@ def LP_primalDual(LP,simplex=None,x0=None,\
 				#'y_eq has '+str(100 * np.mean(y_eq==0))+' % of zeros '+\
 		#    'y_ineq has '+str(100 * np.mean(y_ineq==0))+' % of zeros '+\			 
 		
-			if callbackFunc!=None:
+			if not callbackFunc is None:
 
 				callbackFunc(i,x,energy1,energy2,elapsed,max_violated_equality,max_violated_inequality,is_active_variable=is_active_variable)
 
 		#Update the dual variables
 	
-		if Aeq!=None:
+		if not Aeq is None:
 			diff_active_y_eq=diagSigma_eq[list_active_equality_constraints]*r_eq_active
 			y_eq[list_active_equality_constraints]=y_eq[list_active_equality_constraints]+diff_active_y_eq
 			
 			#y_eq=y_eq+diagSigma_eq*r_eq
 			#y_eq+=diagSigma_eq*r_eq
 
-		if Aineq!=None: 
+		if not Aineq is None: 
 			#active_y_ineq=y_ineq[list_active_inequality_constraints]
 			new_active_y_ineq=active_y_ineq+diagSigma_ineq_active*r_ineq_active
 			new_active_y_ineq=np.maximum(new_active_y_ineq, 0)			

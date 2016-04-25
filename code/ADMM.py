@@ -20,9 +20,9 @@ def LP_admm(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_eq=2,gamma_ineq=
 	n=c.size
 	if x0==None:
 		x0=np.zeros(c.size)
-	if Aeq!=None:
+	if not Aeq is None:
 		Aeq,beq=preconditionConstraints(Aeq,beq,alpha=2)
-	if Aineq!=None:# it seem important to do this preconditionning before converting to standard form
+	if not Aineq is None:# it seem important to do this preconditionning before converting to standard form
 			Aineq,b_lower,b_upper=preconditionConstraints(Aineq,b_lower,b_upper,alpha=2)
 	c,Aeq,beq,lb,ub,x0=	convertToStandardFormWithBounds(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0)
 	x=x0
@@ -149,7 +149,7 @@ def LP_admm(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_eq=2,gamma_ineq=
 			print 'iter'+str(i)+": energy1= "+str(energy1) + " energy2="+str(energy2)+ ' elaspsed '+str(elapsed)+' second'+\
 			      ' max violated inequality:'+str(max_violated_inequality)+\
 			      ' max violated equality:'+str(max_violated_equality)
-			if callbackFunc!=None:
+			if not callbackFunc is None:
 				callbackFunc(i, x[0:n],energy1,energy2,elapsed,max_violated_equality,max_violated_inequality)			
 			
 		#solve the penalized problem with respect to xp	
@@ -194,9 +194,9 @@ def LP_admm2(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_ineq=0.7,nb_ite
 		x0=np.zeros(c.size)
 	
 	if use_preconditionning:
-		if Aeq!=None:
+		if not Aeq is None:
 			Aeq,beq=preconditionConstraints(Aeq,beq,alpha=2)
-		if Aineq!=None:# it seem important to do this preconditionning before converting to standard form
+		if not Aineq is None:# it seem important to do this preconditionning before converting to standard form
 			Aineq,b_lower,b_upper=preconditionConstraints(Aineq,b_lower,b_upper,alpha=2)
 			
 	c,Aeq,beq,lb,ub,x0=	convertToStandardFormWithBounds(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0)
@@ -299,7 +299,7 @@ def LP_admm2(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_ineq=0.7,nb_ite
 			print 'iter'+str(i)+": energy1= "+str(energy1) + " energy2="+str(energy2)+ ' elaspsed '+str(elapsed)+' second'+\
 			      ' max violated inequality:'+str(max_violated_inequality)+\
 			      ' max violated equality:'+str(max_violated_equality)
-			if callbackFunc!=None:
+			if not callbackFunc is None:
 				callbackFunc(i, x[0:n],energy1,energy2,elapsed,max_violated_equality,max_violated_inequality)		
 		
 		#print 'iter'+str(i)+' '+str(L(x, xp,lambda_ineq))

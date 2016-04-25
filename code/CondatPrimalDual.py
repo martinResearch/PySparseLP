@@ -22,7 +22,7 @@ def LP_primalDualCondat(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,simplex=None,\
 
 	Aineq,bineq=convertToOnesideInequalitySytem(Aineq,b_lower,b_upper)
 
-	if x0!=None:
+	if not x0 is None:
 		x=xo.copy()
 	else:
 		x=np.zeros(c.size)
@@ -38,7 +38,7 @@ def LP_primalDualCondat(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,simplex=None,\
 
 	n=c.size		
 	
-	if useStandardForm and Aineq!=None:
+	if useStandardForm and (not Aineq is None):
 		c,Aeq,beq,lb,ub,x0=convertToStandardFormWithBounds(c,Aeq,beq,Aineq,bineq,lb,ub,x0)
 		Aineq=None
 		
@@ -60,7 +60,7 @@ def LP_primalDualCondat(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,simplex=None,\
 
 		if i%30==0:
 			st.eval(x, i)
-			if max_time!=None and st.elapsed>max_time:
+			if (not max_time is None) and st.elapsed>max_time:
 				break
 			
 		r_eq=(AeqCSC*z)-beq

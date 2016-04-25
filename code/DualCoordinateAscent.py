@@ -150,7 +150,7 @@ def DualCoordinateAscent(x,LP,nbmaxiter=20,callbackFunc=None,y_eq=None,y_ineq=No
 		#y_ineq=np.maximum(y_ineq, 0)
 		#print 'iter %d energy %f'%(iter ,eval(y_eq,y_ineq))
 		
-		if max_time!=None and elapsed>max_time:
+		if (not max_time is None) and elapsed>max_time:
 			break			
 	return x, y_eq,y_ineq
 

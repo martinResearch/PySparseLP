@@ -42,6 +42,11 @@ The complexity of state-of-the-art LP
 solvers (i.e. Interior-Point method and Primal, Dual Simplex methods) is still at least quadratic inthe number of variables or constraints \cite{NocedalWright2006}.
 The quadratic complexity comes from the need to solve each linear system exactly in both simplex and interior point method.
 
+\begin{equation}
+\mathbf{x}^*=argmin_x \mathbf{c}^t\mathbf{x} ~  s.t.~  A_e\mathbf{x}=\mathbf{b_e},A_i\mathbf{x}\leq\mathbf{ b_i}, \mathbf{l}\leq \mathbf{x}\leq \mathbf{u} 
+\end{equation}
+
+
 \section{Generic LP solvers}
 \subsection{Dual Gradient Ascent and Dual Coordinate Ascend}
 
@@ -137,7 +142,7 @@ We adapt the algorithm for solving linear program presented in \cite{Chambolle20
 
 
 \begin{equation}
-\mathbf{x}^*=argmin_x \mathbf{c}^t\mathbf{x} ~  s.t.~  A_ex=\mathbf{b_e},A_ix\leq\mathbf{ b_i}, \mathbf{l}\leq \mathbf{x}\leq \mathbf{u} 
+\mathbf{x}^*=argmin_x \mathbf{c}^t\mathbf{x} ~  s.t.~  A_e\mathbf{x}=\mathbf{b_e},A_i\mathbf{x}\leq\mathbf{ b_i}, \mathbf{l}\leq \mathbf{x}\leq \mathbf{u} 
 \end{equation}
 this can be rewritten as 
 \begin{equation}

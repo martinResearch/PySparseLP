@@ -170,7 +170,7 @@ def DualGradientAscent(x,LP,nbmaxiter=1000,callbackFunc=None,y_eq=None,y_ineq=No
 			callbackFunc(iter,x,0,0,elapsed,0,0)
 			
 		
-		if max_time!=None and elapsed>max_time:
+		if (not max_time is None) and elapsed>max_time:
 			break				
 
 	print 'done'

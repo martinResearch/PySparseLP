@@ -5,7 +5,8 @@ import scipy.sparse
 import scipy.ndimage
 import sys
 from ADMM import *
-from ChambollePockPreconditionedPrimalDual import *
+from ChambollePockPPD import *
+from ChambollePockPPDAS import *
 from ADMMBlocks import *
 from DualGradientAscent import *
 from DualCoordinateAscent import *
@@ -160,19 +161,7 @@ class SparseLP():
 			for j,d in zip(col.indices,col.data):
 				f.write('    X%-9dI%-9d%f\n'%(i,j,d))
 				
-		#for i in range(self.costsvector.size):
-			#f.write('    X%-9dOBJ       %f\n'%(i,self.costsvector[i]))
-			
-			
-		#Aeq=self.Aequalities.tocsc().tocoo()# convert to scipy sparse csc matrix
-		#assert np.all((np.diff(Aeq.col)>=0))
-		#for i in range(Aeq.data.size):
-			#f.write('    X%-9dEQ%-8d%f\n'%(Aeq.col[i],Aeq.row[i]+1,Aeq.data[i]))		
-		
-		#Aineq=self.Ainequalities.tocsc().tocoo()# convert to scipy sparse csc matrix
-		#assert np.all((np.diff(Aineq.col)>=0))
-		#for i in range(Aineq.data.size):
-			#f.write('    X%-9dINEQ%-6d%f\n'%(Aineq.col[i],Aineq.row[i],Aineq.data[i]))
+
 		
 		f.write('RHS\n')
 		for i in range(Aeq.shape[0]):
@@ -195,6 +184,34 @@ class SparseLP():
 		f.write('ENDATA\n')
 		f.close()
 		
+	def save_Ian_E_H_Yen(self,folder):
+		if not self.B_lower is None:
+			print 'self.B_lower is not None, you should convert your problem with convertToOnesideInequalitySystem first'
+			raise
+		if not np.all(self.lowerbounds==0):
+			print 'lower bound constraint on variables should at 0'
+			raise
+		
+		import os		
+		Aeq=self.Aequalities.tocoo()
+		tmp=np.row_stack(([Aeq.shape[0],Aeq.shape[1],0.0],np.column_stack((Aeq.row+1,Aeq.col+1,Aeq.data))))
+		np.savetxt(os.path.join(folder,'Aeq'),tmp,fmt='%d %d %f')
+		np.savetxt(os.path.join(folder,'beq'),self.Bequalities,fmt='%f')
+		np.savetxt(os.path.join(folder,'c'),self.costsvector,fmt='%f')
+		nbvariables=self.costsvector.size
+		Aineq=scipy.sparse.vstack((self.Ainequalities,sparse.eye(nbvariables))).tocoo()
+		bupper=np.hstack((self.B_upper,np.ones(nbvariables)))
+		tmp=np.row_stack(([Aineq.shape[0],Aineq.shape[1],0.0],np.column_stack((Aineq.row+1,Aineq.col+1,Aineq.data))))
+		np.savetxt(os.path.join(folder,'A'),tmp,fmt='%d %d %f')	
+		np.savetxt(os.path.join(folder,'b'),bupper,fmt='%f')	
+	
+		with open(os.path.join(folder,'meta'), 'w') as f:
+			f.write('nb	%d\n'%nbvariables)
+			f.write('nf	%d\n'%0)
+			f.write('mI	%d\n'%Aineq.shape[0])
+			f.write('mE	%d\n'%Aeq.shape[0])
+		
+	
 			
 		
 	def getVariablesBounds(self):
@@ -330,10 +347,10 @@ class SparseLP():
 			aux= self.addVariablesArray((cols.shape[0],),upperbounds=None,lowerbounds=0,costs=coef_penalization)
 
 			cols2=np.column_stack((cols,aux))
-			if upperbounds!=None:
+			if not upperbounds is None:
 				vals2=np.column_stack((vals,-np.ones((vals.shape[0],1)))	)	
 				self.addLinearConstraintRows(cols2,vals2,lowerbounds=None,upperbounds=upperbounds)
-			if lowerbounds!=None:	
+			if not lowerbounds is None:	
 				vals2=np.column_stack((vals,np.ones((vals.shape[0],1))))		
 				self.addLinearConstraintRows(cols2,vals2,lowerbounds,upperbounds=None)			
 			return aux
@@ -351,20 +368,20 @@ class SparseLP():
 		self.simplex=indices
 		
 	def convertToSlackForm(self):
-		if self.Ainequalities!=None:			
+		if not self.Ainequalities is None:			
 			m=self.Ainequalities.shape[0]
 			n=self.Ainequalities.shape[1]
 			slacks_lower=self.addVariablesArray(m, self.B_lower, self.B_upper)
 			self.Ainequalities._shape=(self.Ainequalities.shape[0],n) 
 			self.addConstraintsSparse(scipy.sparse.hstack((self.Ainequalities,-scipy.sparse.eye(m))),0,0)
 			self.B_lower=None
-			self.B_lupper=None
+			self.B_upper=None
 			self.Ainequalities=None
 		
 		
 		
 	def convertToOnesideInequalitySystem(self):
-		if self.Ainequalities!=None and (not self.B_lower is None):
+		if (not self.Ainequalities is None) and (not self.B_lower is None):
 			idskeep_upper=np.nonzero(self.B_upper!=np.inf)[0]
 			mapping_upper=np.hstack(([0],np.cumsum(self.B_upper!=np.inf)))
 			idskeep_lower=np.nonzero(self.B_lower!=-np.inf)[0]
@@ -427,7 +444,7 @@ class SparseLP():
 	          x0=None,nb_iter=10000,\
 	          max_time=None,callbackFunc=None,\
 	          nb_iter_plot=10,\
-	          plotSolution=None,groundTruth=None,groundTruthIndices=None,frequency_update_active_set=2000000):
+	          plotSolution=None,groundTruth=None,groundTruthIndices=None):
 		
 		
 		if not(self.Ainequalities is None) and self.Ainequalities.shape[0]>0:
@@ -457,7 +474,7 @@ class SparseLP():
 		self.itrn_curve=[]
 		
 		def callbackFunc(niter,solution,energy1,energy2,duration,max_violated_equality,max_violated_inequality,is_active_variable=None):
-			if groundTruth!=None:
+			if not groundTruth is None:
 				self.distanceToGroundTruth.append(np.mean(np.abs(groundTruth-solution[groundTruthIndices])))
 				self.distanceToGroundTruthAfterRounding.append(np.mean(np.abs(groundTruth-np.round(solution[groundTruthIndices]))))
 			self.itrn_curve.append(niter)
@@ -467,7 +484,7 @@ class SparseLP():
 			self.pobj_curve.append(energy1)
 			self.max_violated_equality.append(max_violated_equality)
 			self.max_violated_inequality.append(max_violated_inequality)
-			if plotSolution!=None:
+			if not plotSolution is None:
 				plotSolution(niter,solution,is_active_variable=is_active_variable)
 				
 		
@@ -505,16 +522,19 @@ class SparseLP():
 		                  Aineq,self.B_lower,self.B_upper,\
 		                  self.lowerbounds,self.upperbounds,nb_iter=nb_iter,\
 		                  x0=x0,callbackFunc=callbackFunc,max_time=max_time)		
-		#x=LP_reprojected(self.costsvector,Aeq,Beq,\
-		                #Aineq,Bineq,\
-		                #self.lowerbounds,self.upperbounds,\
-		                #x0=x0,callbackFunc=callbackFunc,max_time=max_time)
-		elif method=="ChambollePock"	:	
-			x=LP_primalDual(self,\
+
+		elif method=="ChambollePockPPD"	:	
+			x,best_integer_solution=ChambollePockPPD(self.costsvector,Aeq,Beq,\
+			                   Aineq,self.B_lower,self.B_upper,\
+			                   self.lowerbounds,self.upperbounds,\
+			                   	x0=x0,alpha=1,theta=1,nb_iter=nb_iter,callbackFunc=callbackFunc,max_time=max_time,save_problem=False)
+
+		elif method=="ChambollePockPPDAS"	:	
+			x=ChambollePockPPDAS(self,\
 			      simplex=self.simplex,
 		              x0=x0,alpha=1,theta=1,nb_iter=nb_iter,\
 			      nb_iter_plot=nb_iter_plot,\
-			      frequency_update_active_set=frequency_update_active_set,
+			      frequency_update_active_set=20,
 		              callbackFunc=callbackFunc,max_time=max_time)
 			
 		elif method=="DualGradientAscent":

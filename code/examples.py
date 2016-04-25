@@ -95,6 +95,18 @@ if __name__ == "__main__":
 	
 	LP.addPottModel(indices, coefpenalization=coefPotts/coefMul)
 	
+	LP2=copy.deepcopy(LP)
+	LP2.convertToOnesideInequalitySystem()
+	LP2.save_Ian_E_H_Yen('data')
+	import os
+	start=time.clock()
+	os.system('../LPsparse/LPsparse  -c -t 1e-4 data/')
+	#os.system('../LPsparse/LPsparse  -c -d -t 1e-4 data/')
+	print time.clock()-start
+	tmp=np.loadtxt('sol')
+	sol1=np.zeros(LP.nb_variables)
+	sol1[tmp[:,0].astype(np.int)-1]=tmp[:,1]
+	plt.imshow(sol1[indices][:,:,0],cmap=plt.cm.Greys_r,interpolation='none')
 	print "solving"
 
 	fig_solutions=plt.figure()
@@ -113,7 +125,7 @@ if __name__ == "__main__":
 		plt.draw()
 		plt.show()
 		
-	methods=["DualCoordinateAscent","DualGradientAscent","ChambollePock","ADMM","ADMM2","ADMMBlocks"]
+	methods=["DualCoordinateAscent","DualGradientAscent","ChambollePockPPD",'ChambollePockPPDAS',"ADMM","ADMM2","ADMMBlocks"]
 	
 	fig=plt.figure()
 	ax=fig.add_subplot(1,len(methods)+1,1,title='graph cut')

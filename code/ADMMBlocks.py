@@ -225,7 +225,7 @@ def LP_admmBlockDecomposition(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamm
 					print 'iter'+str(i)+": energy1= "+str(energy1) + " energy2="+str(energy2)+ ' elaspsed '+str(elapsed)+' second'+\
 				          ' max violated inequality:'+str(max_violated_inequality)+\
 				          ' max violated equality:'+str(max_violated_equality)
-					if callbackFunc!=None:
+					if not callbackFunc is None:
 						callbackFunc(i,(R* xp)[0:n],energy1,energy2,elapsed,max_violated_equality,max_violated_inequality)				
 		i+=1
 				

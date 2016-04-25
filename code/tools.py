@@ -49,10 +49,10 @@ class CholeskyOrLu():
 
 def convertToStandardFormWithBounds(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0):
 	
-	if Aineq!=None:
+	if not Aineq is None:
 		ni=Aineq.shape[0]
 		#need to convert in standard form by adding an auxiliary variables for each inequality
-		if Aeq!=None:
+		if not Aeq is None:
 			Aeq2=scipy.sparse.vstack((scipy.sparse.hstack((Aeq,scipy.sparse.csc_matrix((Aeq.shape[0], ni)))),scipy.sparse.hstack((Aineq,-scipy.sparse.eye(ni,ni))))).tocsr()
 			Aeq2.__dict__['blocks']=Aeq.blocks+[(b[0]+Aeq.shape[0],b[1]+Aeq.shape[0]) for b in Aineq.blocks]
 			beq2=np.hstack((beq,np.zeros((ni))))
@@ -70,7 +70,7 @@ def convertToStandardFormWithBounds(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0):
 	return c,Aeq2,beq2,lb,ub,x0
 
 def convertToOnesideInequalitySystem(Aineq,b_lower,b_upper):
-	if Aineq!=None and b_lower!=None:
+	if (not Aineq is None) and (not b_lower is None):
 	
 	
 		idskeep_upper=np.nonzero(b_upper!=np.inf)[0]
@@ -143,9 +143,9 @@ class solutionStat():
 		max_violated_inequality=0
 		r_eq=(self.Aeq*x)-self.beq
 		r_ineq=(self.Aineq*x)-self.bineq			
-		if self.Aeq!=None:							
+		if not self.Aeq is None:							
 			max_violated_equality=np.max(np.abs(r_eq))
-		if self.Aineq!=None: 
+		if not self.Aineq is None: 
 			max_violated_inequality=np.max(r_ineq)
 	
 		xrounded=np.round(x)

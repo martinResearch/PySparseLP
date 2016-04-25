@@ -7,7 +7,8 @@ import sys
 from ADMM import *
 from ChambollePockPreconditionedPrimalDual import *
 from ADMMBlocks import *
-
+from DualGradientAscent import *
+from DualCoordinateAscent import *
 
 def csr_matrix_append_row(A,n,cols,vals):
 	A._shape=(A.shape[0]+1,n) 
@@ -515,6 +516,11 @@ class SparseLP():
 			      nb_iter_plot=nb_iter_plot,\
 			      frequency_update_active_set=frequency_update_active_set,
 		              callbackFunc=callbackFunc,max_time=max_time)
+			
+		elif method=="DualGradientAscent":
+			x, y_eq,y_ineq=DualGradientAscent(x=x0,LP=self,nbmaxiter=nb_iter,callbackFunc=callbackFunc,y_eq=None,y_ineq=None,max_time=max_time)
+		elif method=="DualCoordinateAscent":
+			x, y_eq,y_ineq=DualCoordinateAscent(x=x0,LP=self,nbmaxiter=nb_iter,callbackFunc=callbackFunc,y_eq=None,y_ineq=None,max_time=max_time)
 
 		else: 
 			print "unkown LP solver method "+method

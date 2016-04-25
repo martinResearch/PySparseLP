@@ -20,8 +20,8 @@ class ImageLP(SparseLP):
 
 	def addPenalizedDifferences(self,I,J,coefpenalization):
 		assert(I.size==J.size)			
-
-		aux=self.addVariablesArray(I.size,upperbounds=None,lowerbounds=0,costs=coefpenalization)
+		maxDiff=np.maximum(self.upperbounds[I]-self.lowerbounds[J],self.upperbounds[J]-self.lowerbounds[I])
+		aux=self.addVariablesArray(I.shape,upperbounds=maxDiff,lowerbounds=0,costs=coefpenalization)
 		if np.isscalar(coefpenalization):
 			assert(coefpenalization>0)			
 		else:#allows a penalization that is different for each edge (could be dependent on an edge detector)
@@ -53,7 +53,7 @@ if __name__ == "__main__":
 	
 	nLabels = 1  
 	np.random.seed(1)
-	size_image=(100,100,nLabels)   
+	size_image=(50,50,nLabels)   
 	nb_pixels=size_image[0]*size_image[1]
 	coefMul=500# we multiply all term by theis constant because the graph cut algorithm take integer weights.
 	unary_terms=np.round(coefMul*((np.random.rand(size_image[0],size_image[1],size_image[2]))*2-1))
@@ -113,7 +113,7 @@ if __name__ == "__main__":
 		plt.draw()
 		plt.show()
 		
-	methods=["ChambollePock","ADMM","ADMM2","ADMMBlocks"]
+	methods=["DualCoordinateAscent","DualGradientAscent","ChambollePock","ADMM","ADMM2","ADMMBlocks"]
 	
 	fig=plt.figure()
 	ax=fig.add_subplot(1,len(methods)+1,1,title='graph cut')
@@ -127,7 +127,7 @@ if __name__ == "__main__":
 	
 	for i,method in enumerate(methods):
 		#method=
-		sol1,elapsed=LP.solve(method=method,force_integer=False,getTiming=True,nb_iter=10000,max_time=10,groundTruth=groundTruth,groundTruthIndices=indices,plotSolution=None)
+		sol1,elapsed=LP.solve(method=method,force_integer=False,getTiming=True,nb_iter=10000,max_time=20,groundTruth=groundTruth,groundTruthIndices=indices,plotSolution=None)
 		ax_curves1.semilogy(LP.itrn_curve,LP.distanceToGroundTruth,label=method)		
 		ax_curves2.semilogy(LP.dopttime_curve,LP.distanceToGroundTruth,label=method)
 		ax_curves1.legend()

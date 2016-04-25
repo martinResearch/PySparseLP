@@ -1,10 +1,18 @@
-def dualCoordinateAscent(x,LP,nbmaxiter=20,callbackFunc=None,y_eq=None,y_ineq=None):
+import copy
+import numpy as np
+import time
+import scipy.sparse
+import scipy.ndimage
+
+
+def DualCoordinateAscent(x,LP,nbmaxiter=20,callbackFunc=None,y_eq=None,y_ineq=None,max_time=None):
 	"""Method from 'An algorigthm for large scale 0-1 integer 
 	programming with application to airline crew scheduling'
 	we generelized it to the case where A is not 0-1 and
 	the upper bounds can be greater than 1
 	did not generalize and code the approximation method
 	"""
+	start=time.clock()
 	# convert to slack form (augmented form)
 	LP2=copy.deepcopy(LP)
 	LP=None
@@ -129,9 +137,10 @@ def dualCoordinateAscent(x,LP,nbmaxiter=20,callbackFunc=None,y_eq=None,y_ineq=No
 		max_violation=np.max(LP2.Ainequalities*x-LP2.B_upper)
 		sum_violation= np.sum(np.maximum(LP2.Ainequalities*x-LP2.B_upper,0))
 		E=eval(y_eq,y_ineq)
-		print 'iter %d energy %f max violation %f sum_violation %f'%(iter ,E,max_violation,sum_violation)	
+		print 'iter %d energy %f max violation %f sum_violation %f'%(iter ,E,max_violation,sum_violation)
+		elapsed= (time.clock() - start)	
 		if not callbackFunc is None:
-			callbackFunc(0,x,0,0,0,0,0)
+			callbackFunc(iter,x,0,0,elapsed,0,0)
 	
 		#direction=scipy.sparse.csr.csr_matrix((y_ineq-y_ineq_prev))
 		#coef_length=exactDualLineSearch(direction,LP2.Ainequalities,LP2.B_upper,c_bar,LP2.upperbounds,LP2.lowerbounds)
@@ -140,5 +149,8 @@ def dualCoordinateAscent(x,LP,nbmaxiter=20,callbackFunc=None,y_eq=None,y_ineq=No
 		#y_ineq=y_ineq+*0.1	
 		#y_ineq=np.maximum(y_ineq, 0)
 		#print 'iter %d energy %f'%(iter ,eval(y_eq,y_ineq))
+		
+		if max_time!=None and elapsed>max_time:
+			break			
 	return x, y_eq,y_ineq
 

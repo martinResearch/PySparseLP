@@ -1,4 +1,9 @@
-		
+import copy
+import numpy as np
+import time
+import scipy.sparse
+import scipy.ndimage
+
 def exactDualLineSearch(direction,A,b,c_bar,upperbounds,lowerbounds):
 
 	assert(isinstance(direction,scipy.sparse.csr.csr_matrix))
@@ -29,9 +34,10 @@ def exactDualLineSearch(direction,A,b,c_bar,upperbounds,lowerbounds):
 
 
 	
-def dualGradientAscent(x,LP,nbmaxiter=1000,callbackFunc=None,y_eq=None,y_ineq=None):
+def DualGradientAscent(x,LP,nbmaxiter=1000,callbackFunc=None,y_eq=None,y_ineq=None,max_time=None):
 	"""gradient ascent in the dual
 	"""
+	start=time.clock()
 	# convert to slack form (augmented form)
 	LP2=copy.deepcopy(LP)
 	LP=None
@@ -95,6 +101,9 @@ def dualGradientAscent(x,LP,nbmaxiter=1000,callbackFunc=None,y_eq=None,y_ineq=No
 	
 	
 	prevE=eval(y_eq,y_ineq)
+	if prevE==-np.inf:
+		print 'intial dual point not feasible'
+		raise
 	for iter in range(nbmaxiter):
 		c_bar,x=getOptimX(y_eq,y_ineq)
 		if not LP2.Ainequalities is None:
@@ -156,8 +165,13 @@ def dualGradientAscent(x,LP,nbmaxiter=1000,callbackFunc=None,y_eq=None,y_ineq=No
 				#break
 		newE=eval(y_eq,y_ineq)	
 		prevE=newE
+		elapsed= (time.clock() - start)	
 		if not callbackFunc is None and iter%100==0:
-			callbackFunc(0,x,0,0,0,0,0)		
+			callbackFunc(iter,x,0,0,elapsed,0,0)
+			
+		
+		if max_time!=None and elapsed>max_time:
+			break				
 
 	print 'done'
 	return x, y_eq,y_ineq

@@ -18,9 +18,11 @@ latex/*.out
 *.pyc
 *~
 latex/*.ps
-code/*.o
-code/*.html
-code/*.cpp
-code/*.c
-code/*.so
+pysparselp/*.o
+pysparselp/*.html
+pysparselp/*.cpp
+pysparselp/*.c
+pysparselp/*.so
+build/
+thirdparties/
 

@@ -1,57 +1,8 @@
 """
-======================================
 Sparse inverse covariance estimation
-======================================
-
-Using the GraphLasso estimator to learn a covariance and sparse precision
-from a small number of samples.
-
-To estimate a probabilistic model (e.g. a Gaussian model), estimating the
-precision matrix, that is the inverse covariance matrix, is as important
-as estimating the covariance matrix. Indeed a Gaussian model is
-parametrized by the precision matrix.
-
-To be in favorable recovery conditions, we sample the data from a model
-with a sparse inverse covariance matrix. In addition, we ensure that the
-data is not too much correlated (limiting the largest coefficient of the
-precision matrix) and that there a no small coefficients in the
-precision matrix that cannot be recovered. In addition, with a small
-number of observations, it is easier to recover a correlation matrix
-rather than a covariance, thus we scale the time series.
-
-Here, the number of samples is slightly larger than the number of
-dimensions, thus the empirical covariance is still invertible. However,
-as the observations are strongly correlated, the empirical covariance
-matrix is ill-conditioned and as a result its inverse --the empirical
-precision matrix-- is very far from the ground truth.
-
-If we use l2 shrinkage, as with the Ledoit-Wolf estimator, as the number
-of samples is small, we need to shrink a lot. As a result, the
-Ledoit-Wolf precision is fairly close to the ground truth precision, that
-is not far from being diagonal, but the off-diagonal structure is lost.
-
-The l1-penalized estimator can recover part of this off-diagonal
-structure. It learns a sparse precision. It is not able to
-recover the exact sparsity pattern: it detects too many non-zero
-coefficients. However, the highest non-zero coefficients of the l1
-estimated correspond to the non-zero coefficients in the ground truth.
-Finally, the coefficients of the l1 precision estimate are biased toward
-zero: because of the penalty, they are all smaller than the corresponding
-ground truth value, as can be seen on the figure.
-
-Note that, the color range of the precision matrices is tweaked to
-improve readability of the figure. The full range of values of the
-empirical precision is not displayed.
-
-The alpha parameter of the GraphLasso setting the sparsity of the model is
-set by internal cross-validation in the GraphLassoCV. As can be
-seen on figure 2, the grid to compute the cross-validation score is
-iteratively refined in the neighborhood of the maximum.
 """
-print(__doc__)
-# author: Gael Varoquaux <gael.varoquaux@inria.fr>
-# License: BSD 3 clause
-# Copyright: INRIA
+
+
 
 import numpy as np
 from scipy import linalg
@@ -105,14 +56,6 @@ X /= X.std(axis=0)
 # Estimate the covariance
 emp_cov = np.dot(X.T, X) / n_samples
 
-model = GraphLassoCV()
-model.fit(X)
-cov_ = model.covariance_
-prec_ = model.precision_
-
-lw_cov_, _ = ledoit_wolf(X)
-lw_prec_ = linalg.inv(lw_cov_)
-
 LP=SparseInvCov()
 ids=LP.addVariablesArray(shape=emp_cov.shape, lowerbounds=None, upperbounds=None)
 lamb=0.15
@@ -124,23 +67,27 @@ LP.addAbsPenalization(ids,1)
 x=LP.solve(method='ADMM')[0]
 x=LP.solve(method='ChambollePockPPD')[0]
 lp_prec_=x[ids]
+lp_prec_=0.5*(lp_prec_+lp_prec_.T)
 plt.figure()
-vmax = .9 * prec_.max()
+vmax = .9 * prec.max()
 lp_prec_=lp_prec_*(np.abs(lp_prec_)>1e-8)
 this_prec=lp_prec_
-plt.imshow(np.ma.masked_equal(this_prec, 0), interpolation='nearest',cmap=plt.cm.RdBu_r,vmin=-vmax, vmax=vmax)
-plt.show()
+lp_cov_=np.linalg.inv(lp_prec_)
+
+
+
+
 ##############################################################################
 # Plot the results
 plt.figure(figsize=(10, 6))
 plt.subplots_adjust(left=0.02, right=0.98)
 
 # plot the covariances
-covs = [('Empirical', emp_cov), ('Ledoit-Wolf', lw_cov_),
-        ('GraphLasso', cov_), ('True', cov)]
-vmax = cov_.max()
+covs = [('Empirical', emp_cov), ('LP', lp_cov_),
+        ('True', cov)]
+vmax = cov.max()
 for i, (name, this_cov) in enumerate(covs):
-    plt.subplot(2, 4, i + 1)
+    plt.subplot(2, 3, i + 1)
     plt.imshow(this_cov, interpolation='nearest', vmin=-vmax, vmax=vmax,
                cmap=plt.cm.RdBu_r)
     plt.xticks(())
@@ -149,11 +96,11 @@ for i, (name, this_cov) in enumerate(covs):
 
 
 # plot the precisions
-precs = [('Empirical', linalg.inv(emp_cov)), ('Ledoit-Wolf', lw_prec_),
-         ('GraphLasso', prec_), ('True', prec)]
-vmax = .9 * prec_.max()
+precs = [('Empirical', linalg.inv(emp_cov)), ('LP', lp_prec_),
+          ('True', prec)]
+vmax = .9 * prec.max()
 for i, (name, this_prec) in enumerate(precs):
-    ax = plt.subplot(2, 4, i + 5)
+    ax = plt.subplot(2, 3, i + 4)
     plt.imshow(np.ma.masked_equal(this_prec, 0),
                interpolation='nearest', vmin=-vmax, vmax=vmax,
                cmap=plt.cm.RdBu_r)
@@ -161,14 +108,8 @@ for i, (name, this_prec) in enumerate(precs):
     plt.yticks(())
     plt.title('%s precision' % name)
     ax.set_axis_bgcolor('.7')
+    
+plt.tight_layout()
 
-# plot the model selection metric
-plt.figure(figsize=(4, 3))
-plt.axes([.2, .15, .75, .7])
-plt.plot(model.cv_alphas_, np.mean(model.grid_scores, axis=1), 'o-')
-plt.axvline(model.alpha_, color='.5')
-plt.title('Model selection')
-plt.ylabel('Cross-validation score')
-plt.xlabel('alpha')
 
 plt.show()

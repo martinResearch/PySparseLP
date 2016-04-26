@@ -141,6 +141,8 @@ def LP_admm(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_eq=2,gamma_ineq=
 		if i%10==0:
 			prev_elapsed=elapsed
 			elapsed= (time.clock() - start)	
+			if elapsed>max_time:
+				break			
 			energy1=L(x, xp,lambda_eq,lambda_ineq)
 			energy2=energy1
 			r=Aeq*x-beq
@@ -291,6 +293,8 @@ def LP_admm2(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_ineq=0.7,nb_ite
 		if i%10==0:
 			prev_elapsed=elapsed
 			elapsed= (time.clock() - start)	
+			if elapsed>max_time:
+				break
 			energy1=L(x, xp,lambda_ineq)
 			energy2=energy1
 			

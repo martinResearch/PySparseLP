@@ -42,6 +42,14 @@ This poblem can be rewritten as a linear progamme by adding an auxilay variable 
  
 This problem can be more efficiently solved using graph-cuts but it is still interesting to compare the different generic LP solvers on this problem. 
 
+
+	import pysparselp.example1
+
+segmentation with the same random data term with the optimizations limited to 15 seconds for each method
+![curves](./images/potts_results.png)
+convergence curves
+![curves](./images/potts_curves.png)
+
 Instead of using a simple Potts model we could try to solve the LP from [5]
 
 ## Sparse inverse convariance matrix 
@@ -57,7 +65,13 @@ the problem rewrites
 
 ![latex: \large $ min_{b,c} \sum_i c_i ~s.t.~ -b\leq c,~b\leq c,~-\lambda\leq M b-f(I_d)\leq \lambda$](./images/lp_sparse_inv_covariance.svg)
 
-we can use this scikit-learn example [here](http://scikit-learn.org/stable/auto_examples/covariance/plot_sparse_cov.html) to generate the data 
+we take inspiration from this scikit-learn example [here](http://scikit-learn.org/stable/auto_examples/covariance/plot_sparse_cov.html) to generate 
+samples   of a gaussian with a sparse inverse covariance (precision) matrix. From the sample we comute the empirical covariance and the we estimate a sparse inverse covariance (precision) matrix from sample using the LP formulation above.
+
+	import pysparselp.example2
+
+
+![curves](./images/sparse_precision_matrix.png)
 
 ## Other problems
 test data can be obtained from  [netlib.org](http://www.netlib.org/lp/data/)

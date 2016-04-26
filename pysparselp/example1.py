@@ -100,8 +100,8 @@ if __name__ == "__main__":
 	LP2.save_Ian_E_H_Yen('data')
 	import os
 	start=time.clock()
-	os.system('../LPsparse/LPsparse  -c -t 1e-4 data/')
-	#os.system('../LPsparse/LPsparse  -c -d -t 1e-4 data/')
+	os.system('../thirdparties/LPsparse/LPsparse  -c -t 1e-4 data/')
+	#os.system('../thirdparties/LPsparse/LPsparse  -c -d -t 1e-4 data/')
 	print time.clock()-start
 	tmp=np.loadtxt('sol')
 	sol1=np.zeros(LP.nb_variables)
@@ -128,8 +128,9 @@ if __name__ == "__main__":
 	methods=["DualCoordinateAscent","DualGradientAscent","ChambollePockPPD",'ChambollePockPPDAS',"ADMM","ADMM2","ADMMBlocks"]
 	
 	fig=plt.figure()
-	ax=fig.add_subplot(1,len(methods)+1,1,title='graph cut')
+	ax=fig.add_subplot(2,4,1,title='graph cut')
 	ax.imshow(groundTruth[:,:,0],cmap=plt.cm.Greys_r,interpolation='none')
+	ax.axis('off')
 	
 	# simplex much too slow for images larger than 20 by 20
 	#LP2=copy.deepcopy(LP)
@@ -139,16 +140,17 @@ if __name__ == "__main__":
 	
 	for i,method in enumerate(methods):
 		#method=
-		sol1,elapsed=LP.solve(method=method,force_integer=False,getTiming=True,nb_iter=10000,max_time=20,groundTruth=groundTruth,groundTruthIndices=indices,plotSolution=None)
+		sol1,elapsed=LP.solve(method=method,force_integer=False,getTiming=True,nb_iter=1000000,max_time=15,groundTruth=groundTruth,groundTruthIndices=indices,plotSolution=None)
 		ax_curves1.semilogy(LP.itrn_curve,LP.distanceToGroundTruth,label=method)		
 		ax_curves2.semilogy(LP.dopttime_curve,LP.distanceToGroundTruth,label=method)
 		ax_curves1.legend()
 		ax_curves2.legend()
-		ax=fig.add_subplot(1,len(methods)+1,i+2,title=method)
+		ax=fig.add_subplot(2,4,i+2,title=method)
 		ax.imshow(sol1[indices][:,:,0],cmap=plt.cm.Greys_r,interpolation='none')
-		
+		ax.axis('off')
 		plt.draw()
-		plt.show()	
+		plt.show()
+	plt.tight_layout()
 	#plt.figure()
 	#plt.plot(LP.itrn_curve,LP.dopttime_curve,'g',label='ADMM')
 	#plt.draw()

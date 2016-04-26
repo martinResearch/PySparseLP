@@ -66,7 +66,7 @@ the problem rewrites
 ![latex: \large $ min_{b,c} \sum_i c_i ~s.t.~ -b\leq c,~b\leq c,~-\lambda\leq M b-f(I_d)\leq \lambda$](./images/lp_sparse_inv_covariance.svg)
 
 we take inspiration from this scikit-learn example [here](http://scikit-learn.org/stable/auto_examples/covariance/plot_sparse_cov.html) to generate 
-samples   of a gaussian with a sparse inverse covariance (precision) matrix. From the sample we comute the empirical covariance and the we estimate a sparse inverse covariance (precision) matrix from sample using the LP formulation above.
+samples of a gaussian with a sparse inverse covariance (precision) matrix. From the sample we compute the empirical covariance A and the we estimate a sparse inverse covariance (precision) matrix B from that empirical covariance using the LP formulation above.
 
 	import pysparselp.example2
 

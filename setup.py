@@ -8,7 +8,7 @@ from Cython.Build import cythonize
 
 import numpy as np
 
-my_modules=cythonize('code/*.pyx',annotate=True)
+my_modules=cythonize('pysparselp/*.pyx',annotate=True)
 
 libname="pysparselp"
 setup(

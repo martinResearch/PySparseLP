@@ -10,11 +10,11 @@ import numpy as np
 
 my_modules=cythonize('code/*.pyx',annotate=True)
 
-libname="pyspraselp"
+libname="pysparselp"
 setup(
 name = libname,
 version="0.1",
-packages=         ['pyspraselp'],
+packages=         ['pysparselp'],
 ext_modules = my_modules,  # additional source file(s)),
 include_dirs=[ np.get_include()],
 )

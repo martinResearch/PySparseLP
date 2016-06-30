@@ -90,6 +90,10 @@ def DualCoordinateAscent(x,LP,nbmaxiter=20,callbackFunc=None,y_eq=None,y_ineq=No
 	for iter in range(nbmaxiter):
 		y_ineq_prev=y_ineq.copy()
 		for i in range(y_eq.size):
+			if i%100==0:
+				elapsed= (time.clock() - start)	
+				if (not max_time is None) and elapsed>max_time:
+					break					
 		
 			#i=32
 			#print eval(y)
@@ -110,6 +114,10 @@ def DualCoordinateAscent(x,LP,nbmaxiter=20,callbackFunc=None,y_eq=None,y_ineq=No
 			alpha_optim=exactCoordinateLineSearch(Ai,LP2.Bequalities[i],c_bar)
 			y_eq[i]+=alpha_optim
 		for i in range(y_ineq.size):
+			if i%100==0:
+				elapsed= (time.clock() - start)	
+				if (not max_time is None) and elapsed>max_time:
+					break			
 			if False:
 				y2=y_ineq.copy()
 				vals=[]

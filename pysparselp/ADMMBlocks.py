@@ -1,3 +1,31 @@
+# -*- coding: utf-8 -*-
+
+# -----------------------------------------------------------------------
+#Copyright © 2016 Martin de la Gorce <martin[dot]delagorce[hat]gmail[dot]com>
+
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+# IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+# -----------------------------------------------------------------------
+
+
+
+
 import copy
 import numpy as np
 import time
@@ -7,7 +35,7 @@ from tools import preconditionConstraints,convertToStandardFormWithBounds,chrono
 import  scikits.sparse.cholmod
 
 def LP_admmBlockDecomposition(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_ineq=0.7,nb_iter=100,callbackFunc=None,max_time=None,use_preconditionning=True,useLU=True,nb_iter_plot=10):
-	# simple ADMM method with an approximate resolutio of a quadratic subproblem using conjugate gradient
+	# simple ADMM method with an approximate resolution of a quadratic subproblem using conjugate gradient
 	# inspiredy by Boyd's paper on ADMM
 	# Distributed Optimization and Statistical Learning via the Alternating Direction Method of Multipliers
 	# the difference with LP_admm is that the linear quality constrainrs Aeq*beq are enforced during the resolution 

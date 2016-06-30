@@ -4,7 +4,7 @@ def projsplx(y):
     """ project a set of  n-dim vectors y to the simplex Dn
      Dn = { x : x n-dim, 1 >= x >= 0, sum(x) = 1}
      
-     adapted from code by to to make it vectorialized 
+     adapted from code by Xiaojing Ye to to make it vectorialized 
      which help to get a faster code in interpreted languages
     
      (c) Xiaojing Ye

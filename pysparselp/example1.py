@@ -53,11 +53,13 @@ if __name__ == "__main__":
 	
 	nLabels = 1  
 	np.random.seed(1)
-	size_image=(50,50,nLabels)   
+	imageSize=50
+	coefPotts=0.5
+	size_image=(imageSize,imageSize,nLabels)   
 	nb_pixels=size_image[0]*size_image[1]
 	coefMul=500# we multiply all term by theis constant because the graph cut algorithm take integer weights.
 	unary_terms=np.round(coefMul*((np.random.rand(size_image[0],size_image[1],size_image[2]))*2-1))
-	coefPotts=round(0.5*coefMul)
+	coefPotts=round(coefPotts*coefMul)
 
 
 
@@ -146,7 +148,7 @@ if __name__ == "__main__":
 		ax_curves1.legend()
 		ax_curves2.legend()
 		ax=fig.add_subplot(2,4,i+2,title=method)
-		ax.imshow(sol1[indices][:,:,0],cmap=plt.cm.Greys_r,interpolation='none')
+		ax.imshow(sol1[indices][:,:,0],cmap=plt.cm.Greys_r,interpolation='none',vmin=0,vmax=1)
 		ax.axis('off')
 		plt.draw()
 		plt.show()

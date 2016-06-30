@@ -64,8 +64,8 @@ from scipy import sparse
 C=sparse.kron(sparse.csr_matrix(emp_cov), sparse.eye(n_features))
 LP.addConstraintsSparse(C,np.eye(emp_cov.shape[0]).flatten()-lamb,np.eye(emp_cov.shape[0]).flatten()+lamb)
 LP.addAbsPenalization(ids,1)
-x=LP.solve(method='ADMM')[0]
-x=LP.solve(method='ChambollePockPPD')[0]
+x=LP.solve(method='ADMM2',nb_iter=60000,max_time=20)[0]
+#x=LP.solve(method='ChambollePockPPD')[0]
 lp_prec_=x[ids]
 lp_prec_=0.5*(lp_prec_+lp_prec_.T)
 plt.figure()

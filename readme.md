@@ -74,6 +74,23 @@ samples of a gaussian with a sparse inverse covariance (precision) matrix. From 
 
 ![curves](./images/sparse_precision_matrix.png)
 
+## L1 regularised multi-class SVM
+
+Given n examples of vector-class pairs (x_i,y_i), with x_i a vector of size m and y_i an integer representing the class, we aim at estimating a matrix W of size k by m that allows to disciminate the right class, with k th enumber of classes. We assume that the last component of x_i is a one in order to represent the offset constants in W.
+
+![latex:\large $W^*=argmin_W min_{\epsilon}\|W\|_1+\sum_{i=1}^n \epsilon_i\\ s.t.~ W[y_i,:]x_i-W[k,:]x_i>1-\epsilon_i \forall\{(i,k)|k\neq y_i\}$](./images/l1svm.svg)
+
+by adding auxialiary variables in a matrix S of the same size as the matrix W we can rewrite the absolute value as follow:
+![latex:\large $\|W\|_1=min_S \sum_{ij}S_{ij} \\ s.t.~ W_{ij}<S_{ij}, -W_{ij}<S_{ij} \forall(ij)$](./images/abstolp.svg)
+
+![latex:\large $W^*=argmin_{W} min_{\epsilon,S}  \sum_{ij}S_{ij} +\sum_{i=1}^n \epsilon_i\\s.t.~ W[y_i,:]x_i-W[k,:]>1-\epsilon_i \forall\{(i,k)|k\neq y_i\},W_{ij}<S_{ij}, -W_{ij}<S_{ij} \forall(ij)$](./images/l1svmLP.svg)
+
+
+	import pysparselp.example3
+
+![classification result with support points](./images/l1svmClassification.svg)
+
+
 ## Other problems
 test data can be obtained from  [netlib.org](http://www.netlib.org/lp/data/)
 

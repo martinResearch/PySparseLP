@@ -17,9 +17,10 @@ The differents algorithms that are implemented are documented in the [pdf](./lat
 
 This project also provides: 
 
-* a python class that  make is easier to building LP programs from python, 
-* methods to convert between the different common forms of LP (slack form , standard form etc), 
-* methods to export to standard file formats (MPS)
+* a python class *SparseLP* (in SparseLP.py) that  makes it easier to build linear programs programs from python 
+* methods to convert between the different common forms of linear programs (slack form , standard form etc), 
+* methods to export the linear program to standard file formats (MPS)
+* a simple constraint propagation method with back-tracking to find feasible integer values solutions (for integer programs)
 
 # Installation
 
@@ -90,7 +91,9 @@ but we need to write
 	* L1 SVM (see [1])
 	* examples from the paper using LP for image processing ? 
 
-* document the active-set *hack* for the chambole pock method.
+* document the active-set *hack* for the chambole pock method (in ChambollePockPPDAS?py).
+
+* finish coding the method by Conda (CondatPrimalDual.py)
 
 * create a cython binding for LPsparse [1] using scipy.sparse matrices for the interface and adding the possibility to compute the convergence curve by providing the problem known solution to the solver.
 

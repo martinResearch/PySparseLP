@@ -90,7 +90,6 @@ class SparseLP():
 		self.Bequalities=np.empty((0),dtype=np.float)   
 		self.Aequalities.__dict__['blocks']=[]
 		self.solver='chambolle_pock'
-		self.simplex=None
 		self.equalityConstraintNames=[]
 		self.inequalityConstraintNames=[]
 		
@@ -387,11 +386,7 @@ class SparseLP():
 		self.addLinearConstraintRows(cols2, vals2,lowerbounds=lowerbounds,upperbounds=upperbounds)
 
 			
-	def addSimplex(self,indices):
-		if not self.simplex is None:
-			print "can define a simplex only once"
-			raise
-		self.simplex=indices
+
 		
 	def convertToSlackForm(self):
 		if not self.Ainequalities is None:			
@@ -556,8 +551,7 @@ class SparseLP():
 			                   	x0=x0,alpha=1,theta=1,nb_iter=nb_iter,callbackFunc=callbackFunc,max_time=max_time,save_problem=False)
 
 		elif method=="ChambollePockPPDAS"	:	
-			x=ChambollePockPPDAS(self,\
-			      simplex=self.simplex,
+			x=ChambollePockPPDAS(self,\			      
 		              x0=x0,alpha=1,theta=1,nb_iter=nb_iter,\
 			      nb_iter_plot=nb_iter_plot,\
 			      frequency_update_active_set=20,

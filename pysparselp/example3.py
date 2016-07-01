@@ -80,11 +80,7 @@ class L1SVM(SparseLP):
 		return classes
 		
 
-
-
-
-
-if __name__ == "__main__":
+def run():
 	plt.ion()
 	
 
@@ -122,7 +118,14 @@ if __name__ == "__main__":
 	plt.plot(x[l1svm.activeSet,0],x[l1svm.activeSet,1],'ko',markersize=10,fillstyle='none' )
 	plt.axis('equal')
 	plt.axis('off')
-	print 'done'
+
+	print 'done'	
+
+
+
+if __name__ == "__main__":
+	run()
+
 
 		
 	

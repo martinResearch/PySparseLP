@@ -44,7 +44,8 @@ This poblem can be rewritten as a linear progamme by adding an auxilay variable 
 This problem can be more efficiently solved using graph-cuts but it is still interesting to compare the different generic LP solvers on this problem. 
 
 
-	import pysparselp.example1
+	from pysparselp.example1 import run
+	run()
 
 segmentation with the same random data term with the optimizations limited to 15 seconds for each method
 ![curves](./images/potts_results.png)
@@ -69,8 +70,8 @@ the problem rewrites
 we take inspiration from this scikit-learn example [here](http://scikit-learn.org/stable/auto_examples/covariance/plot_sparse_cov.html) to generate 
 samples of a gaussian with a sparse inverse covariance (precision) matrix. From the sample we compute the empirical covariance A and the we estimate a sparse inverse covariance (precision) matrix B from that empirical covariance using the LP formulation above.
 
-	import pysparselp.example2
-
+	from pysparselp.example2 import run
+	run()
 
 ![curves](./images/sparse_precision_matrix.png)
 
@@ -90,7 +91,8 @@ we obtain the LP formulation:
 
 you can run the example using the following line in python
 
-	import pysparselp.example3
+	from pysparselp.example3 import run
+	run()
 
 
 the suport vecgors are represented by black circles.

@@ -45,8 +45,7 @@ class ImageLP(SparseLP):
 
 
 
-
-if __name__ == "__main__":
+def run():
 	plt.ion()
 	
 	
@@ -157,5 +156,9 @@ if __name__ == "__main__":
 	#plt.draw()
 	#plt.show()	
 	print done
+	
+if __name__ == "__main__":
+	run()
+
 	
 	

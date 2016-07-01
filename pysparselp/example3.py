@@ -48,7 +48,7 @@ class L1SVM(SparseLP):
 		
 		self.weightsIndices=self.addVariablesArray((nbClasses,nbFeatures+1),None,None)
 		self.addAbsPenalization(self.weightsIndices,1)
-		epsilonsIndices=self.addVariablesArray((nbExamples,1),upperbounds=None,lowerbounds=0,costs=1)
+		self.epsilonsIndices=self.addVariablesArray((nbExamples,1),upperbounds=None,lowerbounds=0,costs=1)
 		e=np.ones((nbExamples,nbClasses))
 		e[np.arange(nbExamples),classes]=0
 		
@@ -60,15 +60,17 @@ class L1SVM(SparseLP):
 			keep=classes!=k
 			cols2 = np.tile(self.weightsIndices[[k],:],[nbExamples,1])
 			vals2 = -xh		
-			vals3 = np.ones(epsilonsIndices.shape)
-			cols3 = epsilonsIndices
+			vals3 = np.ones(self.epsilonsIndices.shape)
+			cols3 = self.epsilonsIndices
 			vals  = np.column_stack((vals1,vals2,vals3))
 			cols  = np.column_stack((cols1,cols2,cols3))
 			self.addLinearConstraintRows(cols[keep,:],vals[keep,:],lowerbounds=e[keep,k],upperbounds=None)	
 		
 	def train(self,method='ADMM'):
-		sol1,elapsed=self.solve(method=method,force_integer=False,getTiming=True,nb_iter=1000000,max_time=30,plotSolution=None)
+		sol1,elapsed=self.solve(method=method,force_integer=False,getTiming=True,nb_iter=1000000,max_time=5,plotSolution=None)
 		self.weights=sol1[self.weightsIndices]
+		marges=sol1[self.epsilonsIndices]
+		self.activeSet=np.nonzero(marges>1e-6)[0]
 	
 	def classify(self,x):
 		nbExamples=x.shape[0]
@@ -117,7 +119,10 @@ if __name__ == "__main__":
 	plt.ion()
 	for k in range(3):
 		plt.plot(x[classes2==k,0],x[classes2==k,1],'.',color=colors[k])
+	plt.plot(x[l1svm.activeSet,0],x[l1svm.activeSet,1],'ko')
 	print 'done'
+	
+	
 	
 		
 	

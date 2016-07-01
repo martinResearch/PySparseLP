@@ -37,6 +37,9 @@ from ADMMBlocks import *
 from DualGradientAscent import *
 from DualCoordinateAscent import *
 
+
+solving_methods=["DualCoordinateAscent","DualGradientAscent","ChambollePockPPD",'ChambollePockPPDAS',"ADMM","ADMM2","ADMMBlocks"]
+
 def csr_matrix_append_row(A,n,cols,vals):
 	A._shape=(A.shape[0]+1,n) 
 	A.indices=np.append(A.indices,cols.astype(A.indices.dtype))
@@ -509,7 +512,12 @@ class SparseLP():
 				plotSolution(niter,solution,is_active_variable=is_active_variable)
 				
 		
-				
+		if not method in solving_methods:
+			print 'method %s not valid'%method
+			print 'avalaible method are'
+			for vmethod in solving_methods:
+				print vmethod
+			raise
 		if method=='ScipyLinProg':
 			if not (self.B_lower is None):
 				print 'you need to convert your lp to a one side inequality system using convertToOnesideInequalitySystem'
@@ -551,11 +559,11 @@ class SparseLP():
 			                   	x0=x0,alpha=1,theta=1,nb_iter=nb_iter,callbackFunc=callbackFunc,max_time=max_time,save_problem=False)
 
 		elif method=="ChambollePockPPDAS"	:	
-			x=ChambollePockPPDAS(self,\			      
-		              x0=x0,alpha=1,theta=1,nb_iter=nb_iter,\
-			      nb_iter_plot=nb_iter_plot,\
-			      frequency_update_active_set=20,
-		              callbackFunc=callbackFunc,max_time=max_time)
+			x=ChambollePockPPDAS(self,\
+			                     x0=x0,alpha=1,theta=1,nb_iter=nb_iter,\
+			                     nb_iter_plot=nb_iter_plot,\
+			                     frequency_update_active_set=20,
+			                     callbackFunc=callbackFunc,max_time=max_time)
 			
 		elif method=="DualGradientAscent":
 			x, y_eq,y_ineq=DualGradientAscent(x=x0,LP=self,nbmaxiter=nb_iter,callbackFunc=callbackFunc,y_eq=None,y_ineq=None,max_time=max_time)

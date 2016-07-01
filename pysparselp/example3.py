@@ -118,7 +118,8 @@ def run():
 	plt.plot(x[l1svm.activeSet,0],x[l1svm.activeSet,1],'ko',markersize=10,fillstyle='none' )
 	plt.axis('equal')
 	plt.axis('off')
-
+	plt.ioff()
+	plt.show()
 	print 'done'	
 
 

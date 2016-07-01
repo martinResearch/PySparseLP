@@ -12,6 +12,8 @@ import scipy.signal
 import sys
 from scipy.misc import imsave
 import  maxflow #pip install PyMaxflow 
+import os
+
 
 class ImageLP(SparseLP):
 
@@ -46,6 +48,7 @@ class ImageLP(SparseLP):
 
 
 def run():
+	thisfilepath=os.path.dirname(os.path.abspath(__file__))
 	plt.ion()
 	
 	
@@ -97,13 +100,13 @@ def run():
 	
 	LP2=copy.deepcopy(LP)
 	LP2.convertToOnesideInequalitySystem()
-	LP2.save_Ian_E_H_Yen('data')
-	import os
+	LP2.save_Ian_E_H_Yen(os.path.join(thisfilepath,'data'))
+	
 	start=time.clock()
-	os.system('../thirdparties/LPsparse/LPsparse  -c -t 1e-4 data/')
+	os.system('%s  -c -t 1e-4 data/'% os.path.join(thisfilepath,'../thirdparties/LPsparse/LPsparse'))
 	#os.system('../thirdparties/LPsparse/LPsparse  -c -d -t 1e-4 data/')
 	print time.clock()-start
-	tmp=np.loadtxt('sol')
+	tmp=np.loadtxt(os.path.join(thisfilepath,'sol'))
 	sol1=np.zeros(LP.nb_variables)
 	sol1[tmp[:,0].astype(np.int)-1]=tmp[:,1]
 	plt.imshow(sol1[indices][:,:,0],cmap=plt.cm.Greys_r,interpolation='none')
@@ -155,7 +158,7 @@ def run():
 	#plt.plot(LP.itrn_curve,LP.dopttime_curve,'g',label='ADMM')
 	#plt.draw()
 	#plt.show()	
-	print done
+	print 'done'
 	
 if __name__ == "__main__":
 	run()

@@ -120,6 +120,8 @@ if __name__ == "__main__":
 	for k in range(3):
 		plt.plot(x[classes2==k,0],x[classes2==k,1],'.',color=colors[k])
 	plt.plot(x[l1svm.activeSet,0],x[l1svm.activeSet,1],'ko',markersize=10,fillstyle='none' )
+	plt.axis('equal')
+	plt.axis('off')
 	print 'done'
 
 		

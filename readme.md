@@ -88,7 +88,12 @@ we obtain the LP formulation:
 ![latex:\large $W^*=argmin_{W} min_{\epsilon,S}  \sum_{ij}S_{ij} +\sum_{i=1}^n \epsilon_i\\s.t.~W_{y_i}x_i-W_kx_i>1-\epsilon_i \forall\{(i,k)|k\neq y_i\},W_{ij}<S_{ij}, -W_{ij}<S_{ij} \forall(ij)$](./images/l1svmLP.svg)
 
 
+you can run the example using the following line in python
+
 	import pysparselp.example3
+
+
+the suport vecgors are represented by black circles.
 
 ![classification result with support points](./images/l1svmClassification.svg)
 
@@ -106,9 +111,8 @@ but we need to write
 #TODO
 
 * add more examples 
-	* sparse inverse covariance matrix (see [1])
-	* L1 SVM (see [1])
-	* examples from the paper using LP for image processing ? 
+	* improve the  L1 SVM example by adding random feature, in order to perform feature selection 
+	* add more examples for image processing, for example from [5]. 
 
 * document the active-set *hack* for the chambole pock method (in ChambollePockPPDAS?py).
 

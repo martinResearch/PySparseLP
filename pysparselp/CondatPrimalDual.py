@@ -25,7 +25,7 @@
 
 	
 
-def LP_primalDualCondat(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,simplex=None,\
+def LP_primalDualCondat(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,\
                         x0=None,alpha=1,theta=1,nb_iter=100,callbackFunc=None,\
                         max_time=None,save_problem=False,useStandardForm=False):
 	# minimizes c.T*x 
@@ -69,8 +69,7 @@ def LP_primalDualCondat(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,simplex=None,\
 
 		d=c+y_eq*AeqCSR+y_ineq*AineqCSR
 		xtilde=x-tau*d		
-		if not simplex is None:
-			x.flat[simplex]=projsplx(xtilde[simplex])
+
 		np.maximum(xtilde,lb,xtilde)
 		np.minimum(xtilde,ub,xtilde)
 		z=2*xtilde-x

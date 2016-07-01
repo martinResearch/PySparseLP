@@ -32,7 +32,7 @@ import scipy.sparse
 import scipy.ndimage
 
 #@profile
-def ChambollePockPPDAS(LP,simplex=None,x0=None,\
+def ChambollePockPPDAS(LP,x0=None,\
                   alpha=1,theta=1,nb_iter=100,callbackFunc=None,max_time=None,\
                   nb_iter_plot=300,save_problem=False,
                   frequency_update_active_set=20
@@ -351,9 +351,6 @@ def ChambollePockPPDAS(LP,simplex=None,x0=None,\
 		#np.maximum(x2,lb,x2)
 		#np.minimum(x2,ub,x2)
 
-		if not simplex is None:
-			
-			new_active_x.flat[simplex]=projsplx(new_active_x[simplex])
 		np.maximum(new_active_x,lb_active,new_active_x)
 		np.minimum(new_active_x,ub_active,new_active_x)
 		

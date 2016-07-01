@@ -2,8 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import copy
-from SparseLP import SparseLP
-from SparseLP import SparseLP
+from SparseLP import SparseLP,solving_methods
 import numpy as np
 import matplotlib.pyplot as plt
 import time
@@ -127,7 +126,7 @@ if __name__ == "__main__":
 		plt.draw()
 		plt.show()
 		
-	methods=["DualCoordinateAscent","DualGradientAscent","ChambollePockPPD",'ChambollePockPPDAS',"ADMM","ADMM2","ADMMBlocks"]
+	
 	
 	fig=plt.figure()
 	ax=fig.add_subplot(2,4,1,title='graph cut')
@@ -140,7 +139,7 @@ if __name__ == "__main__":
 	#sol1,elapsed=LP2.solve(method='ScipyLinProg',force_integer=False,getTiming=True,nb_iter=10000,max_time=10,groundTruth=groundTruth,groundTruthIndices=indices,plotSolution=None)
 	
 	
-	for i,method in enumerate(methods):
+	for i,method in enumerate(solving_methods):
 		#method=
 		sol1,elapsed=LP.solve(method=method,force_integer=False,getTiming=True,nb_iter=1000000,max_time=15,groundTruth=groundTruth,groundTruthIndices=indices,plotSolution=None)
 		ax_curves1.semilogy(LP.itrn_curve,LP.distanceToGroundTruth,label=method)		

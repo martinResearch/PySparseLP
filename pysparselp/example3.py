@@ -66,11 +66,11 @@ class L1SVM(SparseLP):
 			cols  = np.column_stack((cols1,cols2,cols3))
 			self.addLinearConstraintRows(cols[keep,:],vals[keep,:],lowerbounds=e[keep,k],upperbounds=None)	
 		
-	def train(self,method='ADMM'):
+	def train(self,method='ADMM2'):
 		sol1,elapsed=self.solve(method=method,force_integer=False,getTiming=True,nb_iter=1000000,max_time=5,plotSolution=None)
 		self.weights=sol1[self.weightsIndices]
 		marges=sol1[self.epsilonsIndices]
-		self.activeSet=np.nonzero(marges>1e-6)[0]
+		self.activeSet=np.nonzero(marges>1e-3)[0]
 	
 	def classify(self,x):
 		nbExamples=x.shape[0]

@@ -116,6 +116,7 @@ but we would need to write
 * add more examples 
 	* improve the  L1 SVM example by adding random feature, in order to perform feature selection  
 	* add more examples for image processing, for example from [5]. 
+	* add classical LP examples (maximum bipatite matching, minimum vertex cover, see https://www.cs.cmu.edu/~ckingsf/bioinfo-lectures/linearp.pdf)
 
 
 * document the active-set *hack* for the chambole pock method (in ChambollePockPPDAS.py).

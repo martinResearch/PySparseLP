@@ -104,6 +104,7 @@ the suport vectors are represented by black circles.
 
 we could get LP exqmples from  [netlib.org](http://www.netlib.org/lp/data/)
 but we woul need to write
+
 * a cython wrapper for the code that decompress emps files to mps (http://www.netlib.org/lp/data/emps.c)
 * a code to read MPS file in python
 
@@ -114,6 +115,7 @@ but we woul need to write
 * add more examples 
 	* improve the  L1 SVM example by adding random feature, in order to perform feature selection  
 	* add more examples for image processing, for example from [5]. 
+
 
 * document the active-set *hack* for the chambole pock method (in ChambollePockPPDAS.py).
 

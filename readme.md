@@ -137,7 +137,7 @@ but we woul need to write
 [3]  Stephen Boyd *Distributed Optimization and Statistical Learning via the Alternating Direction Method of Multipliers*  Foundations and Trends in Machine Learning 2010
 
 [4] Yu G Evtushenko, A I Golikov, and N Mollaverdy. *Augmented
-Lagrangian method for large-scale linear programming problems*  2005.
+Lagrangian method for large-scale linear programming problems*  Optimization Method and Software 2005.
 
-[5] *A linear framework for region-based image segmentation
-and inpainting involving curvature penalization*
+[5] T. Schoenemann, F. Kahl, S. Masnou and D. Cremers *A linear framework for region-based image segmentation
+and inpainting involving curvature penalization* IJCV 2012

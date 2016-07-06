@@ -17,5 +17,6 @@ version="0.1",
 packages=         ['pysparselp'],
 ext_modules = my_modules,  # additional source file(s)),
 include_dirs=[ np.get_include()],
+install_requires=['numpy','scipy','scikits.sparse']
 )
 

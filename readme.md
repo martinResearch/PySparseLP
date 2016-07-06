@@ -1,18 +1,18 @@
 # Goal
 
-This projet provides several python codes to solve sparse linear programs of the form
+This project provides several python codes to solve sparse linear programs of the form
 
 ![latex:\large $\mathbf{x}^*=argmin_\mathbf{x} \mathbf{c}^t\mathbf{x} ~  s.t.~  A_e\mathbf{x}=\mathbf{b_e},A_i\mathbf{x}\leq\mathbf{ b_i}, \mathbf{l}\leq \mathbf{x}\leq \mathbf{u}$ ](https://rawgithub.com/martinResearch/PySparseLP/master/images/LPproblem.svg)
 
 
-The differents algorithms that are implemented are documented in the [pdf](./latex/SparseLinearProgramming.pdf): 
+The different algorithms that are implemented are documented in the [pdf](./latex/SparseLinearProgramming.pdf): 
 
 * a dual coordinate ascent method with exact line search 
 * a dual gradient ascent with exact line search
 * a first order primal-dual algorithm adapted from chambolle pock [2]
 * three methods based on the Alternating Direction Method of Multipliers [3]
 
-**Note** These methods are not meant to be efficient methods to solve generic linear programs. They are simple and quite naive methods i coded while exploring different possibilites to solve sparse linear programs.
+**Note** These methods are not meant to be efficient methods to solve generic linear programs. They are simple and quite naive methods i coded while exploring different possibilities to solve sparse linear programs.
 
 
 This project also provides: 
@@ -33,12 +33,12 @@ using pip
 # Examples
 
 ## Image segmentation
-we can use it to solve a binary image segmentation problem with Potts regularization.
+we can use it to solve a binary image segmentation problem with Potts regularisation.
 
 ![latex: \large $min_s c^ts + \sum_{(i,j)\in E}  |s_i-s_j| ~s.t. ~0 \leq s\leq 1$](https://rawgithub.com/martinResearch/PySparseLP/master/images/segmentation.svg)
 
-with E the list of indices of pairs of neighboring pixels and c a cost vector that is obtain from color distribution models of the two regions.
-This poblem can be rewritten as a linear progamme by adding an auxilay variable d_ij for each edge with the constraints
+with E the list of indices of pairs of neighbouring pixels and c a cost vector that is obtain from color distribution models of the two regions.
+This problem can be rewritten as a linear progam by adding an auxiliary variable d_ij for each edge with the constraints
 
 ![latex: \large $min_s c^ts + \sum_{(i,j)\in E}  d_{ij} ~s.t. ~0 \leq s\leq 1, ~d_{ij}\geq s_j-s_j, ~d_{ij}\geq s_i-s_i $](https://rawgithub.com/martinResearch/PySparseLP/master/images/segmentation_lp.svg)
  
@@ -48,7 +48,7 @@ This problem can be more efficiently solved using graph-cuts but it is still int
 	from pysparselp.example1 import run
 	run()
 
-segmentation with the same random data term with the optimizations limited to 15 seconds for each method
+segmentation with the same random data term with the optimisations limited to 15 seconds for each method
 ![curves](https://rawgithub.com/martinResearch/PySparseLP/master/images/potts_results.png)
 convergence curves
 ![curves](./images/potts_curves.png)
@@ -78,7 +78,7 @@ samples of a gaussian with a sparse inverse covariance (precision) matrix. From 
 
 ## L1 regularised multi-class SVM
 
-Given n examples of vector-class pairs (x_i,y_i), with x_i a vector of size m and y_i an integer representing the class, we aim at estimating a matrix W of size k by m that allows to disciminate the right class, with k th enumber of classes. We assume that the last component of x_i is a one in order to represent the offset constants in W. we denote W_k the kth line of the matrix W
+Given n examples of vector-class pairs (x_i,y_i), with x_i a vector of size m and y_i an integer representing the class, we aim at estimating a matrix W of size k by m that allows to discriminate the right class, with k the number of classes. We assume that the last component of x_i is a one in order to represent the offset constants in W. we denote W_k the kth line of the matrix W
 
 ![latex:\large $W^*=argmin_W min_{\epsilon}\|W\|_1+\sum_{i=1}^n \epsilon_i\\ s.t.~ W_{y_i}x_i-W_kx_i>1-\epsilon_i \forall\{(i,k)|k\neq y_i\}$](https://rawgithub.com/martinResearch/PySparseLP/master/images/l1svm.svg)
 
@@ -96,15 +96,15 @@ you can run the example using the following line in python
 	run()
 
 
-the suport vectors are represented by black circles.
+the support vectors are represented by black circles.
 
 ![classification result with support points](https://rawgithub.com/martinResearch/PySparseLP/master/images/l1svmClassification.svg)
 
 
 ## Other example problems
 
-we could get LP exqmples from  [netlib.org](http://www.netlib.org/lp/data/)
-but we woul need to write
+we could get LP examples from  [netlib.org](http://www.netlib.org/lp/data/)
+but we would need to write
 
 * a cython wrapper for the code that decompress emps files to mps (http://www.netlib.org/lp/data/emps.c)
 * a code to read MPS file in python

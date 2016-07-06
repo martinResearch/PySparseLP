@@ -67,6 +67,7 @@ class L1SVM(SparseLP):
 			self.addLinearConstraintRows(cols[keep,:],vals[keep,:],lowerbounds=e[keep,k],upperbounds=None)	
 		
 	def train(self,method='ADMM2'):
+		
 		sol1,elapsed=self.solve(method=method,force_integer=False,getTiming=True,nb_iter=1000000,max_time=5,plotSolution=None)
 		self.weights=sol1[self.weightsIndices]
 		marges=sol1[self.epsilonsIndices]

@@ -38,7 +38,7 @@ from DualGradientAscent import *
 from DualCoordinateAscent import *
 
 
-solving_methods=["DualCoordinateAscent","DualGradientAscent","ChambollePockPPD",'ChambollePockPPDAS',"ADMM","ADMM2","ADMMBlocks"]
+solving_methods=["ScipyLinProg","DualCoordinateAscent","DualGradientAscent","ChambollePockPPD",'ChambollePockPPDAS',"ADMM","ADMM2","ADMMBlocks"]
 
 def csr_matrix_append_row(A,n,cols,vals):
 	A._shape=(A.shape[0]+1,n) 

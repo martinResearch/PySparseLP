@@ -100,25 +100,22 @@ the suport vectors are represented by black circles.
 ![classification result with support points](./images/l1svmClassification.svg)
 
 
-## Other problems
-test data can be obtained from  [netlib.org](http://www.netlib.org/lp/data/)
+## Other example problems
 
-but we need to write
-
+we could get LP exqmples from  [netlib.org](http://www.netlib.org/lp/data/)
+but we woul need to write
 * a cython wrapper for the code that decompress emps files to mps (http://www.netlib.org/lp/data/emps.c)
 * a code to read MPS file in python
 
 
-
 #TODO
 
-* add prerequested library in the setup.py ? numpy,scipy, scikits.sparse.cholmod
 
 * add more examples 
 	* improve the  L1 SVM example by adding random feature, in order to perform feature selection  
 	* add more examples for image processing, for example from [5]. 
 
-* document the active-set *hack* for the chambole pock method (in ChambollePockPPDAS?py).
+* document the active-set *hack* for the chambole pock method (in ChambollePockPPDAS.py).
 
 * finish coding the method by Conda (CondatPrimalDual.py)
 

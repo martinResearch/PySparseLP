@@ -125,6 +125,8 @@ but we woul need to write
 
 * implement method [4]
 
+* add simplex methods written in python, could get code from here https://bitbucket.org/jbolinge/lp
+
 # References
 
 [1] Ian En-Hsu Yen,  Kai Zhong,  Cho-Jui Hsieh, Pradeep K Ravikumar, Inderjit S Dhillon *Sparse Linear Programming via Primal and Dual Augmented Coordinate Descent*, NIPS 2015

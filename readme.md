@@ -95,7 +95,7 @@ you can run the example using the following line in python
 	run()
 
 
-the suport vecgors are represented by black circles.
+the suport vectors are represented by black circles.
 
 ![classification result with support points](./images/l1svmClassification.svg)
 
@@ -112,8 +112,10 @@ but we need to write
 
 #TODO
 
+* add prerequested library in the setup.py ? numpy,scipy, scikits.sparse.cholmod
+
 * add more examples 
-	* improve the  L1 SVM example by adding random feature, in order to perform feature selection 
+	* improve the  L1 SVM example by adding random feature, in order to perform feature selection  
 	* add more examples for image processing, for example from [5]. 
 
 * document the active-set *hack* for the chambole pock method (in ChambollePockPPDAS?py).

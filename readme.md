@@ -128,6 +128,8 @@ but we would need to write
 * implement method [4]
 
 * add simplex methods written in python, could get code from here https://bitbucket.org/jbolinge/lp
+* add interior point methods (could translate in python the matlab code https://github.com/YimingYAN/pathfollow, http://www.cs.ubc.ca/~pcarbo/convexprog.html) 
+
 
 # References
 

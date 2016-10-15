@@ -37,8 +37,8 @@ we can use it to solve a binary image segmentation problem with Potts regularisa
 
 ![latex: \large $min_s c^ts + \sum_{(i,j)\in E}  |s_i-s_j| ~s.t. ~0 \leq s\leq 1$](https://rawgithub.com/martinResearch/PySparseLP/master/images/segmentation.svg)
 
-with E the list of indices of pairs of neighbouring pixels and c a cost vector that is obtain from color distribution models of the two regions.
-This problem can be rewritten as a linear progam by adding an auxiliary variable d_ij for each edge with the constraints
+with *E* the list of indices of pairs of neighbouring pixels and *c* a cost vector that is obtain from color distribution models of the two regions.
+This problem can be rewritten as a linear progam by adding an auxiliary variable *d_ij* for each edge with the constraints
 
 ![latex: \large $min_s c^ts + \sum_{(i,j)\in E}  d_{ij} ~s.t. ~0 \leq s\leq 1, ~d_{ij}\geq s_j-s_j, ~d_{ij}\geq s_i-s_i $](https://rawgithub.com/martinResearch/PySparseLP/master/images/segmentation_lp.svg)
  
@@ -78,7 +78,7 @@ samples of a gaussian with a sparse inverse covariance (precision) matrix. From 
 
 ## L1 regularised multi-class SVM
 
-Given n examples of vector-class pairs (x_i,y_i), with x_i a vector of size m and y_i an integer representing the class, we aim at estimating a matrix W of size k by m that allows to discriminate the right class, with k the number of classes. We assume that the last component of x_i is a one in order to represent the offset constants in W. we denote W_k the kth line of the matrix W
+Given n examples of vector-class pairs *(x_i,y_i)*, with *x_i* a vector of size m and *y_i* an integer representing the class, we aim at estimating a matrix W of size k by m that allows to discriminate the right class, with k the number of classes. We assume that the last component of *x_i* is a one in order to represent the offset constants in W. we denote *W_k* the kth line of the matrix *W*
 
 ![latex:\large $W^*=argmin_W min_{\epsilon}\|W\|_1+\sum_{i=1}^n \epsilon_i\\ s.t.~ W_{y_i}x_i-W_kx_i>1-\epsilon_i \forall\{(i,k)|k\neq y_i\}$](https://rawgithub.com/martinResearch/PySparseLP/master/images/l1svm.svg)
 
@@ -129,6 +129,13 @@ but we would need to write
 
 * add simplex methods written in python, could get code from here https://bitbucket.org/jbolinge/lp
 * add interior point methods (could translate in python the matlab code https://github.com/YimingYAN/pathfollow, http://www.cs.ubc.ca/~pcarbo/convexprog.html) 
+
+# Alternatives
+
+
+* Scipy's linprog. http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html. Only the simlex his implemented in october 2016.
+* Python bindings for GLPK here https://en.wikibooks.org/wiki/GLPK/Python. Might not be adapted to very large sparse problems as it use simplex or interior point methods. The installation is a bit tedious.
+
 
 
 # References

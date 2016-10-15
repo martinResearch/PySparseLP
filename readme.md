@@ -133,7 +133,8 @@ but we would need to write
 # Alternatives
 
 
-* Scipy's linprog. http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html. Only the simplex is implemented in october 2016. Note that it is possible to call this solver from within our code using *method='ScipyLinProg'* when callign the *solve* method. 
+* Scipy's linprog. http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html. Only the simplex is implemented in october 2016. Note that it is possible to call this solver from within our code using *method='ScipyLinProg'* when callign the *solve* method. This method is implemented in python with many loops and is very slows for problems that involve more than a hundred variables.
+
 * Python bindings for GLPK here https://en.wikibooks.org/wiki/GLPK/Python. Might not be adapted to very large sparse problems as it use simplex or interior point methods. The installation is a bit tedious.
 
 

@@ -172,11 +172,17 @@ generate random problems with the matlab code  available [here](https://github.c
 * try to get more meaningfull convergence curves for scipy.linprog, or maybe those are the expected curves ? 
 
 * we provide an implementation of Mehrotra's Predictor-Corrector Pimal-Dual Interior Point method translated to python from  [Yiming yan's matlab code](https://github.com/YimingYAN/mpc). We could add other interior point methods by translating into python the code 
+
        * https://github.com/YimingYAN/pathfollow  (matlab)
+       
        * https://github.com/YimingYAN/pipm-lp        (matlab)
+       
        * http://www.cs.ubc.ca/~pcarbo/convexprog.html
+       
        * https://github.com/YimingYAN/cppipm (c++)
+       
        * https://github.com/pkhuong/cholesky-is-magic (lisp) described here https://www.pvk.ca/Blog/2013/12/19/so-you-want-to-write-an-lp-solver/
+       
 	  
 	  
 * implement some presolve methods to avoid singular matrices in the interior point methods	 (for example http://www.davi.ws/doc/gondzio94presolve.pdf). For example detect constraints on singletons, duplicated rows etc.

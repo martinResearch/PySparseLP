@@ -178,7 +178,7 @@ generate random problems with the matlab code  available [here](https://github.c
 	* http://www.cs.ubc.ca/~pcarbo/convexprog.html
 	* https://github.com/YimingYAN/cppipm (c++)
 	* https://github.com/pkhuong/cholesky-is-magic (lisp) described here https://www.pvk.ca/Blog/2013/12/19/so-you-want-to-write-an-lp-solver/
-	  
+
 	  
 * implement some presolve methods to avoid singular matrices in the interior point methods	 (for example http://www.davi.ws/doc/gondzio94presolve.pdf). For example detect constraints on singletons, duplicated rows etc.
 

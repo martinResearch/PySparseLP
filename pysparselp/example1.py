@@ -81,15 +81,7 @@ def run():
 	plt.imshow(img2[:,:,0], cmap=plt.cm.gray, interpolation='nearest')
 	plt.show()
 
-
-
-
-
-
 	LP=ImageLP()
-	
-	
-	
 	
 	indices=LP.addVariablesArray(shape=size_image,lowerbounds=0,upperbounds=1,costs=unary_terms/coefMul) 
 	
@@ -97,22 +89,7 @@ def run():
 	groundTruthIndices=indices	
 	
 	LP.addPottModel(indices, coefpenalization=coefPotts/coefMul)
-	
-	
-	# testing sparse solver by Ian E.H.Yen http://www.cs.utexas.edu/~ianyen/publication/LPsparse.pdf
-	# you will need to copy the linbrary and compile it in ../thirdparties/LPsparse/
-	#LP2=copy.deepcopy(LP)
-	#LP2.convertToOnesideInequalitySystem()
-	#LP2.save_Ian_E_H_Yen(os.path.join(thisfilepath,'data'))
-	#start=time.clock()
-	#os.system('%s  -c -t 1e-4 data/'% os.path.join(thisfilepath,'../thirdparties/LPsparse/LPsparse'))
-	##os.system('../thirdparties/LPsparse/LPsparse  -c -d -t 1e-4 data/')
-	#print time.clock()-start
-	#tmp=np.loadtxt(os.path.join(thisfilepath,'sol'))
-	#sol1=np.zeros(LP.nb_variables)
-	#sol1[tmp[:,0].astype(np.int)-1]=tmp[:,1]
-	#plt.imshow(sol1[indices][:,:,0],cmap=plt.cm.Greys_r,interpolation='none')
-	
+
 	print "solving"
 
 	fig_solutions=plt.figure()
@@ -134,25 +111,23 @@ def run():
 	
 	
 	fig=plt.figure()
-	ax=fig.add_subplot(2,4,1,title='graph cut')
+	ax=fig.add_subplot(2,5,1,title='graph cut')
 	ax.imshow(groundTruth[:,:,0],cmap=plt.cm.Greys_r,interpolation='none')
 	ax.axis('off')
 	
 	# simplex much too slow for images larger than 20 by 20
 	#LP2=copy.deepcopy(LP)
 	#LP2.convertToOnesideInequalitySystem()
-	#sol1,elapsed=LP2.solve(method='ScipyLinProg',force_integer=False,getTiming=True,nb_iter=10000,max_time=10,groundTruth=groundTruth,groundTruthIndices=indices,plotSolution=None)
+	#sol1,elapsed=LP2.solve(method='ScipyLinProg',force_integer=False,getTiming=True,nb_iter=100,max_time=10,groundTruth=groundTruth,groundTruthIndices=indices,plotSolution=None)
 	
-	solving_methods2=list(set(solving_methods) - set(['ScipyLinProg']))
-	
+	solving_methods2=[m for m in solving_methods if (not m in ['ScipyLinProg'])] # remove ScipyLinProg because it is too slow
 	for i,method in enumerate(solving_methods2):
-		#method=
 		sol1,elapsed=LP.solve(method=method,force_integer=False,getTiming=True,nb_iter=1000000,max_time=15,groundTruth=groundTruth,groundTruthIndices=indices,plotSolution=None)
 		ax_curves1.semilogy(LP.itrn_curve,LP.distanceToGroundTruth,label=method)		
-		ax_curves2.semilogy(LP.dopttime_curve,LP.distanceToGroundTruth,label=method)
+		ax_curves2.semilogy(LP.opttime_curve,LP.distanceToGroundTruth,label=method)
 		ax_curves1.legend()
 		ax_curves2.legend()
-		ax=fig.add_subplot(2,4,i+2,title=method)
+		ax=fig.add_subplot(2,5,i+2,title=method)
 		ax.imshow(sol1[indices][:,:,0],cmap=plt.cm.Greys_r,interpolation='none',vmin=0,vmax=1)
 		ax.axis('off')
 		plt.draw()

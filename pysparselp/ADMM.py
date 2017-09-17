@@ -33,10 +33,12 @@ import scipy.sparse
 import scipy.ndimage
 from tools import preconditionConstraints,convertToStandardFormWithBounds  ,chrono,check_decrease
 from gaussSiedel import boundedGaussSeidelClass
-import  scikits.sparse.cholmod
+from conjugateGradientLinearSolver import conjgrad
+
+#import  scikits.sparse.cholmod
 #@profile		
 def LP_admm(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_eq=2,gamma_ineq=3,nb_iter=100,callbackFunc=None,max_time=None,use_preconditionning=True):
-	# simple ADMM method with an approximate resolutio of a quadratic subproblem using conjugate gradient
+	# simple ADMM method with an approximate resolution of a quadratic subproblem using conjugate gradient
 	useLU=False
 	useCholesky=False
 	useAMG=False
@@ -212,7 +214,7 @@ def LP_admm2(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_ineq=0.7,nb_ite
 	# of the subproblem instead of beeing enforced through multipliers 
 	useLU=False
 	useAMG=False
-	useCholesky=True
+	useCholesky=False
 	useCholesky2=False
 	
 	alpha=1.95#relaxation paramter should be in [0,2] , 1.95 seems to be often a good choice
@@ -249,7 +251,13 @@ def LP_admm2(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_ineq=0.7,nb_ite
 	elif useCholesky:
 		
 		ch.tic()
+		# not that it will work only if M is positive definite which nto garantied the way it is constructed
+		# unfortunaletly i'm not able to atch the error to fall back on LU decomposition if
+		# chelesky fails because the matric is not positive definite
 		Chol=     scikits.sparse.cholmod.cholesky(M.tocsc(),mode='simplicial')
+		
+
+		
 		print 'cholesky factorization took '+str(ch.toc())+ ' seconds'
 		print 'the sparsity ratio between the cholesky decomposition of M and M is '+str(Chol.L().nnz/float(M.nnz))
 		nb_cg_iter=1

@@ -87,6 +87,16 @@ def convertToStandardFormWithBounds(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0):
 			Aeq2=scipy.sparse.hstack((Aineq,-scipy.sparse.eye(ni,ni))).tocsr()
 			Aeq2.__dict__['blocks']=Aineq.blocks
 			beq2=np.zeros((ni))
+			
+		if b_lower is None:
+			b_lower=np.empty(Aineq.shape[0])
+			b_lower.fill(-np.inf)
+			
+			
+		if b_upper is None:
+			b_upper=np.empty(Aineq.shape[0])
+			b_upper.fill(np.inf)		
+		
 
 		lb=np.hstack((lb,b_lower))
 		ub=np.hstack((ub,b_upper))		
@@ -235,7 +245,10 @@ def preconditionConstraints(A,b,b2=None,alpha=2):
 	Sigma=scipy.sparse.diags([diagSigmA],[0]).tocsr()
 	Ap=Sigma*A
 	Ap.__dict__['blocks']=A.blocks
-	bp=Sigma*b
+	if not b is None:
+		bp=Sigma*b
+	else:
+		bp=None
 	if b2==None:
 
 		return Ap,bp

@@ -32,7 +32,7 @@ import time
 from scipy import sparse
 import scipy.ndimage
 from tools import preconditionConstraints,convertToStandardFormWithBounds,chrono,check_decrease
-import  scikits.sparse.cholmod
+#import  scikits.sparse.cholmod
 
 def LP_admmBlockDecomposition(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_ineq=0.7,nb_iter=100,callbackFunc=None,max_time=None,use_preconditionning=True,useLU=True,nb_iter_plot=10):
 	# simple ADMM method with an approximate resolution of a quadratic subproblem using conjugate gradient
@@ -76,7 +76,7 @@ def LP_admmBlockDecomposition(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamm
 	#Aeq.blocks=[(0,Aeq.blocks[-1][1])]	
 	
 	beqs=[]
-	usesparseLU=False
+	usesparseLU=True
 	xv=[]
 	#for idblock in range(nb_blocks):
 	ch=chrono()	
@@ -157,6 +157,7 @@ def LP_admmBlockDecomposition(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamm
 		else:
 			ch.tic()
 			LU=     scikits.sparse.cholmod.cholesky(M.tocsc(),mode='simplicial')
+			# may fail when M is not positive definite , which sometimes occurs
 			factorization_duration= ch.toc()
 			#A=     scikits.sparse.cholmod.analyze(M.tocsc(),mode='simplicial')
 			#P=scipy.sparse.coo_matrix((np.ones(A.P().size),(A.P(),np.arange(A.P().size))))

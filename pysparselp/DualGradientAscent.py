@@ -32,6 +32,7 @@ import time
 import scipy.sparse
 import scipy.ndimage
 
+
 def exactDualLineSearch(direction,A,b,c_bar,upperbounds,lowerbounds):
 
 	assert(isinstance(direction,scipy.sparse.csr.csr_matrix))
@@ -53,7 +54,7 @@ def exactDualLineSearch(direction,A,b,c_bar,upperbounds,lowerbounds):
 		#+np.hstack(([0],np.cumsum(tmp)))
 
 	k=np.searchsorted(-derivatives,0)
-	if derivatives[k]==0:
+	if derivatives[k]==0 and k<len(order):
 		t=np.random.rand()
 		alpha_optim=t*alphas[order[k]]+(1-t)*alphas[order[k-1]]#maybe courld draw and random valu in the interval ? 
 	else:
@@ -130,8 +131,9 @@ def DualGradientAscent(x,LP,nbmaxiter=1000,callbackFunc=None,y_eq=None,y_ineq=No
 	
 	prevE=eval(y_eq,y_ineq)
 	if prevE==-np.inf:
-		print 'intial dual point not feasible'
-		raise
+		print 'initial dual point not feasible, you could bound all variables'
+		c_bar,x=getOptimX(y_eq,y_ineq)
+		return x, y_eq,y_ineq
 	for iter in range(nbmaxiter):
 		c_bar,x=getOptimX(y_eq,y_ineq)
 		if not LP2.Ainequalities is None:
@@ -142,29 +144,36 @@ def DualGradientAscent(x,LP,nbmaxiter=1000,callbackFunc=None,y_eq=None,y_ineq=No
 			print 'iter %d energy %f max violation %f sum_violation %f'%(iter ,prevE,max_violation,sum_violation)		
 	
 			grad_y_ineq=LP2.Ainequalities*x-LP2.B_upper
+		
+			
 			grad_y_ineq[y_ineq_prev<=0]=np.maximum(grad_y_ineq[y_ineq_prev<=0], 0)# not sure it is correct to do that here
-			grad_y_ineq_sparse=scipy.sparse.csr.csr_matrix(grad_y_ineq)
-			coef_length_ineq=exactDualLineSearch(grad_y_ineq_sparse,LP2.Ainequalities,LP2.B_upper,c_bar,LP2.upperbounds,LP2.lowerbounds)
-			#y_ineq_prev+coef_length*grad_y>0
-			assert(coef_length_ineq>=0)
-			maxstep_ineq=np.min(y_ineq_prev[grad_y_ineq<0]/-grad_y_ineq[grad_y_ineq<0])
-			coef_length_ineq=min(coef_length_ineq,maxstep_ineq)
-			#if False:
-				#y2=y_ineq.copy()
-				#alphasgrid=np.linspace(coef_length*0.99,coef_length*1.01,1000)
-				#vals=[]
-				#for alpha in alphasgrid:
-					#y2=y_ineq+alpha*grad_y		
-					#vals.append(eval(y_eq,y2))
-				#plt.plot(alphasgrid,vals,'.')		
-			
-			#coef_length=0.001/(iter+2000000)
-			#coef_length=min(0.01/(iter+200000),maxstep)
-			y_ineq=y_ineq_prev+coef_length_ineq*grad_y_ineq	
-			#assert(np.min(y_ineq)>=-1e-8)
-			y_ineq=np.maximum(y_ineq, 0)
-			
+			if np.sum(grad_y_ineq<0)>0:
+					
+					
+				grad_y_ineq_sparse=scipy.sparse.csr.csr_matrix(grad_y_ineq)
+				coef_length_ineq=exactDualLineSearch(grad_y_ineq_sparse,LP2.Ainequalities,LP2.B_upper,c_bar,LP2.upperbounds,LP2.lowerbounds)
+				#y_ineq_prev+coef_length*grad_y>0
+				assert(coef_length_ineq>=0)
+				maxstep_ineq=np.min(y_ineq_prev[grad_y_ineq<0]/-grad_y_ineq[grad_y_ineq<0])
+				coef_length_ineq=min(coef_length_ineq,maxstep_ineq)
+				#if False:
+					#y2=y_ineq.copy()
+					#alphasgrid=np.linspace(coef_length*0.99,coef_length*1.01,1000)
+					#vals=[]
+					#for alpha in alphasgrid:
+						#y2=y_ineq+alpha*grad_y		
+						#vals.append(eval(y_eq,y2))
+					#plt.plot(alphasgrid,vals,'.')		
+				
+				#coef_length=0.001/(iter+2000000)
+				#coef_length=min(0.01/(iter+200000),maxstep)
+				y_ineq=y_ineq_prev+coef_length_ineq*grad_y_ineq	
+				#assert(np.min(y_ineq)>=-1e-8)
+				y_ineq=np.maximum(y_ineq, 0)
+				
 		if not LP2.Aequalities is None and LP2.Aequalities.shape[0]>0:
+			
+			
 			
 			y_eq_prev=y_eq.copy()		
 			max_violation=np.max(np.abs(LP2.Aequalities*x-LP2.Bequalities))

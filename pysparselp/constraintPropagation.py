@@ -29,7 +29,17 @@
 # linear program solution to an integer solution using 
 # - constraints propagation and backtracking
 # - greedy reduction of the number of violated constraints using local search
+import numpy as np
+import copy
 
+
+
+try:
+	import cython_tools
+	cython_tools_installed=True
+except:
+	print 'could not import cython_tools maybe the compilation did not work , will be slower'
+	cython_tools_installed=False
 
 def check_constraints(i,x_r,mask,Acsr,Acsc,b_lower,b_upper):
 	"""check that the variable i is not involed in any violated constraint"""
@@ -58,7 +68,8 @@ def check_constraints(i,x_r,mask,Acsr,Acsc,b_lower,b_upper):
 
 #@profile	
 def propagateConstraints(list_changed_var,x_l,x_u,Acsr,Acsc,b_lower,b_upper,back_ops,nb_iter=1000,use_cython=True):
-	if use_cython:
+	# may have similarities with the tightening method in http://www.davi.ws/doc/gondzio94presolve.pdf
+	if cython_tools_installed and use_cython:
 		#return cython_tools.propagateConstraints(list_changed_var,x_l,x_u,Acsr,Acsc,b_lower,b_upper,back_ops,nb_iter=nb_iter)
 		return cython_tools.propagateConstraints(list_changed_var,x_l,x_u,\
 		        Acsc.indices,\
@@ -139,18 +150,26 @@ def propagateConstraints(list_changed_var,x_l,x_u,Acsr,Acsc,b_lower,b_upper,back
 
 
 	
-	 
+	
+
+def revert(back_ops,x_l,x_u):
+	for t,i,v in reversed(back_ops):
+		if t==0:
+			x_l[i]=v
+		else:
+			x_u[i]=v	 
 	
 	
 #@profile	
-def greedy_round(x,LP,callbackFunc=None):
+def greedy_round(x,LP,callbackFunc=None,maxiter=np.inf,order=None,fixed=None):
 	#save_arguments('greedy_round_test')
 	if False:
 		import pickle
 		d={'x':x,'LP':LP}
 		with open('greedy_test.pkl', 'wb') as f:				
 			pickle.dump(d,f)	
-	callbackFunc(0,np.round(x),0,0,0,0,0)
+	if not callbackFunc is None:
+		callbackFunc(0,np.round(x),0,0,0,0,0)
 	LP2=copy.copy(LP)
 	LP2.convertToAllInequalities()
 	assert(LP2.Aequalities is None)
@@ -159,7 +178,9 @@ def greedy_round(x,LP,callbackFunc=None):
 	x_u=LP2.upperbounds.copy()
 	x_l=LP2.lowerbounds.copy()
 	
-	
+	if not fixed is None:
+		x_l[fixed]=x[fixed]
+		x_u[fixed]=x[fixed]
 	
 
 	A=LP2.Ainequalities 
@@ -169,25 +190,31 @@ def greedy_round(x,LP,callbackFunc=None):
 	#callbackFunc(0,np.maximum(x_r.astype(np.float),0),0,0,0,0,0)
 	A_csr=A.tocsr()	
 	A_csc=A.tocsc()
-	
-	# sort from the less fractional to the most fractional
-	# order=np.argsort(np.abs(x-np.round(x))+c*np.round(x))
-	order=np.argsort(LP2.costsvector*(2*np.round(x)-1))
-	#order=np.argsort(LP2.costsvector*np.round(x))
-	#order=np.arange(x.size)
-	#order=np.arange(x.size)[::-1]
-	x_r=np.full(x.size,-1,dtype=np.int32)
+	if order is None:
+		# sort from the less fractional to the most fractional
+		# order=np.argsort(np.abs(x-np.round(x))+c*np.round(x))
+		order=np.argsort(LP2.costsvector*(2*np.round(x)-1))
+		#order=np.argsort(LP2.costsvector*np.round(x))
+		#order=np.arange(x.size)
+		#order=np.arange(x.size)[::-1]
+	#x_r=np.full(x.size,-1,dtype=np.int32)
+	x_r=x.copy()
 	mask=np.zeros(x.size,dtype=np.int32)
 	depth=0
 	nb_backtrack=0
 	#callbackFunc(0,x,0,0,0,0,0)
 	
 	
-	valid=propagateConstraints(np.arange(A.shape[1]),x_l, x_u, A_csr, A_csc, b_l, b_u,[])
+	valid,idcons=propagateConstraints(np.arange(A.shape[1]),x_l, x_u, A_csr, A_csc, b_l, b_u,[])
+	if valid==0:
+		return x_r,valid
+		
 
 	#check that no constraint is violated
 	back_ops=[[] for i in range(x.size)]
-	while depth<x.size:
+	niter=0
+	while depth<x.size :
+		niter+=1
 		#callbackFunc(0,x_l,0,0,0,0,0)
 		#print depth
 		
@@ -266,10 +293,10 @@ def greedy_round(x,LP,callbackFunc=None):
 				#raise # need a way to save the bound constraint to restore it
 	#callbackFunc(0,np.maximum(x_r.astype(np.float),0),0,0,0,0,0)
 	valid=propagateConstraints(np.arange(A.shape[1]),x_l, x_u, A_csr, A_csc, b_l, b_u,[])
-	assert(valid)
+	#assert(valid)
 	print 'backtracked %d times'%nb_backtrack
 	print 'energy after rounding =%f'%np.sum(x_r*LP.costsvector)
-	return x_r
+	return x_r,valid
 
 
 

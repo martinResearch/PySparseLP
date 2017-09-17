@@ -1,9 +1,8 @@
 # Goal
 
-This project provides several python codes to solve sparse linear programs of the form
+This project provides several python codes to solve very sparse linear programs of the form
 
 ![latex:\large $\mathbf{x}^*=argmin_\mathbf{x} \mathbf{c}^t\mathbf{x} ~  s.t.~  A_e\mathbf{x}=\mathbf{b_e},A_i\mathbf{x}\leq\mathbf{ b_i}, \mathbf{l}\leq \mathbf{x}\leq \mathbf{u}$ ](https://rawgithub.com/martinResearch/PySparseLP/master/images/LPproblem.svg)
-
 
 The different algorithms that are implemented are documented in the [pdf](./latex/SparseLinearProgramming.pdf): 
 
@@ -12,7 +11,7 @@ The different algorithms that are implemented are documented in the [pdf](./late
 * a first order primal-dual algorithm adapted from chambolle pock [2]
 * three methods based on the Alternating Direction Method of Multipliers [3]
 
-**Note** These methods are not meant to be efficient methods to solve generic linear programs. They are simple and quite naive methods i coded while exploring different possibilities to solve very large sparse linear programs.
+**Note** These methods are not meant to be efficient methods to solve generic linear programs. They are simple and quite naive methods i coded while exploring different possibilities to solve very large sparse linear programs that are too big to be solved using the standard simplex method or standard interior point methods.
 
 
 This project also provides: 
@@ -162,6 +161,8 @@ generate random problems with the matlab code  available [here](https://github.c
 
 * finish coding the method by Conda (CondatPrimalDual.py)
 
+* convert to python the matlab implementation of the LP solver based on improved version of champolle-pock called [Adaptive Primal-Dual Hybrid Gradient Methods](https://arxiv.org/abs/1305.0546) available [here](https://www.cs.umd.edu/~tomg/projects/pdhg/)
+
 * create a cython binding for LPsparse [1] using scipy.sparse matrices for the interface and adding the possibility to compute the convergence curve by providing the problem known solution to the solver or by adding the possibility to define a callback to a python function.
 
 * implement method [4]
@@ -172,11 +173,11 @@ generate random problems with the matlab code  available [here](https://github.c
 * try to get more meaningfull convergence curves for scipy.linprog, or maybe those are the expected curves ? 
 
 * we provide an implementation of Mehrotra's Predictor-Corrector Pimal-Dual Interior Point method translated to python from  [Yiming yan's matlab code](https://github.com/YimingYAN/mpc). We could add other interior point methods by translating into python the code 
-       * https://github.com/YimingYAN/pathfollow  (matlab)
-       * https://github.com/YimingYAN/pipm-lp        (matlab)
-       * http://www.cs.ubc.ca/~pcarbo/convexprog.html
-       * https://github.com/YimingYAN/cppipm (c++)
-       * https://github.com/pkhuong/cholesky-is-magic (lisp) described here https://www.pvk.ca/Blog/2013/12/19/so-you-want-to-write-an-lp-solver/
+	* https://github.com/YimingYAN/pathfollow  (matlab)
+	* https://github.com/YimingYAN/pipm-lp        (matlab)
+	* http://www.cs.ubc.ca/~pcarbo/convexprog.html
+	* https://github.com/YimingYAN/cppipm (c++)
+	* https://github.com/pkhuong/cholesky-is-magic (lisp) described here https://www.pvk.ca/Blog/2013/12/19/so-you-want-to-write-an-lp-solver/
 	  
 	  
 * implement some presolve methods to avoid singular matrices in the interior point methods	 (for example http://www.davi.ws/doc/gondzio94presolve.pdf). For example detect constraints on singletons, duplicated rows etc.

@@ -17,21 +17,14 @@ The different algorithms that are implemented are documented in the [pdf](./late
 This project also provides: 
 
 * a python implementation of Mehrotra's Predictor-Corrector Pimal-Dual Interior Point method.
-<<<<<<< HEAD
+
 * a python class *SparseLP* (in SparseLP.py) that makes it easier to build linear programs from python 
 * methods to convert between the different common forms of linear programs (slack form, standard form etc), 
 * methods to import and export the linear program from and to standard file formats (MPS), It is used here to run [netlib](http://www.netlib.org/lp/data/) LP problems. Using mps file one can upload and solve LP on the [neos](https://neos-server.org/neos/) servers.
 * a simple constraint propagation method with back-tracking to find feasible integer values solutions (for integer programs)
 * interfaces to other solvers (SCS, ECOS, CVXOPT) through CVXPY
 * interfaces to other LP and MILP solvers ([CLP](https://www.coin-or.org/download/binary/Clp/),[CBC](https://www.coin-or.org/download/binary/Cbc/),[MIPLC](http://mipcl-cpp.appspot.com/),[GLPSOL](https://sourceforge.net/projects/winglpk/),[QSOPT](http://www.math.uwaterloo.ca/~bico/qsopt/downloads/downloads.htm)) using mps text files
-=======
-* a python class *SparseLP* (in SparseLP.py) that  makes it easier to build linear programs from python 
-* methods to convert between the different common forms of linear programs (slack form , standard form etc), 
-* methods to import and export the linear program from and to standard file formats (MPS), It is used here to run [netlib](http://www.netlib.org/lp/data/) LP problems.
-* a simple constraint propagation method with back-tracking to find feasible integer values solutions (for integer programs)
-* interfaces to other solvers (SCS, ECOS, CVXOPT) through CVXPY
 
->>>>>>> 8fdc02635013fa7ddacd6800b073c3c6dba3b44e
 # Installation
 
 
@@ -39,7 +32,7 @@ using pip
 
 	sudo pip install git+git://github.com/martinResearch/PySparseLP.git
 	
-<<<<<<< HEAD
+
 otherwise you can dowload it, decompressit it and compile it locally using 
 
 	python setup.py build_ext --inplace
@@ -101,11 +94,7 @@ But they have some limitations:
 * GLOP:
 
 the approach i have taken is a bit lower level than this tools  but provide more control and flexibility on how to define constraints and the objective function. It is made easy by using numpyarrays  to store variables indices.
-=======
-otherwise you can dowload it, decompressit it  and compile it locally using 
 
-	python setup.py build_ext --inplace
->>>>>>> 8fdc02635013fa7ddacd6800b073c3c6dba3b44e
 
 # Examples
 
@@ -189,7 +178,6 @@ we relax it into an LP.
 	run()
 
 
-<<<<<<< HEAD
 
 ## K-medians
 
@@ -232,63 +220,19 @@ generate random problems with the matlab code available [here](https://github.co
 # TODO
 
 * add automatic constraint checking if we provide a feasible solution from the begining. It will help debugging constraints.
-=======
-
-## K-medians
-
-Given n point we want to cluster them into k set by minimizing
-
-![latex: $min_ {C \subset \{1,\dots,n\}} \sum_i min_{j\in C}d_{ij}~ s.t~ card(C)\leq k$](./images/kmedians1.svg)
-with d_ij the distance between point i and point j
-The can be reformulated as an integer program
-
-![latex: $$ min \sum_{ij\in \{1,\dots,n\}^2} L_{ij} d_{ij} ~ s.t~ L_{ij}\in\{0,1\}, \sum_j L_{ij}=1 \forall i, L_{ij}<u_i \forall (i,j),\sum_i u_i\leq k $$](./images/kmedians2.svg)
- 
-we relax it into using 
-
-![latex: $$ L_{ij}\in[0,1]$$](./images/kmedians2_relax.svg)
- 
-	from pysparselp.example5 import run
-	run()
-
-![kmedians result](./images/kmedians.svg)
-
-
-## Netlib LP problems 
-
-We have an interface to easily test the solvers on netlib problems from [netlib](http://www.netlib.org/lp/data/).  
-The uncompressed files are downloaded from [here](ftp://ftp.numerical.rl.ac.uk/pub/cuter/netlib/). 
-In order to monitor convergence rates, the exact solutions of these problems are found  [here](http://www.zib.de/koch/perplex/data/netlib/txt/)
-
-	from pysparselp.test_netlib import test_netlib
-	test_netlib('SC50A')
-
-![curves](./images/libnetSC50A.png)
-Note: since august 2017, numpy files containing the netlib examples are provided with scipy [here] (https://github.com/scipy/scipy/tree/master/benchmarks/benchmarks/linprog_benchmark_files)
-
-## Random problems 
-
-random sparse LP problem can be generate using code in *randomLP.py*. The approach used to generate random problem is very simple and could be improved
-to generate harder sparse LPs. We could implement the approach used in section 6.2.1 in https://arxiv.org/pdf/1404.6770v3.pdf to 
-generate random problems with the matlab code  available [here](https://github.com/YimingYAN/pipm-lp/tree/master/Tests/Ultilities)
-
-# TODO
->>>>>>> 8fdc02635013fa7ddacd6800b073c3c6dba3b44e
 
 * document the active-set *hack* for the chambole pock method (in ChambollePockPPDAS.py).
 
 * finish coding the method by Conda (CondatPrimalDual.py)
 
 * convert to python the matlab implementation of the LP solver based on improved version of champolle-pock called [Adaptive Primal-Dual Hybrid Gradient Methods](https://arxiv.org/abs/1305.0546) available [here](https://www.cs.umd.edu/~tomg/projects/pdhg/)
-<<<<<<< HEAD
 
-* create a cython binding for LPsparse [1] using scipy.sparse matrices for the interface and adding the possibility to compute the convergence curve by providing the problem known solution to the solver or by adding the possibility to define a callback to a python function.
-=======
->>>>>>> 8fdc02635013fa7ddacd6800b073c3c6dba3b44e
 
 * create a cython binding for LPsparse [1] using scipy.sparse matrices for the interface and adding the possibility to compute the convergence curve by providing the problem known solution to the solver or by adding the possibility to define a callback to a python function.
 
-<<<<<<< HEAD
+* create a cython binding for LPsparse [1] using scipy.sparse matrices for the interface and adding the possibility to compute the convergence curve by providing the problem known solution to the solver or by adding the possibility to define a callback to a python function.
+
+
 * implement method in [5]
 
 * add interface to [8] once the code is online.
@@ -319,47 +263,16 @@ generate random problems with the matlab code  available [here](https://github.c
 * Python bindings for GLPK [here](https://en.wikibooks.org/wiki/GLPK/Python) . Might not be adapted to very large sparse problems as it use simplex or interior point methods. The installation is a bit tedious. The licence is GPL which makes it unsuited for use in commercial products.
 * [GLOP](https://developers.google.com/optimization/lp/glop), Google's linear programming system has a python interface [pywraplp](https://developers.google.com/optimization/introduction/using#python). 
 * [CyLP](http://mpy.github.io/CyLPdoc/index.html) . Python interface to Coin-Or solvers CLP, CBC, and CGL. We can use the first two solvers using mps files using my code. Isntalling CyLP involves quite a few steps. CyLP also provide LP modeling tools.
-=======
-* implement method [4]
-
-* add simplex methods written in python, could get code from here https://bitbucket.org/jbolinge/lp or speedup scipy code 
-  [here](https://github.com/scipy/scipy/blob/master/scipy/optimize/_linprog.py) by getting rid of slow loops and using cython.
-
-* try to get more meaningfull convergence curves for scipy.linprog, or maybe those are the expected curves ? 
-
-* we provide an implementation of Mehrotra's Predictor-Corrector Pimal-Dual Interior Point method translated to python from  [Yiming yan's matlab code](https://github.com/YimingYAN/mpc). We could add other interior point methods by translating into python the code 
-	* https://github.com/YimingYAN/pathfollow  (matlab)
-	* https://github.com/YimingYAN/pipm-lp        (matlab)
-	* http://www.cs.ubc.ca/~pcarbo/convexprog.html
-	* https://github.com/YimingYAN/cppipm (c++)
-	* https://github.com/pkhuong/cholesky-is-magic (lisp) described here https://www.pvk.ca/Blog/2013/12/19/so-you-want-to-write-an-lp-solver/
-
-	  
-* implement some presolve methods to avoid singular matrices in the interior point methods	 (for example http://www.davi.ws/doc/gondzio94presolve.pdf). For example detect constraints on singletons, duplicated rows etc.
-
-# Alternatives
-
-## Linear Program solvers with a python interface
-* Scipy's [linprog](http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html). Only the simplex is implemented in october 2016 (Note: an [interior point method](http://scipy.github.io/devdocs/optimize.linprog-interior-point.html) has been added in august 2017). Note that it is possible to call this solver from within our code using *method='ScipyLinProg'* when callign the *solve* method. The simplex method is implemented in python with many loops and is very slow for problems that involve more than a hundred variables. The interior point method has not been tested here.
-* Python bindings for GLPK [here](https://en.wikibooks.org/wiki/GLPK/Python) . Might not be adapted to very large sparse problems as it use simplex or interior point methods. The installation is a bit tedious. The licence is GPL which makes it unsuited for use in commercial products.
-* [CyLP](http://mpy.github.io/CyLPdoc/index.html) 
->>>>>>> 8fdc02635013fa7ddacd6800b073c3c6dba3b44e
 * [CVXOPT](http://cvxopt.org/), provides linear program cone program solvers and also provides interfaces to GLPK,Mosek,DSPD. 
 * [CVXPY](http://www.cvxpy.org/en/latest/) Python-embedded modeling language for convex optimization problems. It provide interface to cvxopt solvers and to SCS
 * [SCS](https://pypi.python.org/pypi/scs), [github](https://github.com/cvxgrp/scs) Solves convex cone programs via operator splitting. Can solve in particular linear programs. 
 ## No python interface
 
-<<<<<<< HEAD
+
 * [LIPSOL](http://www.caam.rice.edu/~zhang/lipsol/). matlab code. Seems to be adequate for sparse problems. Part of the code in fortran. licence GPL
 * [LPsolve](https://sourceforge.net/projects/lpsolve/) licence LGPL. Python wrapper [here](http://lpsolve.sourceforge.net/5.5/,Python.htm#Install_the_lpsolve_driver). I cannot find  in the windows installer the command line executable mentioned in the documentation that could be executed with mps files.
 * [Joptimize](http://www.joptimizer.com/linearProgramming.html) implemented in Java. Appache licence
 * [PCx](http://pages.cs.wisc.edu/~swright/PCx/) PCx is an interior-point predictor-corrector linear programming package. Code available here https://github.com/lpoo/PCx. Free but to public domain. Binaries provided for Linux only.
-=======
-* [LIPSOL](http://www.caam.rice.edu/~zhang/lipsol/). Seems to be adequate for sparse problems. Part of the code in fortran. licence GPL
-* [LPsolve](https://sourceforge.net/projects/lpsolve/) licence LGPL
-* [Joptimize](http://www.joptimizer.com/linearProgramming.html) appache licence
-* [PCx](http://pages.cs.wisc.edu/~swright/PCx/) PCx is an interior-point predictor-corrector linear programming package. Code available here https://github.com/lpoo/PCx. Free but to public domain
->>>>>>> 8fdc02635013fa7ddacd6800b073c3c6dba3b44e
 * [DSDP](http://www.mcs.anl.gov/hs/software/DSDP/) solve semidefinite programs, which are more general than linear programs. It uses the sparsity of the problem and might still be competitive to solve sparse linear programs. Can be called from python through [cvxopt](http://cvxopt.org/)
 
 # References
@@ -370,9 +283,7 @@ generate random problems with the matlab code  available [here](https://github.c
 
 [3] Stephen Boyd *Distributed Optimization and Statistical Learning via the Alternating Direction Method of Multipliers*  Foundations and Trends in Machine Learning 2010
 
-[4] Yu G Evtushenko, A I Golikov, and N Mollaverdy. *Augmented
-<<<<<<< HEAD
-Lagrangian method for large-scale linear programming problems* Optimization Method and Software 2005.
+[4] Yu G Evtushenko, A I Golikov, and N Mollaverdy. *AugmentedbLagrangian method for large-scale linear programming problems* Optimization Method and Software 2005.
 
 [5] Alternating Direction Method of Multipliers for Linear Programming. He Bingsheng and Yuan Xiaoming. 2015. Paper [here](http://www.optimization-online.org/DB_FILE/2015/06/4951.pdf) 
 
@@ -388,6 +299,3 @@ paper [here](http://papers.nips.cc/paper/6746-a-new-alternating-direction-method
 [10] Factoring nonnegative matrices with linear programs
 Victor Bittorf, Benjamin Recht, Christopher Re, Joel A. Tropp. 2012 
 paper [here](https://arxiv.org/abs/1206.1270)
-=======
-Lagrangian method for large-scale linear programming problems*  Optimization Method and Software 2005.
->>>>>>> 8fdc02635013fa7ddacd6800b073c3c6dba3b44e

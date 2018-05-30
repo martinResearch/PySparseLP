@@ -113,7 +113,7 @@ def ChambollePockPPDAS(LP,x0=None,\
 		# constructing the preconditioning diagonal matrices  
 		tmp=0
 		if not Aeq is None:
-			print ("Aeq shape="+str(Aeq.shape))
+			print "Aeq shape="+str(Aeq.shape)
 	
 			assert(scipy.sparse.issparse(Aeq))  
 			assert(Aeq.shape[1]==c.size)
@@ -124,7 +124,7 @@ def ChambollePockPPDAS(LP,x0=None,\
 			tmp=tmp+SumAeq
 			#AeqT=Aeq.T
 		if not Aineq is None:     
-			print( "Aineq shape="+str(Aineq.shape))
+			print "Aineq shape="+str(Aineq.shape)
 			assert(scipy.sparse.issparse(Aineq))
 			assert(Aineq.shape[1]==c.size)
 			assert(Aineq.shape[0]==b_upper.size)
@@ -331,9 +331,9 @@ def ChambollePockPPDAS(LP,x0=None,\
 			
 			subAineqCSR2=subAineqCSC2.tocsr()
 			r_ineq_active=r_ineq[list_active_inequality_constraints]				
-			print ('%d active variables %d  active inequalities %d active equalities'%(np.sum(is_active_variable),np.sum(is_active_inequality_constraint),nb_active_equality_constraints))
+			print '%d active variables %d  active inequalities %d active equalities'%(np.sum(is_active_variable),np.sum(is_active_inequality_constraint),nb_active_equality_constraints)
 			
-			print ('%f percent of active variables %f percent active inequalities %f percent active equalities'%(100*np.mean(is_active_variable),100*np.mean(is_active_inequality_constraint),percent_active_equality_constraint))
+			print '%f percent of active variables %f percent active inequalities %f percent active equalities'%(100*np.mean(is_active_variable),100*np.mean(is_active_inequality_constraint),percent_active_equality_constraint)
 			x_active=x[list_active_variables]
 			x3_active=x3[list_active_variables]
 			lb_active=lb[list_active_variables]
@@ -454,17 +454,17 @@ def ChambollePockPPDAS(LP,x0=None,\
 				nb_violated_inequality_rounded=0
 			
 			if nb_violated_equality_rounded==0 and nb_violated_inequality_rounded==0:
-				print ('##########   found feasible solution with energy'+str(energy_rounded))
+				print '##########   found feasible solution with energy'+str(energy_rounded)
 				if energy_rounded<best_integer_solution_energy:
 					best_integer_solution_energy=energy_rounded
 					best_integer_solution=xrounded
 				
 
-			print ('iter'+str(i)+": energy1= "+str(energy1) + " energy2="+str(energy2)+ ' elaspsed '+str(elapsed)+' second'+\
+			print 'iter'+str(i)+": energy1= "+str(energy1) + " energy2="+str(energy2)+ ' elaspsed '+str(elapsed)+' second'+\
 				  ' max violated inequality:'+str(max_violated_inequality)+\
 				  ' max violated equality:'+str(max_violated_equality)+\
 				  'mean_iter_period='+str(mean_iter_priod)+\
-			'rounded : %f ineq %f eq'%(nb_violated_inequality_rounded,nb_violated_equality_rounded))
+			'rounded : %f ineq %f eq'%(nb_violated_inequality_rounded,nb_violated_equality_rounded)
 				#'y_eq has '+str(100 * np.mean(y_eq==0))+' % of zeros '+\
 		#    'y_ineq has '+str(100 * np.mean(y_ineq==0))+' % of zeros '+\			 
 		

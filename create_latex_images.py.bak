@@ -61,11 +61,8 @@ def formula_as_file( formula, file, negate=False,header='' ):
     latexfile = open(laxtex_tmp_file, 'w')
     latexfile.write('\\documentclass[preview]{standalone}')    
     #latexfile.write('\\input{header.tex}') 
-    latexfile.write('\\usepackage{amsmath}') 
     latexfile.write('\\usepackage{wasysym}')  
-    latexfile.write('\\usepackage{amssymb}') 
-    
-  
+    latexfile.write('\\usepackage{amssymb}')     
     latexfile.write('\n\\begin{document}')   
     latexfile.write(' %s'%formula)
     latexfile.write('\n\\end{document}  ') 

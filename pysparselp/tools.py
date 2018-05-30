@@ -68,8 +68,8 @@ class CholeskyOrLu():
 		elif type=='umfpackLU':
 			M2=convertToPySparseFormat(M)
 			self.LU_umfpack = umfpack.factorize(M2, strategy="UMFPACK_STRATEGY_SYMMETRIC")
-			print "nnz per line :"+str(LU_umfpack.nnz/float(M2.shape[0]) ) 
-			print "factorization :"+str(c.toc())
+			print ("nnz per line :"+str(LU_umfpack.nnz/float(M2.shape[0]) )) 
+			print ("factorization :"+str(c.toc()))
 			
 			LU_umfpack.solve(b,x)		
 
@@ -87,6 +87,16 @@ def convertToStandardFormWithBounds(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0):
 			Aeq2=scipy.sparse.hstack((Aineq,-scipy.sparse.eye(ni,ni))).tocsr()
 			Aeq2.__dict__['blocks']=Aineq.blocks
 			beq2=np.zeros((ni))
+			
+		if b_lower is None:
+			b_lower=np.empty(Aineq.shape[0])
+			b_lower.fill(-np.inf)
+			
+			
+		if b_upper is None:
+			b_upper=np.empty(Aineq.shape[0])
+			b_upper.fill(np.inf)		
+		
 
 		lb=np.hstack((lb,b_lower))
 		ub=np.hstack((ub,b_upper))		
@@ -180,17 +190,17 @@ class solutionStat():
 		nb_violated_inequality_rounded=np.sum(np.maximum(Aineq*xrounded-bineq,0))	
 	
 		if nb_violated_equality_rounded==0 and nb_violated_inequality_rounded==0:
-			print '##########   found feasible solution with energy'+str(energy_rounded)
+			print ('##########   found feasible solution with energy'+str(energy_rounded))
 			if energy_rounded<best_integer_solution_energy:
 				self.best_integer_solution_energy=energy_rounded
 				self.best_integer_solution=xrounded
 
 
-		print 'iter'+str(i)+": energy1= "+str(energy1) +  ' elaspsed '+str(elapsed)+' second'+\
+		print ('iter'+str(i)+": energy1= "+str(energy1) +  ' elaspsed '+str(elapsed)+' second'+\
 	              ' max violated inequality:'+str(max_violated_inequality)+\
 	              ' max violated equality:'+str(max_violated_equality)+\
 	              'mean_iter_period='+str(mean_iter_priod)+\
-	              'rounded : %f ineq %f eq'%(nb_violated_inequality_rounded,nb_violated_equality_rounded)
+	              'rounded : %f ineq %f eq'%(nb_violated_inequality_rounded,nb_violated_equality_rounded))
 			#'y_eq has '+str(100 * np.mean(y_eq==0))+' % of zeros '+\
 		#    'y_ineq has '+str(100 * np.mean(y_ineq==0))+' % of zeros '+\
 		self.iprev=i
@@ -235,7 +245,10 @@ def preconditionConstraints(A,b,b2=None,alpha=2):
 	Sigma=scipy.sparse.diags([diagSigmA],[0]).tocsr()
 	Ap=Sigma*A
 	Ap.__dict__['blocks']=A.blocks
-	bp=Sigma*b
+	if not b is None:
+		bp=Sigma*b
+	else:
+		bp=None
 	if b2==None:
 
 		return Ap,bp

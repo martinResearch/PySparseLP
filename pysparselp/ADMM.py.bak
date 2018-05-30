@@ -31,11 +31,9 @@ import numpy as np
 import time
 import scipy.sparse
 import scipy.ndimage
-from pysparselp.tools import preconditionConstraints,convertToStandardFormWithBounds  ,chrono,check_decrease
-#from pysparselp.gaussSiedel import boundedGaussSeidelClass
-from pysparselp.conjugateGradientLinearSolver import conjgrad
-
-#import  scikits.sparse.cholmod
+from tools import preconditionConstraints,convertToStandardFormWithBounds  ,chrono,check_decrease
+from gaussSiedel import boundedGaussSeidelClass
+import  scikits.sparse.cholmod
 #@profile		
 def LP_admm(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_eq=2,gamma_ineq=3,nb_iter=100,callbackFunc=None,max_time=None,use_preconditionning=True):
 	# simple ADMM method with an approximate resolution of a quadratic subproblem using conjugate gradient
@@ -81,8 +79,8 @@ def LP_admm(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_eq=2,gamma_ineq=
 		ch=chrono()
 		ch.tic()
 		Chol=     scikits.sparse.cholmod.cholesky(M.tocsc())
-		print ('cholesky factorization took '+str(ch.toc())+ ' seconds')
-		print ('the sparsity ratio between the cholesky decomposition of M and M is '+str(Chol.L().nnz/float(M.nnz)))
+		print 'cholesky factorization took '+str(ch.toc())+ ' seconds'
+		print 'the sparsity ratio between the cholesky decomposition of M and M is '+str(Chol.L().nnz/float(M.nnz))
 		
 	elif useAMG:
 		Mamg=pyamg.ruge_stuben_solver(M)
@@ -129,7 +127,7 @@ def LP_admm(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_eq=2,gamma_ineq=
 			if False:# optimal sep along the direction given by the last two iterates, does not seem to imrove much speed
 					direction=speed
 					t=-direction.dot(M*xprev-y)
-					print( t)
+					print t
 					if abs(t)>0:
 						step_lenght=t/(direction.dot(M*direction))
 						x=xprev+step_lenght*direction		
@@ -165,7 +163,7 @@ def LP_admm(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_eq=2,gamma_ineq=
 			x=alpha*x+(1-alpha)*xp#over relaxation
 			
 		else:
-			print ('unkown method')
+			print 'unkown method'
 			raise
 		
 		if i%10==0:
@@ -178,9 +176,9 @@ def LP_admm(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_eq=2,gamma_ineq=
 			r=Aeq*x-beq
 			max_violated_equality=np.max(np.abs(r))
 			max_violated_inequality=max(0,-np.min(x))
-			print ('iter'+str(i)+": energy1= "+str(energy1) + " energy2="+str(energy2)+ ' elaspsed '+str(elapsed)+' second'+\
+			print 'iter'+str(i)+": energy1= "+str(energy1) + " energy2="+str(energy2)+ ' elaspsed '+str(elapsed)+' second'+\
 			      ' max violated inequality:'+str(max_violated_inequality)+\
-			      ' max violated equality:'+str(max_violated_equality))
+			      ' max violated equality:'+str(max_violated_equality)
 			if not callbackFunc is None:
 				callbackFunc(i, x[0:n],energy1,energy2,elapsed,max_violated_equality,max_violated_inequality)			
 			
@@ -212,7 +210,7 @@ def LP_admm2(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_ineq=0.7,nb_ite
 	# Distributed Optimization and Statistical Learning via the Alternating Direction Method of Multipliers
 	# the difference with LP_admm is that the linear quality constrainrs Aeq*beq are enforced during the resolution 
 	# of the subproblem instead of beeing enforced through multipliers 
-	useLU=False
+	useLU=True
 	useAMG=False
 	useCholesky=False
 	useCholesky2=False
@@ -258,18 +256,18 @@ def LP_admm2(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_ineq=0.7,nb_ite
 		
 
 		
-		print ('cholesky factorization took '+str(ch.toc())+ ' seconds')
-		print ('the sparsity ratio between the cholesky decomposition of M and M is '+str(Chol.L().nnz/float(M.nnz)))
+		print 'cholesky factorization took '+str(ch.toc())+ ' seconds'
+		print 'the sparsity ratio between the cholesky decomposition of M and M is '+str(Chol.L().nnz/float(M.nnz))
 		nb_cg_iter=1
 	elif useCholesky2:	
-		print ("using UMFPACK_STRATEGY_SYMMETRIC through PySparse")
+		print "using UMFPACK_STRATEGY_SYMMETRIC through PySparse"
 		ch.tic()
 		M2=convertToPySparseFormat(M)
-		print ("conversion :"+str(ch.toc()))
+		print "conversion :"+str(ch.toc())
 		ch.tic()
 		LU_umfpack = umfpack.factorize(M2, strategy="UMFPACK_STRATEGY_SYMMETRIC")
-		print ("nnz per line :"+str(LU_umfpack.nnz/float(M2.shape[0]) ) )
-		print ("factorization :"+str(ch.toc()))
+		print "nnz per line :"+str(LU_umfpack.nnz/float(M2.shape[0]) ) 
+		print "factorization :"+str(ch.toc())
 		nb_cg_iter=1
 		
 	elif useAMG:
@@ -281,7 +279,7 @@ def LP_admm2(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_ineq=0.7,nb_ite
 		#Mamg=pyamg.ruge_stuben_solver(I.tocsc())
 		
 		for l in range(len(Mamg.levels)):
-			print ("checking level " + str(l))
+			print "checking level " + str(l)
 			assert np.isfinite(Mamg.levels[l].A.data).all()
 		nb_cg_iter=1
 	else:
@@ -329,16 +327,16 @@ def LP_admm2(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_ineq=0.7,nb_ite
 		if i%10==0:
 			prev_elapsed=elapsed
 			elapsed= (time.clock() - start)	
-			if not(max_time is None) and elapsed>max_time:
+			if elapsed>max_time:
 				break
 			energy1=L(x, xp,lambda_ineq)
 			energy2=energy1
 			
 			max_violated_equality=0
 			max_violated_inequality=0
-			print ('iter'+str(i)+": energy1= "+str(energy1) + " energy2="+str(energy2)+ ' elaspsed '+str(elapsed)+' second'+\
+			print 'iter'+str(i)+": energy1= "+str(energy1) + " energy2="+str(energy2)+ ' elaspsed '+str(elapsed)+' second'+\
 			      ' max violated inequality:'+str(max_violated_inequality)+\
-			      ' max violated equality:'+str(max_violated_equality))
+			      ' max violated equality:'+str(max_violated_equality)
 			if not callbackFunc is None:
 				callbackFunc(i, x[0:n],energy1,energy2,elapsed,max_violated_equality,max_violated_inequality)		
 		

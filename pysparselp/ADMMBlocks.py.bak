@@ -31,8 +31,8 @@ import numpy as np
 import time
 from scipy import sparse
 import scipy.ndimage
-from pysparselp.tools import preconditionConstraints,convertToStandardFormWithBounds,chrono,check_decrease
-#import  scikits.sparse.cholmod
+from tools import preconditionConstraints,convertToStandardFormWithBounds,chrono,check_decrease
+import  scikits.sparse.cholmod
 
 def LP_admmBlockDecomposition(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_ineq=0.7,nb_iter=100,callbackFunc=None,max_time=None,use_preconditionning=True,useLU=True,nb_iter_plot=10):
 	# simple ADMM method with an approximate resolution of a quadratic subproblem using conjugate gradient
@@ -124,14 +124,14 @@ def LP_admmBlockDecomposition(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamm
 		M=scipy.sparse.vstack((scipy.sparse.hstack((gamma_ineq*scipy.sparse.eye(subA2.shape[1],subA2.shape[1]),subA2.T)),\
 			                       scipy.sparse.hstack((subA2, scipy.sparse.csc_matrix((subA2.shape[0], subA2.shape[0])))))).tocsr()
 		LU=     scikits.sparse.cholmod.cholesky(M.tocsc(),mode='simplicial')
-		print ('the sparsity ratio between Chol(M) and the  matrix M  is +'+str(LU.L().nnz/float(M.nnz)))
+		print 'the sparsity ratio between Chol(M) and the  matrix M  is +'+str(LU.L().nnz/float(M.nnz))
 		
 		
-		print( 'connected components M'+str(scipy.sparse.csgraph.connected_components(M)))
+		print 'connected components M'+str(scipy.sparse.csgraph.connected_components(M))
 			
 		#scipy.sparse.csgraph.connected_components(subA.T*subA)
 		FactorConnections=subA*subA.T
-		print ('connected components F'+str(scipy.sparse.csgraph.connected_components(FactorConnections)))
+		print 'connected components F'+str(scipy.sparse.csgraph.connected_components(FactorConnections))
 		ST=scipy.sparse.csgraph.minimum_spanning_tree(FactorConnections)
 		
 	
@@ -153,7 +153,7 @@ def LP_admmBlockDecomposition(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamm
 			
 			ch.tic()
 			LU=scipy.sparse.linalg.splu(M.tocsc())
-			print( ch.toc())
+			print ch.toc()
 		else:
 			ch.tic()
 			LU=     scikits.sparse.cholmod.cholesky(M.tocsc(),mode='simplicial')
@@ -167,8 +167,8 @@ def LP_admmBlockDecomposition(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamm
 			
 			#LU=     scikits.sparse.cholmod.cholesky(M.tocsc(),mode='supernodal')# gives me matrix is not positive definite errors..
 			
-			print ('the sparsity ratio between Chol(M) and the  matrix M for block'+str(idblock)+' is +'+str(LU.L().nnz/float(M.nnz))+\
-			' took '+str(factorization_duration)+ 'seconds to factorize')
+			print 'the sparsity ratio between Chol(M) and the  matrix M for block'+str(idblock)+' is +'+str(LU.L().nnz/float(M.nnz))+\
+			' took '+str(factorization_duration)+ 'seconds to factorize'
 			
 			
 			#LU.__=LU.solve_A
@@ -251,9 +251,9 @@ def LP_admmBlockDecomposition(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamm
 					
 					max_violated_equality=0
 					max_violated_inequality=0
-					print ('iter'+str(i)+": energy1= "+str(energy1) + " energy2="+str(energy2)+ ' elaspsed '+str(elapsed)+' second'+\
+					print 'iter'+str(i)+": energy1= "+str(energy1) + " energy2="+str(energy2)+ ' elaspsed '+str(elapsed)+' second'+\
 				          ' max violated inequality:'+str(max_violated_inequality)+\
-				          ' max violated equality:'+str(max_violated_equality))
+				          ' max violated equality:'+str(max_violated_equality)
 					if not callbackFunc is None:
 						callbackFunc(i,(R* xp)[0:n],energy1,energy2,elapsed,max_violated_equality,max_violated_inequality)				
 		i+=1

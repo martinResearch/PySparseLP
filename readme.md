@@ -17,14 +17,12 @@ The different algorithms that are implemented are documented in the [pdf](./late
 This project also provides: 
 
 * a python implementation of Mehrotra's Predictor-Corrector Pimal-Dual Interior Point method.
-
 * a python class *SparseLP* (in SparseLP.py) that makes it easier to build linear programs from python 
 * methods to convert between the different common forms of linear programs (slack form, standard form etc), 
 * methods to import and export the linear program from and to standard file formats (MPS), It is used here to run [netlib](http://www.netlib.org/lp/data/) LP problems. Using mps file one can upload and solve LP on the [neos](https://neos-server.org/neos/) servers.
 * a simple constraint propagation method with back-tracking to find feasible integer values solutions (for integer programs)
 * interfaces to other solvers (SCS, ECOS, CVXOPT) through CVXPY
 * interfaces to other LP and MILP solvers ([CLP](https://www.coin-or.org/download/binary/Clp/),[CBC](https://www.coin-or.org/download/binary/Cbc/),[MIPLC](http://mipcl-cpp.appspot.com/),[GLPSOL](https://sourceforge.net/projects/winglpk/),[QSOPT](http://www.math.uwaterloo.ca/~bico/qsopt/downloads/downloads.htm)) using mps text files
-
 # Installation
 
 
@@ -32,7 +30,6 @@ using pip
 
 	sudo pip install git+git://github.com/martinResearch/PySparseLP.git
 	
-
 otherwise you can dowload it, decompressit it and compile it locally using 
 
 	python setup.py build_ext --inplace
@@ -94,7 +91,6 @@ But they have some limitations:
 * GLOP:
 
 the approach i have taken is a bit lower level than this tools  but provide more control and flexibility on how to define constraints and the objective function. It is made easy by using numpyarrays  to store variables indices.
-
 
 # Examples
 
@@ -227,11 +223,9 @@ generate random problems with the matlab code available [here](https://github.co
 
 * convert to python the matlab implementation of the LP solver based on improved version of champolle-pock called [Adaptive Primal-Dual Hybrid Gradient Methods](https://arxiv.org/abs/1305.0546) available [here](https://www.cs.umd.edu/~tomg/projects/pdhg/)
 
-
 * create a cython binding for LPsparse [1] using scipy.sparse matrices for the interface and adding the possibility to compute the convergence curve by providing the problem known solution to the solver or by adding the possibility to define a callback to a python function.
 
-* create a cython binding for LPsparse [1] using scipy.sparse matrices for the interface and adding the possibility to compute the convergence curve by providing the problem known solution to the solver or by adding the possibility to define a callback to a python function.
-
+* implement method [4]
 
 * implement method in [5]
 
@@ -268,7 +262,6 @@ generate random problems with the matlab code available [here](https://github.co
 * [SCS](https://pypi.python.org/pypi/scs), [github](https://github.com/cvxgrp/scs) Solves convex cone programs via operator splitting. Can solve in particular linear programs. 
 ## No python interface
 
-
 * [LIPSOL](http://www.caam.rice.edu/~zhang/lipsol/). matlab code. Seems to be adequate for sparse problems. Part of the code in fortran. licence GPL
 * [LPsolve](https://sourceforge.net/projects/lpsolve/) licence LGPL. Python wrapper [here](http://lpsolve.sourceforge.net/5.5/,Python.htm#Install_the_lpsolve_driver). I cannot find  in the windows installer the command line executable mentioned in the documentation that could be executed with mps files.
 * [Joptimize](http://www.joptimizer.com/linearProgramming.html) implemented in Java. Appache licence
@@ -283,7 +276,8 @@ generate random problems with the matlab code available [here](https://github.co
 
 [3] Stephen Boyd *Distributed Optimization and Statistical Learning via the Alternating Direction Method of Multipliers*  Foundations and Trends in Machine Learning 2010
 
-[4] Yu G Evtushenko, A I Golikov, and N Mollaverdy. *AugmentedbLagrangian method for large-scale linear programming problems* Optimization Method and Software 2005.
+[4] Yu G Evtushenko, A I Golikov, and N Mollaverdy. *Augmented
+Lagrangian method for large-scale linear programming problems* Optimization Method and Software 2005.
 
 [5] Alternating Direction Method of Multipliers for Linear Programming. He Bingsheng and Yuan Xiaoming. 2015. Paper [here](http://www.optimization-online.org/DB_FILE/2015/06/4951.pdf) 
 

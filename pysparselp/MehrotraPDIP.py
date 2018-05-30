@@ -9,7 +9,7 @@ from scipy import sparse
 from numpy.linalg import norm
 #from scikits.sparse.cholmod import cholesky
 #import scikits.sparse.cholmod 
-from xorshift import xorshift
+from pysparselp.xorshift import xorshift
 
 def initialPoint(A,b,c):
     
@@ -74,10 +74,10 @@ def newtonDirection(Rb, Rc, Rxs, A, m, n, x, s, lu, errorCheck=0):
     ds = -(Rxs+s*dx)/x;
     
     if errorCheck == 1:
-        print 'error = %6.2e'%(norm(A.T*dy + ds + Rc)+ norm(A*dx + Rb) + norm(s*dx + x*ds + Rxs)),
-        print '\t + err_d = %6.2e'%(norm(A.T*dy + ds + Rc)),
-        print '\t + err_p = %6.2e'%(norm(A*dx + Rb)),
-        print '\t + err_gap = %6.2e\n'%(norm(s*dx + x*ds + Rxs)),
+        print ('error = %6.2e'%(norm(A.T*dy + ds + Rc)+ norm(A*dx + Rb) + norm(s*dx + x*ds + Rxs)),)
+        print ('\t + err_d = %6.2e'%(norm(A.T*dy + ds + Rc)),)
+        print ('\t + err_p = %6.2e'%(norm(A*dx + Rb)),)
+        print ('\t + err_gap = %6.2e\n'%(norm(s*dx + x*ds + Rxs)),)
       
     return dx, dy, ds, lu
     

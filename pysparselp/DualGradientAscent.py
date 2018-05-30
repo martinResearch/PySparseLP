@@ -131,7 +131,9 @@ def DualGradientAscent(x,LP,nbmaxiter=1000,callbackFunc=None,y_eq=None,y_ineq=No
 	
 	prevE=eval(y_eq,y_ineq)
 	if prevE==-np.inf:
+
 		print ('initial dual point not feasible, you could bound all variables')
+
 		c_bar,x=getOptimX(y_eq,y_ineq)
 		return x, y_eq,y_ineq
 	for iter in range(nbmaxiter):

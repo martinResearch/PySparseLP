@@ -35,6 +35,7 @@ import copy
 
 
 try:
+
 	import propagateConstraints as cythonPropagateConstraints
 	propagateConstraints_installed=True
 except:
@@ -69,7 +70,9 @@ def check_constraints(i,x_r,mask,Acsr,Acsc,b_lower,b_upper):
 #@profile	
 def propagateConstraints(list_changed_var,x_l,x_u,Acsr,Acsc,b_lower,b_upper,back_ops,nb_iter=1000,use_cython=True):
 	# may have similarities with the tightening method in http://www.davi.ws/doc/gondzio94presolve.pdf
+
 	if propagateConstraints_installed and use_cython:
+
 		#return cython_tools.propagateConstraints(list_changed_var,x_l,x_u,Acsr,Acsc,b_lower,b_upper,back_ops,nb_iter=nb_iter)
 		return cythonPropagateConstraints.propagateConstraints(list_changed_var,x_l,x_u,\
 		        Acsc.indices,\
@@ -161,7 +164,9 @@ def revert(back_ops,x_l,x_u):
 	
 	
 #@profile	
+
 def greedy_round(x,LP,callbackFunc=None,maxiter=np.inf,order=None,fixed=None,displayFunc=None):
+
 	#save_arguments('greedy_round_test')
 	if False:
 		import pickle
@@ -215,8 +220,10 @@ def greedy_round(x,LP,callbackFunc=None,maxiter=np.inf,order=None,fixed=None,dis
 	niter=0
 	while depth<x.size :
 		niter+=1
+
 		if niter>maxiter:
 			break
+
 		#callbackFunc(0,x_l,0,0,0,0,0)
 		#print depth
 		
@@ -302,8 +309,10 @@ def greedy_round(x,LP,callbackFunc=None,maxiter=np.inf,order=None,fixed=None,dis
 	#callbackFunc(0,np.maximum(x_r.astype(np.float),0),0,0,0,0,0)
 	valid=propagateConstraints(np.arange(A.shape[1]),x_l, x_u, A_csr, A_csc, b_l, b_u,[])
 	#assert(valid)
+
 	print ('backtracked %d times'%nb_backtrack)
 	print ('energy after rounding =%f'%np.sum(x_r*LP.costsvector))
+
 	return x_r,valid
 
 

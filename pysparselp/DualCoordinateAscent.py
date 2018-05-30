@@ -32,9 +32,11 @@ import numpy as np
 import time
 import scipy.sparse
 import scipy.ndimage
+
 from pysparselp.DualGradientAscent import exactDualLineSearch
 import matplotlib.pyplot as plt
 from pysparselp.constraintPropagation import greedy_round
+
 
 def DualCoordinateAscent(x,LP,nbmaxiter=20,callbackFunc=None,y_eq=None,y_ineq=None,max_time=None):
 	"""Method from 'An algorigthm for large scale 0-1 integer 
@@ -84,7 +86,9 @@ def DualCoordinateAscent(x,LP,nbmaxiter=20,callbackFunc=None,y_eq=None,y_ineq=No
 		elif tiemethod=='center':
 			x[c_bar==0]=0.5*(LP2.lowerbounds+LP2.upperbounds)[c_bar==0]
 		else:
+
 			print ('unkown tie method %s'%tiemethod)
+
 			raise
 		
 		#x[(c_bar==0) & (LP2.costsvector>0)]=LP2.lowerbounds[(c_bar==0) & (LP2.costsvector>0)]
@@ -129,7 +133,9 @@ def DualCoordinateAscent(x,LP,nbmaxiter=20,callbackFunc=None,y_eq=None,y_ineq=No
 	# when incrementing y[i]
 	#
 	E=eval(y_eq,y_ineq)
+
 	print ('iter %d energy %f'%(0 ,E))
+
 	c_bar,x=getOptimX(y_eq, y_ineq)
 	direction=np.zeros(y_ineq.shape)
 	
@@ -172,14 +178,18 @@ def DualCoordinateAscent(x,LP,nbmaxiter=20,callbackFunc=None,y_eq=None,y_ineq=No
 		c_bar=LP2.costsvector+y_eq*LP2.Aequalities+y_ineq*LP2.Ainequalities
 		nE=eval(y_eq,y_ineq)	
 		if nE<E:
+
 			print ('not expected')
+
 			
 		E=nE;
 		
 		c_bar,x=getOptimX(y_eq, y_ineq)
 		grad_y_ineq=LP2.Ainequalities*x-LP2.B_upper
 		grad_y_ineq[y_ineq<=0]=np.maximum(grad_y_ineq[y_ineq<=0], 0)# 		
+
 		print (np.mean(grad_y_ineq!=0)	)
+
 		for i in np.nonzero(grad_y_ineq)[0]:
 			if i%100==0:
 				elapsed= (time.clock() - start)	
@@ -219,7 +229,9 @@ def DualCoordinateAscent(x,LP,nbmaxiter=20,callbackFunc=None,y_eq=None,y_ineq=No
 		
 		nE=eval(y_eq,y_ineq)	
 		if nE<E:
+
 			print ('not expected')
+
 			
 					
 		c_bar,x=getOptimX(y_eq, y_ineq,tiemethod='center')
@@ -237,6 +249,7 @@ def DualCoordinateAscent(x,LP,nbmaxiter=20,callbackFunc=None,y_eq=None,y_ineq=No
 		sum_violation= np.sum(np.maximum(LP2.Ainequalities*x-LP2.B_upper,0))+np.sum(np.abs(LP2.Aequalities*x-LP2.Bequalities))
 		elapsed= (time.clock() - start)	
 
+
 		print ('iter %d time %3.1f dual energy %f, primal %f max violation %f sum_violation %f'%(iter,elapsed ,nE,uE,max_violation,sum_violation))
 		if max_violation==0:
 			
@@ -249,6 +262,7 @@ def DualCoordinateAscent(x,LP,nbmaxiter=20,callbackFunc=None,y_eq=None,y_ineq=No
 				print ('not expected')
 			if nE<E+1e-10:
 				print ('will not find better solution , stop' )
+
 				break				
 		
 		E=nE;
@@ -262,7 +276,9 @@ def DualCoordinateAscent(x,LP,nbmaxiter=20,callbackFunc=None,y_eq=None,y_ineq=No
 			y_ineq=np.maximum(y_ineq, 0)		
 			#y_ineq=y_ineq+*0.1	
 			#y_ineq=np.maximum(y_ineq, 0)
+
 			print ('iter %d energy %f'%(iter ,eval(y_eq,y_ineq)))
+
 		
 		if (not max_time is None) and elapsed>max_time:
 			break			

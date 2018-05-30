@@ -31,9 +31,11 @@ import numpy as np
 import time
 import scipy.sparse
 import scipy.ndimage
+
 from pysparselp.tools import preconditionConstraints,convertToStandardFormWithBounds  ,chrono,check_decrease
 #from pysparselp.gaussSiedel import boundedGaussSeidelClass
 from pysparselp.conjugateGradientLinearSolver import conjgrad
+
 
 #import  scikits.sparse.cholmod
 #@profile		
@@ -258,8 +260,10 @@ def LP_admm2(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_ineq=0.7,nb_ite
 		
 
 		
+
 		print ('cholesky factorization took '+str(ch.toc())+ ' seconds')
 		print ('the sparsity ratio between the cholesky decomposition of M and M is '+str(Chol.L().nnz/float(M.nnz)))
+
 		nb_cg_iter=1
 	elif useCholesky2:	
 		print ("using UMFPACK_STRATEGY_SYMMETRIC through PySparse")

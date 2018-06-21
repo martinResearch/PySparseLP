@@ -102,10 +102,7 @@ def run():
 	
 	colors=['r','g','b']
 	
-	for k in range(3):
-		plt.plot(x[classes==k,0],x[classes==k,1],'.',color=colors[k])
-		
-		
+
 	l1svm=L1SVM()
 	l1svm.setData(x,classes)
 	l1svm.train()

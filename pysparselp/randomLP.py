@@ -69,7 +69,7 @@ if __name__ == "__main__":
     costScipy=scipySol.dot(LP2.costsvector.T)
     maxv=LP2.maxConstraintViolation(scipySol)
     if maxv>1e-8:
-        print 'not expected'
+        print ('not expected')
         raise
     
     groundTruth=scipySol
@@ -87,7 +87,7 @@ if __name__ == "__main__":
         axarr[2].semilogy(LP2.opttime_curve,np.maximum(LP2.pobj_curve-costScipy,1e-18))
         axarr[0].legend()
         plt.show()
-    print 'done'   
+    print ('done' )  
     
     
     

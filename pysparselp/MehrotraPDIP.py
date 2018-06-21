@@ -59,7 +59,7 @@ def newtonDirection(Rb, Rc, Rxs, A, m, n, x, s, lu, errorCheck=0):
     if useLu:
         if (lu is None)  :
             lu = sparse.linalg.splu(B.tocsc())
-            # wikipedia says it uses Mehrotra cholesky by the matrix i'm getting is not definite positive
+            # wikipedia says it uses Mehrotra cholesky but the matrix i'm getting is not definite positive
             # scikits.sparse.cholmod.cholesky fails without a warning 
     
         sol=lu.solve(rhs)

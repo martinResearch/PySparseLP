@@ -32,12 +32,12 @@ def run():
 	indices=LP.addVariablesArray(Cost.shape,0,1, Cost)
 	addBipartiteContraint(LP,indices)
 	s=LP.solve(method='Mehrotra',nb_iter=60000,max_time=20)[0]
-	print LP.costsvector.dot(s)
+	print (LP.costsvector.dot(s))
 	s=LP.solve(method='DualCoordinateAscent',nb_iter=60000,max_time=40)[0]
 	s=LP.solve(method='ChambollePockPPD',nb_iter=60000,max_time=10)[0]
 	x=s[indices]
 	print(np.round(x*1000)/1000)
-	print 'done'
+	print ('done')
 	
 if __name__ == "__main__":
 	run()

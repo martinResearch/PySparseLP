@@ -68,7 +68,7 @@ class L1SVM(SparseLP):
 		
 	def train(self,method='Mehrotra'):
 		
-		sol1,elapsed=self.solve(method=method,force_integer=False,getTiming=True,nb_iter=1000000,max_time=20,plotSolution=None)
+		sol1,elapsed=self.solve(method=method,getTiming=True,nb_iter=1000000,max_time=20,plotSolution=None)
 		self.weights=sol1[self.weightsIndices]
 		marges=sol1[self.epsilonsIndices]
 		self.activeSet=np.nonzero(marges>1e-3)[0]
@@ -121,7 +121,7 @@ def run():
 	plt.axis('off')
 	plt.ioff()
 	plt.show()
-	print 'done'	
+	print ('done')	
 
 
 

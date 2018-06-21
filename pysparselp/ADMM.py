@@ -33,7 +33,7 @@ import scipy.sparse
 import scipy.ndimage
 
 from pysparselp.tools import preconditionConstraints,convertToStandardFormWithBounds  ,chrono,check_decrease
-#from pysparselp.gaussSiedel import boundedGaussSeidelClass
+from pysparselp.gaussSiedel import boundedGaussSeidelClass
 from pysparselp.conjugateGradientLinearSolver import conjgrad
 
 

@@ -48,6 +48,10 @@ def ChambollePockPPD(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,alpha=1,theta
 	start = time.clock() 				
 	elapsed=start
 	
+	if Aeq.shape[0]==0:
+		Aeq=None
+		beq=None
+	
 	if (not Aineq is None) and (not b_lower is None):
 		
 	

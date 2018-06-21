@@ -477,7 +477,7 @@ class SparseLP():
 		nbfree=np.sum(free)
 		Mchange=scipy.sparse.coo_matrix((np.ones((nbfree)),(idfree,np.arange(nbfree))),(self.nb_variables,nbfree))
 		shift=np.zeros((self.nb_variables))
-		shift[idfree]=self.lowerbounds[idfree]
+		shift[~free]=self.lowerbounds[~free]
 		
 		self.Bequalities= self.Bequalities-self.Aequalities*shift
 		if not self.B_lower is None:

@@ -33,7 +33,7 @@ import scipy.sparse
 import scipy.ndimage
 
 
-def ChambollePockPPD(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,alpha=1,theta=1,nb_iter=100,callbackFunc=None,max_time=None,save_problem=False):
+def ChambollePockPPD(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,alpha=1,theta=1,nb_iter=100,callbackFunc=None,max_time=None,save_problem=False,force_integer=False):
 	# method adapted from 
 	# Diagonal preconditioning for first order primal-dual algorithms in convex optimization 
 	# by Thomas Pack and Antonin Chambolle
@@ -94,7 +94,7 @@ def ChambollePockPPD(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,alpha=1,theta
 		# constructing the preconditioning diagonal matrices  
 		tmp=0
 		if not Aeq is None:
-			print "Aeq shape="+str(Aeq.shape)
+			print ("Aeq shape="+str(Aeq.shape))
 	
 			assert(scipy.sparse.issparse(Aeq))  
 			assert(Aeq.shape[1]==c.size)
@@ -105,7 +105,7 @@ def ChambollePockPPD(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,alpha=1,theta
 			tmp=tmp+SumAeq
 			#AeqT=Aeq.T
 		if not Aineq is None:     
-			print "Aineq shape="+str(Aineq.shape)
+			print ("Aineq shape="+str(Aineq.shape))
 			assert(scipy.sparse.issparse(Aineq))
 			assert(Aineq.shape[1]==c.size)
 			assert(Aineq.shape[0]==bineq.size)
@@ -238,8 +238,10 @@ def ChambollePockPPD(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,alpha=1,theta
 				energy1+=y_ineq.T.dot(Aineq*x-bineq)
 				energy2+=y_ineq.T.dot(Aineq*x4-bineq)
 				max_violated_inequality=np.max(r_ineq)
-
-			xrounded=np.round(x)
+			if force_integer:
+				xrounded=np.round(x)
+			else:
+				xrounded=x
 			energy_rounded=c.dot(xrounded)
 			if not Aeq is None:
 				max_violated_equality_rounded=np.max(np.abs(Aeq*xrounded-beq))
@@ -247,18 +249,18 @@ def ChambollePockPPD(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,alpha=1,theta
 				max_violated_equality_rounded=0
 			max_violated_inequality=np.max(Aineq*xrounded-bineq)	
 			if max_violated_equality_rounded==0 and max_violated_inequality<=0:
-				print '##########   found feasible solution with energy'+str(energy_rounded)
+				print ('##########   found feasible solution with energy'+str(energy_rounded))
 				if energy_rounded<best_integer_solution_energy:
 					best_integer_solution_energy=energy_rounded
 					best_integer_solution=xrounded
 				
 
-			print 'iter'+str(i)+": energy1= "+str(energy1) + " energy2="+str(energy2)+ ' elaspsed '+str(elapsed)+' second'+\
+			print ('iter'+str(i)+": energy1= "+str(energy1) + " energy2="+str(energy2)+ ' elaspsed '+str(elapsed)+' second'+\
 				  ' max violated inequality:'+str(max_violated_inequality)+\
 				  ' max violated equality:'+str(max_violated_equality)+\
 				  ' x3 has ' + str(100*np.mean(x3==0))+' % of zeros '+\
 				  'diff x3 has '+ str(100*np.mean(diff_x3==0))+' % of zeros '+\
-				  'mean_iter_period='+str(mean_iter_priod)
+				  'mean_iter_period='+str(mean_iter_priod))
 				#'y_eq has '+str(100 * np.mean(y_eq==0))+' % of zeros '+\
 		#    'y_ineq has '+str(100 * np.mean(y_ineq==0))+' % of zeros '+\			 
 

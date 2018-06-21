@@ -119,7 +119,7 @@ class boundedGaussSeidelClass:
 		cdef double v,l,u
 		cdef unsigned int i,j
 		cdef unsigned int n=b.size
-		if order==None:
+		if order is None:
 			order=np.arange(n,dtype=np.uint32)
 		else: 
 			assert(order.dtype==np.uint32)

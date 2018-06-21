@@ -15,7 +15,6 @@ import scipy.ndimage
 import scipy.signal
 import sys
 from scipy.misc import imsave
-import  maxflow #pip install PyMaxflow 
 import os
 
 
@@ -52,7 +51,7 @@ def clusterize(points,k,nCenterCandidates):
 	
 	s=LP.solve(method='ADMM',nb_iter=60000,max_time=20)[0]
 	
-	print LP.costsvector.dot(s)
+	print (LP.costsvector.dot(s))
 	x=s[labeling]
 	print(np.round(x*1000)/1000)
 	
@@ -71,7 +70,7 @@ def run():
 	centers=prng.randn(k,2)
 	gtlabel=np.floor(prng.rand(n)*5).astype(np.int)
 	points=0.4*prng.randn(n,2)+centers[gtlabel,:]
-	
+	plt.ion()
 	plt.plot(points[:,0],points[:,1],'.')	
 	plt.draw()	
 	plt.show()	
@@ -86,7 +85,7 @@ def run():
 	plt.show()
 	plt.axis('equal')
 	plt.tight_layout()
-	print 'done'
+	print ('done')
 	
 if __name__ == "__main__":
 	run()

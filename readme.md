@@ -23,8 +23,26 @@ This project also provides:
 * a simple constraint propagation method with back-tracking to find feasible integer values solutions (for integer programs)
 * interfaces to other solvers (SCS, ECOS, CVXOPT) through CVXPY
 * interfaces to other LP and MILP solvers ([CLP](https://www.coin-or.org/download/binary/Clp/),[CBC](https://www.coin-or.org/download/binary/Cbc/),[MIPLC](http://mipcl-cpp.appspot.com/),[GLPSOL](https://sourceforge.net/projects/winglpk/),[QSOPT](http://www.math.uwaterloo.ca/~bico/qsopt/downloads/downloads.htm)) using mps text files
+
+# Build and test status
+
+[![Build status](https://ci.appveyor.com/api/projects/status/wcasscudbjr40ql3?svg=true)](https://ci.appveyor.com/project/martinResearch/pysparselp)
+
 # Installation
 
+## Windows
+
+If you have python 3.6 64 bits you can instal it using the recompiled wheel 
+
+* download the wheel [here](https://ci.appveyor.com/project/martinResearch/pysparselp/build/artifacts)
+* move in the download folder
+* execute th epip command: 
+	
+		pip install pysparselp-0.1-cp36-cp36m-win_amd64.whl
+ 
+Other wise compile from source
+
+## Compiling from source
 
 using pip
 

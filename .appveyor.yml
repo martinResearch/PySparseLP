@@ -31,6 +31,7 @@ install:
   - conda install -y -q numpy
   - conda install -y -q matplotlib
   - conda install -y -q scipy
+  - conda install -y -q sklearn
   - pip install PyMaxFlow
 
 build_script:

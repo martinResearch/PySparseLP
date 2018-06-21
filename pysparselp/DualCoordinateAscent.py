@@ -239,18 +239,18 @@ def DualCoordinateAscent(x,LP,nbmaxiter=20,callbackFunc=None,y_eq=None,y_ineq=No
 		elapsed= (time.clock() - start)	
 		if (iter%nb_iter_plot)==0:
 			print ('iter %d time %3.1f dual energy %f, primal %f max violation %f sum_violation %f'%(iter,elapsed ,nE,uE,max_violation,sum_violation))
-		if max_violation==0:
+			if max_violation==0:
 			
 			
-			print ('found feasible primal solution with energy %f'%uE)
-			if uE==nE:
-				print ('found optimal solution , stop' )
-				break
-			if uE<nE:
-				print ('not expected')
-			if nE<E+1e-10:
-				print ('will not find better solution , stop' )
-				break				
+				print ('found feasible primal solution with energy %f'%uE)
+				if uE==nE:
+					print ('found optimal solution , stop' )
+					break
+				if uE<nE:
+					print ('not expected')
+				if nE<E+1e-10:
+					print ('will not find better solution , stop' )
+					break				
 		
 		E=nE;
 		if not callbackFunc is None:

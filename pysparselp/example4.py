@@ -32,8 +32,8 @@ def run():
 	addBipartiteContraint(LP,indices)
 	s=LP.solve(method='Mehrotra',nb_iter=60000,max_time=20)[0]
 	print (LP.costsvector.dot(s))
-	s=LP.solve(method='DualCoordinateAscent',nb_iter=60000,max_time=40)[0]
-	s=LP.solve(method='ChambollePockPPD',nb_iter=60000,max_time=10)[0]
+	s=LP.solve(method='DualCoordinateAscent',nb_iter=60000,max_time=40,nb_iter_plot=500)[0]
+	s=LP.solve(method='ChambollePockPPD',nb_iter=60000,max_time=10,nb_iter_plot=500)[0]
 	x=s[indices]
 	print(np.round(x*1000)/1000)
 	print ('done')

@@ -48,7 +48,7 @@ def clusterize(points,k,nCenterCandidates):
 	
 	
 	
-	s=LP.solve(method='ADMM',nb_iter=60000,max_time=20)[0]
+	s=LP.solve(method='ADMM',nb_iter=60000,max_time=20,nb_iter_plot=500)[0]
 	
 	print (LP.costsvector.dot(s))
 	x=s[labeling]

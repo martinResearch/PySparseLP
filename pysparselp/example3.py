@@ -101,7 +101,7 @@ def run():
 	classes=np.argmax(scores,axis=1)
 	
 	colors=['r','g','b']
-	plt.ion()
+	
 	for k in range(3):
 		plt.plot(x[classes==k,0],x[classes==k,1],'.',color=colors[k])
 		
@@ -113,14 +113,13 @@ def run():
 	
 	colors=['r','g','b']
 	plt.figure()
-	plt.ion()
+
 	for k in range(3):
 		plt.plot(x[classes2==k,0],x[classes2==k,1],'.',color=colors[k])
 	plt.plot(x[l1svm.activeSet,0],x[l1svm.activeSet,1],'ko',markersize=10,fillstyle='none' )
 	plt.axis('equal')
-	plt.axis('off')
-	plt.ioff()
-	plt.show()
+
+
 	print ('done')	
 
 

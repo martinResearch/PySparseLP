@@ -27,9 +27,13 @@ install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PYTHON%\\Library\\bin;%PYTHON%\\Lib\\site-packages;%PATH%;"
   - conda install -y -q wheel
   - conda install -y -q setuptools
-build_script:
   - conda install -y -q Cython=0.25.2
   - conda install -y -q numpy
+  - conda install -y -q matplotlib
+  - conda install -y -q scipy
+
+build_script:
+
   - python setup.py build_ext -i
   - python setup.py install
   - python setup.py bdist_wheel

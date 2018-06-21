@@ -14,7 +14,6 @@ import scipy.sparse
 import scipy.ndimage
 import scipy.signal
 import sys
-from scipy.misc import imsave
 import os
 
 

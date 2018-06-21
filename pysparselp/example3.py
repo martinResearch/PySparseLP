@@ -10,7 +10,7 @@ import scipy.sparse
 import scipy.ndimage
 import scipy.signal
 import sys
-from scipy.misc import imsave
+
 
 class L1SVM(SparseLP):
 	""" L1-regularized multi-class Support	Vector Machine  J. Zhu, S. Rosset, T. Hastie, and R. Tibshirani. 1-norm support vector machines. NIPS, 2004."""

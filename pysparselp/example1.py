@@ -10,7 +10,7 @@ import scipy.sparse
 import scipy.ndimage
 import scipy.signal
 import sys
-from scipy.misc import imsave
+#from imageio import imwrite
 import  maxflow #pip install PyMaxflow
 import os
 
@@ -105,8 +105,8 @@ def run():
 	ax_curves2.set_ylabel('distanceToGroundTruth')	
 	def plotSolution(niter,solution,is_active_variable=None):
 		image=solution[indices]
-		#imsave('ter%05d.png'%niter,solution[indices][:,:,0])
-		#imsave('diff_iter%05d.png'%niter,np.diff(solution[indices][:,:,0]))
+		#imwrite('ter%05d.png'%niter,solution[indices][:,:,0])
+		#imwrite('diff_iter%05d.png'%niter,np.diff(solution[indices][:,:,0]))
 		im.set_array(image[:,:,0])
 		#im.set_array(np.diff(image[:,:,0]))
 		plt.draw()

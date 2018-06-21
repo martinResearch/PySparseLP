@@ -82,6 +82,7 @@ def run():
     
     ##############################################################################
     # Plot the results
+    plt.ion()
     plt.figure(figsize=(10, 6))
     plt.subplots_adjust(left=0.02, right=0.98)
     

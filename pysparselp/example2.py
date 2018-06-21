@@ -110,7 +110,7 @@ def run():
         plt.xticks(())
         plt.yticks(())
         plt.title('%s precision' % name)
-        ax.set_axis_bgcolor('.7')
+        ax.set_facecolor ('.7')
         
     plt.tight_layout()
     

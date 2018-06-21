@@ -954,7 +954,7 @@ class SparseLP():
 		elif method=="ChambollePockPPDAS"	:	
 			LPreduced=copy.deepcopy(self)
 			Mchange1,shift1=LPreduced.removeFixedVariables()# removed fixed variables
-			def thisBack(niter,solution,energy1,energy2,duration,max_violated_equality,max_violated_inequality):
+			def thisBack(niter,solution,energy1,energy2,duration,max_violated_equality,max_violated_inequality,is_active_variable):
 				solution=Mchange1*solution-shift1
 				callbackFunc(niter, solution,energy1,energy2,duration,max_violated_equality,max_violated_inequality )
 						

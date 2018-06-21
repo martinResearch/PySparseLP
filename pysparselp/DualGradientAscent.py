@@ -63,7 +63,7 @@ def exactDualLineSearch(direction,A,b,c_bar,upperbounds,lowerbounds):
 
 
 	
-def DualGradientAscent(x,LP,nbmaxiter=1000,callbackFunc=None,y_eq=None,y_ineq=None,max_time=None):
+def DualGradientAscent(x,LP,nbmaxiter=1000,callbackFunc=None,y_eq=None,y_ineq=None,max_time=None,nb_iter_plot=1):
 	"""gradient ascent in the dual
 	"""
 	start=time.clock()
@@ -131,9 +131,7 @@ def DualGradientAscent(x,LP,nbmaxiter=1000,callbackFunc=None,y_eq=None,y_ineq=No
 	
 	prevE=eval(y_eq,y_ineq)
 	if prevE==-np.inf:
-
 		print ('initial dual point not feasible, you could bound all variables')
-
 		c_bar,x=getOptimX(y_eq,y_ineq)
 		return x, y_eq,y_ineq
 	for iter in range(nbmaxiter):
@@ -143,7 +141,8 @@ def DualGradientAscent(x,LP,nbmaxiter=1000,callbackFunc=None,y_eq=None,y_ineq=No
 			max_violation=np.max(LP2.Ainequalities*x-LP2.B_upper)
 			sum_violation=np.sum(np.maximum(LP2.Ainequalities*x-LP2.B_upper,0))
 			np.sum(np.maximum(LP2.Ainequalities*x-LP2.B_upper,0))
-			print ('iter %d energy %f max violation %f sum_violation %f'%(iter ,prevE,max_violation,sum_violation)	)	
+			if (iter%nb_iter_plot)==0:
+				print ('iter %d energy %f max violation %f sum_violation %f'%(iter ,prevE,max_violation,sum_violation)	)	
 	
 			grad_y_ineq=LP2.Ainequalities*x-LP2.B_upper
 		
@@ -180,8 +179,8 @@ def DualGradientAscent(x,LP,nbmaxiter=1000,callbackFunc=None,y_eq=None,y_ineq=No
 			y_eq_prev=y_eq.copy()		
 			max_violation=np.max(np.abs(LP2.Aequalities*x-LP2.Bequalities))
 			sum_violation=np.sum(np.abs(LP2.Aequalities*x-LP2.Bequalities))
-			
-			print ('iter %d energy %f max violation %f sum_violation %f'%(iter ,prevE,max_violation,sum_violation)	)	
+			if (iter%nb_iter_plot)==0:
+				print ('iter %d energy %f max violation %f sum_violation %f'%(iter ,prevE,max_violation,sum_violation)	)	
 		
 			grad_y_eq=LP2.Aequalities*x-LP2.Bequalities
 			

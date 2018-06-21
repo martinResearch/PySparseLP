@@ -925,7 +925,7 @@ class SparseLP():
 			x=LP_admm(self.costsvector,Aeq,Beq,\
 				Aineq,self.B_lower,self.B_upper,\
 				self.lowerbounds,self.upperbounds,nb_iter=nb_iter,\
-			        x0=x0,callbackFunc=callbackFunc,max_time=max_time)
+			        x0=x0,callbackFunc=callbackFunc,max_time=max_time,nb_iter_plot=nb_iter_plot)
 			
 		elif method=='ADMMBlocks':		
 			x=LP_admmBlockDecomposition(self.costsvector,Aeq,Beq,\
@@ -937,7 +937,7 @@ class SparseLP():
 			x=LP_admm2(self.costsvector,Aeq,Beq,\
 		                  Aineq,self.B_lower,self.B_upper,\
 		                  self.lowerbounds,self.upperbounds,nb_iter=nb_iter,\
-		                  x0=x0,callbackFunc=callbackFunc,max_time=max_time)		
+		                  x0=x0,callbackFunc=callbackFunc,max_time=max_time,nb_iter_plot=nb_iter_plot	)	
 
 		elif method=="ChambollePockPPD"	:	
 			LPreduced=copy.deepcopy(self)
@@ -949,7 +949,7 @@ class SparseLP():
 			x,best_integer_solution=ChambollePockPPD(LPreduced.costsvector,LPreduced.Aequalities,LPreduced.Bequalities,\
 			                                        LPreduced.Ainequalities,LPreduced.B_lower,LPreduced.B_upper,\
 			                   LPreduced.lowerbounds,LPreduced.upperbounds,\
-			                   	x0=None,alpha=1,theta=1,nb_iter=nb_iter,callbackFunc=thisBack,max_time=max_time,save_problem=False)
+			                   	x0=None,alpha=1,theta=1,nb_iter=nb_iter,callbackFunc=thisBack,max_time=max_time,save_problem=False,nb_iter_plot=nb_iter_plot)
 			x=Mchange1*x-shift1	
 		elif method=="ChambollePockPPDAS"	:	
 			LPreduced=copy.deepcopy(self)
@@ -968,7 +968,7 @@ class SparseLP():
 		
 			
 		elif method=="DualGradientAscent":
-			x, y_eq,y_ineq=DualGradientAscent(x=x0,LP=self,nbmaxiter=nb_iter,callbackFunc=callbackFunc,y_eq=None,y_ineq=None,max_time=max_time)
+			x, y_eq,y_ineq=DualGradientAscent(x=x0,LP=self,nbmaxiter=nb_iter,callbackFunc=callbackFunc,y_eq=None,y_ineq=None,max_time=max_time,nb_iter_plot=nb_iter_plot)
 		elif method=="DualCoordinateAscent":
 			LPreduced=copy.deepcopy(self)
 			Mchange1,shift1=LPreduced.removeFixedVariables()# removed fixed variables
@@ -976,7 +976,7 @@ class SparseLP():
 				solution=Mchange1*solution-shift1
 				callbackFunc(niter, solution,energy1,energy2,duration,max_violated_equality,max_violated_inequality )
 						
-			x, y_eq,y_ineq=DualCoordinateAscent(x=None,LP=LPreduced,nbmaxiter=nb_iter,callbackFunc=thisBack,y_eq=None,y_ineq=None,max_time=max_time)
+			x, y_eq,y_ineq=DualCoordinateAscent(x=None,LP=LPreduced,nbmaxiter=nb_iter,callbackFunc=thisBack,y_eq=None,y_ineq=None,max_time=max_time,nb_iter_plot=nb_iter_plot)
 			x=Mchange1*x-shift1
 
 		else: 

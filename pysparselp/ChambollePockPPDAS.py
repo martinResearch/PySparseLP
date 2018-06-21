@@ -330,10 +330,11 @@ def ChambollePockPPDAS(LP,x0=None,\
 			subAineqCSC2=subAineqCSR.tocsc()[:,list_active_variables]
 			
 			subAineqCSR2=subAineqCSC2.tocsr()
-			r_ineq_active=r_ineq[list_active_inequality_constraints]				
-			print ('%d active variables %d  active inequalities %d active equalities'%(np.sum(is_active_variable),np.sum(is_active_inequality_constraint),nb_active_equality_constraints))
+			r_ineq_active=r_ineq[list_active_inequality_constraints]
+			if i%nb_iter_plot==0:
+				print ('%d active variables %d  active inequalities %d active equalities'%(np.sum(is_active_variable),np.sum(is_active_inequality_constraint),nb_active_equality_constraints))
 			
-			print ('%f percent of active variables %f percent active inequalities %f percent active equalities'%(100*np.mean(is_active_variable),100*np.mean(is_active_inequality_constraint),percent_active_equality_constraint))
+				print ('%f percent of active variables %f percent active inequalities %f percent active equalities'%(100*np.mean(is_active_variable),100*np.mean(is_active_inequality_constraint),percent_active_equality_constraint))
 			x_active=x[list_active_variables]
 			x3_active=x3[list_active_variables]
 			lb_active=lb[list_active_variables]

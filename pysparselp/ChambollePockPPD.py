@@ -33,7 +33,7 @@ import scipy.sparse
 import scipy.ndimage
 
 
-def ChambollePockPPD(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,alpha=1,theta=1,nb_iter=100,callbackFunc=None,max_time=None,save_problem=False,force_integer=False):
+def ChambollePockPPD(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,alpha=1,theta=1,nb_iter=100,callbackFunc=None,max_time=None,save_problem=False,force_integer=False,nb_iter_plot=10):
 	# method adapted from 
 	# Diagonal preconditioning for first order primal-dual algorithms in convex optimization 
 	# by Thomas Pack and Antonin Chambolle
@@ -45,6 +45,7 @@ def ChambollePockPPD(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,alpha=1,theta
 	# b_lower<= Aineq*x<= b_upper               assert(scipy.sparse.issparse(Aineq))
 
 	# lb<=x<=ub
+	
 	start = time.clock() 				
 	elapsed=start
 	
@@ -212,7 +213,7 @@ def ChambollePockPPD(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,alpha=1,theta
 			else:
 				r_ineq=(Aineq*x3)-bineq		
 		
-		if i%10==0:
+		if i%nb_iter_plot==0:
 			prev_elapsed=elapsed
 			elapsed= (time.clock() - start)	
 			mean_iter_priod=(elapsed-prev_elapsed)/10

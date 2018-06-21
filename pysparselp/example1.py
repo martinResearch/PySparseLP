@@ -127,7 +127,8 @@ def run():
 	
 	solving_methods2=[m for m in solving_methods if (not m in ['ScipyLinProg'])] # remove ScipyLinProg because it is too slow
 	for i,method in enumerate(solving_methods2):
-		sol1,elapsed=LP.solve(method=method,getTiming=True,nb_iter=1000000,max_time=15,groundTruth=groundTruth,groundTruthIndices=indices,plotSolution=None)
+		print('\n\n----------------------------------------------------------\nSolving LP using %s'%method)
+		sol1,elapsed=LP.solve(method=method,getTiming=True,nb_iter=1000000,max_time=15,groundTruth=groundTruth,groundTruthIndices=indices,plotSolution=None,nb_iter_plot=500)
 		ax_curves1.semilogy(LP.itrn_curve,LP.distanceToGroundTruth,label=method)
 		ax_curves2.semilogy(LP.opttime_curve,LP.distanceToGroundTruth,label=method)
 		ax_curves1.legend()

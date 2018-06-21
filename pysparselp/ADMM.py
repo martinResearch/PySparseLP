@@ -31,15 +31,13 @@ import numpy as np
 import time
 import scipy.sparse
 import scipy.ndimage
-
 from pysparselp.tools import preconditionConstraints,convertToStandardFormWithBounds  ,chrono,check_decrease
 from pysparselp.gaussSiedel import boundedGaussSeidelClass
 from pysparselp.conjugateGradientLinearSolver import conjgrad
 
-
 #import  scikits.sparse.cholmod
 #@profile		
-def LP_admm(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_eq=2,gamma_ineq=3,nb_iter=100,callbackFunc=None,max_time=None,use_preconditionning=True):
+def LP_admm(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_eq=2,gamma_ineq=3,nb_iter=100,callbackFunc=None,max_time=None,use_preconditionning=True,nb_iter_plot=10):
 	# simple ADMM method with an approximate resolution of a quadratic subproblem using conjugate gradient
 	useLU=False
 	useCholesky=False
@@ -170,7 +168,7 @@ def LP_admm(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_eq=2,gamma_ineq=
 			print ('unkown method')
 			raise
 		
-		if i%10==0:
+		if i%nb_iter_plot==0:
 			prev_elapsed=elapsed
 			elapsed= (time.clock() - start)	
 			if elapsed>max_time:
@@ -180,9 +178,10 @@ def LP_admm(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_eq=2,gamma_ineq=
 			r=Aeq*x-beq
 			max_violated_equality=np.max(np.abs(r))
 			max_violated_inequality=max(0,-np.min(x))
+			
 			print ('iter'+str(i)+": energy1= "+str(energy1) + " energy2="+str(energy2)+ ' elaspsed '+str(elapsed)+' second'+\
-			      ' max violated inequality:'+str(max_violated_inequality)+\
-			      ' max violated equality:'+str(max_violated_equality))
+		              ' max violated inequality:'+str(max_violated_inequality)+\
+		              ' max violated equality:'+str(max_violated_equality))
 			if not callbackFunc is None:
 				callbackFunc(i, x[0:n],energy1,energy2,elapsed,max_violated_equality,max_violated_inequality)			
 			
@@ -208,7 +207,7 @@ def LP_admm(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_eq=2,gamma_ineq=
 
 
 
-def LP_admm2(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_ineq=0.7,nb_iter=100,callbackFunc=None,max_time=None,use_preconditionning=False):
+def LP_admm2(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_ineq=0.7,nb_iter=100,callbackFunc=None,max_time=None,use_preconditionning=False,nb_iter_plot=10):
 	# simple ADMM method with an approximate resolution of a quadratic subproblem using conjugate gradient
 	# inspiredy by Boyd's paper on ADMM
 	# Distributed Optimization and Statistical Learning via the Alternating Direction Method of Multipliers
@@ -260,10 +259,8 @@ def LP_admm2(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_ineq=0.7,nb_ite
 		
 
 		
-
 		print ('cholesky factorization took '+str(ch.toc())+ ' seconds')
 		print ('the sparsity ratio between the cholesky decomposition of M and M is '+str(Chol.L().nnz/float(M.nnz)))
-
 		nb_cg_iter=1
 	elif useCholesky2:	
 		print ("using UMFPACK_STRATEGY_SYMMETRIC through PySparse")
@@ -330,7 +327,7 @@ def LP_admm2(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_ineq=0.7,nb_ite
 		xp=x.copy()+lambda_ineq/gamma_ineq
 		xp=np.maximum(xp,lb)
 		xp=np.minimum(xp,ub)
-		if i%10==0:
+		if i%nb_iter_plot==0:
 			prev_elapsed=elapsed
 			elapsed= (time.clock() - start)	
 			if not(max_time is None) and elapsed>max_time:

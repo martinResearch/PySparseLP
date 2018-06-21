@@ -249,7 +249,7 @@ def preconditionConstraints(A,b,b2=None,alpha=2):
 		bp=Sigma*b
 	else:
 		bp=None
-	if b2==None:
+	if b2 is None:
 
 		return Ap,bp
 	else:

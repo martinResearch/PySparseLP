@@ -96,7 +96,7 @@ def MPSParser(f,fsol=None):
             continue  
         
         if line.startswith('RANGES'):
-            print 'not coded yet'
+            print ('not coded yet')
             raise
         
 
@@ -105,7 +105,7 @@ def MPSParser(f,fsol=None):
             if t[0]=='N':
                 costname=t[1]
                
-            if rows.has_key(t[1]):
+            if t[1] in rows:
                 raise
             r=dict()
             rows[t[1]]=r
@@ -131,7 +131,7 @@ def MPSParser(f,fsol=None):
                 
         if partparsing=='COLUMNS':
             
-            if variables.has_key(t[1]):
+            if t[1] in variables:
                
                 var=variables[t[1]]
             else:
@@ -145,7 +145,7 @@ def MPSParser(f,fsol=None):
                 nb_var+=1
                 
             j=var['id']
-            for k in range((len(t)-2)/2):
+            for k in range(int((len(t)-2)/2)):
                 if t[2*k+2]=='':
                     break
                 r=rows[t[2*k+2]]
@@ -168,7 +168,7 @@ def MPSParser(f,fsol=None):
                 
         if partparsing=='RHS':  
             
-            for k in range((len(t)-2)/2):
+            for k in range(int((len(t)-2)/2)):
                 if t[2*k+2]=='':
                     break
                 r=rows[t[2*k+2]]
@@ -204,7 +204,7 @@ def MPSParser(f,fsol=None):
             elif t[0]=='PL':  
                 var['UP']=np.inf  
             elif t[0]=='BV' or t[0]=='LI' or t[0]=='UI':  
-                print 'integer constraints ignored'
+                print ('integer constraints ignored')
                 raise
         
     costVector =np.array([vidtovar[i]['cost'] for i in range(nb_var)])
@@ -331,7 +331,7 @@ def getProblem(pbname):
 
     fLP=open(filenameLP, 'r')
     if not filenameSol is None:
-        fSol=open(filenameSol, 'rb')
+        fSol=open(filenameSol, 'r')
     else:
         fSol=None
         

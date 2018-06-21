@@ -34,7 +34,7 @@ def test_netlib(pbname):
 	LP.addEqualityConstraintsSparse(LPDict['Aeq'],LPDict['Beq'])
 	LP.addConstraintsSparse(LPDict['Aineq'],LPDict['B_lower'],LPDict['B_upper'])
 	
-	print "solving"
+	print ("solving")
 
 	f, axarr = plt.subplots(3, sharex=True)
 	axarr[0].set_title('mean absolute distance to solution')
@@ -51,17 +51,17 @@ def test_netlib(pbname):
 	costGT=LP.costsvector.dot(groundTruth.T)
 
 	
-	scipySol,elapsed=LP2.solve(method='ScipyLinProg',force_integer=False,getTiming=True,nb_iter=100000)
+	scipySol,elapsed=LP2.solve(method='ScipyLinProg',getTiming=True,nb_iter=100000)
 	max_time=3
 	method='ScipyLinProg'
 	if not scipySol is np.nan:
 		sol1=scipySol
 		maxv=LP.maxConstraintViolation(sol1)
 		# compute the primal and dual infeasibility 
-		print '%s found  solution with maxviolation=%2.2e and  cost %f (vs %f for ground truth) in %f seconds'%(method,maxv,LP.costsvector.dot(sol1),costGT,elapsed)
-		print 'mean of absolute distance to gt solution =%f'%np.mean(np.abs(groundTruth-sol1))	
+		print ('%s found  solution with maxviolation=%2.2e and  cost %f (vs %f for ground truth) in %f seconds'%(method,maxv,LP.costsvector.dot(sol1),costGT,elapsed))
+		print ('mean of absolute distance to gt solution =%f'%np.mean(np.abs(groundTruth-sol1)))	
 	else:
-		print 'scipy simplex did not find a solution'
+		print ('scipy simplex did not find a solution')
 		
 
 	# testing our methods
@@ -69,13 +69,13 @@ def test_netlib(pbname):
 	solving_methods2=[m for m in solving_methods if (not m in ['ScipyLinProg','DualCoordinateAscent'])]
 	#solving_methods2=['Mehrotra']
 	for i,method in enumerate(solving_methods2):
-		sol1,elapsed=LP.solve(method=method,force_integer=False,getTiming=True,nb_iter=1000000,max_time=max_time,groundTruth=groundTruth,plotSolution=None)
+		sol1,elapsed=LP.solve(method=method,getTiming=True,nb_iter=1000000,max_time=max_time,groundTruth=groundTruth,plotSolution=None)
 		axarr[0].semilogy(LP.opttime_curve,LP.distanceToGroundTruth,label=method)
 		axarr[1].semilogy(LP.opttime_curve,LP.max_violated_constraint)
 		axarr[2].semilogy(LP.opttime_curve,LP.pobj_curve-costGT)
 		axarr[0].legend()
 		plt.show()
-	print 'done'
+	print ('done')
 	
 if __name__ == "__main__":
 	

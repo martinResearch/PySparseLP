@@ -42,11 +42,13 @@ build_script:
   - python -m pip list
   
 test_script:
-  - python pysparselp/example2.py
-  - python pysparselp/example1.py
   - python pysparselp/example3.py
   - python pysparselp/example4.py
   - python pysparselp/example5.py
+  - python pysparselp/example2.py
+  - python pysparselp/example1.py
+
+
 
   
 after_test:

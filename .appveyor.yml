@@ -36,11 +36,11 @@ build_script:
   - python -m pip list
   
 test_script:
-  - python examples1.py
-  - python examples2.py
-  - python examples3.py
-  - python examples4.py
-  - python examples5.py
+  - python pysparselp/examples1.py
+  - python pysparselp/examples2.py
+  - python pysparselp/examples3.py
+  - python pysparselp/examples4.py
+  - python pysparselp/examples5.py
   
 after_test:
   # If tests are successful, create binary packages for the project.

@@ -213,18 +213,18 @@ def LP_admm2(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_ineq=0.7,nb_ite
 	# Distributed Optimization and Statistical Learning via the Alternating Direction Method of Multipliers
 	# the difference with LP_admm is that the linear quality constrainrs Aeq*beq are enforced during the resolution 
 	# of the subproblem instead of beeing enforced through multipliers 
-	useLU=False
-	useAMG=False
-	useCholesky=False
-	useCholesky2=False
+	useLU = True
+	useAMG = False
+	useCholesky = False
+	useCholesky2 = False
 	
 	alpha=1.95#relaxation paramter should be in [0,2] , 1.95 seems to be often a good choice
 	
 	start = time.clock() 	
-	elapsed=start	
-	n=c.size
-	if x0==None:
-		x0=np.zeros(c.size)
+	elapsed = start	
+	n = c.size
+	if x0 == None:
+		x0 = np.zeros(c.size)
 	
 	if use_preconditionning:
 		if not Aeq is None:
@@ -232,30 +232,30 @@ def LP_admm2(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0=None,gamma_ineq=0.7,nb_ite
 		if not Aineq is None:# it seem important to do this preconditionning before converting to standard form
 			Aineq,b_lower,b_upper=preconditionConstraints(Aineq,b_lower,b_upper,alpha=2)
 			
-	c,Aeq,beq,lb,ub,x0=	convertToStandardFormWithBounds(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0)
-	x=x0
+	c,Aeq,beq,lb,ub,x0 = convertToStandardFormWithBounds(c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub,x0)
+	x = x0
 	
-	xp=x.copy()
-	xp=np.maximum(xp,lb)
-	xp=np.minimum(xp,ub)	
-	ch=chrono()
+	xp = x.copy()
+	xp = np.maximum(xp,lb)
+	xp = np.minimum(xp,ub)	
+	ch = chrono()
 	#trying some preconditioning
 	if use_preconditionning:
-		Aeq,beq=preconditionConstraints(Aeq,beq,alpha=2)
+		Aeq,beq = preconditionConstraints(Aeq,beq,alpha=2)
 
 
-	M=scipy.sparse.vstack((scipy.sparse.hstack((gamma_ineq*scipy.sparse.eye(Aeq.shape[1],Aeq.shape[1]),Aeq.T)),\
+	M = scipy.sparse.vstack((scipy.sparse.hstack((gamma_ineq*scipy.sparse.eye(Aeq.shape[1],Aeq.shape[1]),Aeq.T)),\
                                scipy.sparse.hstack((Aeq, scipy.sparse.csc_matrix((Aeq.shape[0], Aeq.shape[0])))))).tocsr()
 	if useLU:
 		luM = scipy.sparse.linalg.splu(M.tocsc()) 
-		nb_cg_iter=1
+		nb_cg_iter = 1
 	elif useCholesky:
 		
 		ch.tic()
 		# not that it will work only if M is positive definite which nto garantied the way it is constructed
 		# unfortunaletly i'm not able to atch the error to fall back on LU decomposition if
 		# chelesky fails because the matric is not positive definite
-		Chol=     scikits.sparse.cholmod.cholesky(M.tocsc(),mode='simplicial')
+		Chol=     scikits.sparse.cholmod.cholesky(M.tocsc(),mode='simplicial')#pip install scikit-sparse, but difficult to compile in windows
 		
 
 		

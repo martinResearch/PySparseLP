@@ -69,7 +69,8 @@ def test_netlib(pbname):
 	solving_methods2=[m for m in solving_methods if (not m in ['ScipyLinProg','DualCoordinateAscent'])]
 	#solving_methods2=['Mehrotra']
 	for i,method in enumerate(solving_methods2):
-		sol1,elapsed=LP.solve(method=method,getTiming=True,nb_iter=1000000,max_time=max_time,groundTruth=groundTruth,plotSolution=None)
+		print('\n\n----------------------------------------------------------\nSolving LP using %s'%method)
+		sol1,elapsed=LP.solve(method=method,getTiming=True,nb_iter=1000000,max_time=max_time,groundTruth=groundTruth,plotSolution=None,nb_iter_plot=500)
 		axarr[0].semilogy(LP.opttime_curve,LP.distanceToGroundTruth,label=method)
 		axarr[1].semilogy(LP.opttime_curve,LP.max_violated_constraint)
 		axarr[2].semilogy(LP.opttime_curve,LP.pobj_curve-costGT)

@@ -86,7 +86,9 @@ def DualCoordinateAscent(x,LP,nbmaxiter=20,callbackFunc=None,y_eq=None,y_ineq=No
 		else:
 			print ('unkown tie method %s'%tiemethod)
 			raise
-		
+		x[(c_bar==0)& np.isinf(LP2.lowerbounds)]=LP2.upperbounds[(c_bar==0)& np.isinf(LP2.lowerbounds)]
+		x[(c_bar==0)& np.isinf(LP2.upperbounds)]=LP2.lowerbounds[(c_bar==0)& np.isinf(LP2.upperbounds)]
+		x[(c_bar==0)& np.isinf(LP2.upperbounds)& np.isinf(LP2.lowerbounds)]=0# could take any arbitrary value
 		#x[(c_bar==0) & (LP2.costsvector>0)]=LP2.lowerbounds[(c_bar==0) & (LP2.costsvector>0)]
 		#x[(c_bar==0) & (LP2.costsvector<0)]=LP2.upperbounds[(c_bar==0) & (LP2.costsvector<0)]
 		return c_bar,x	
@@ -234,10 +236,11 @@ def DualCoordinateAscent(x,LP,nbmaxiter=20,callbackFunc=None,y_eq=None,y_ineq=No
 		
 		uE=LP2.costsvector.dot(x)
 		
-		max_violation=max(np.max(LP2.Ainequalities*x-LP2.B_upper),np.max(np.sum(np.abs(LP2.Aequalities*x-LP2.Bequalities))))
-		sum_violation= np.sum(np.maximum(LP2.Ainequalities*x-LP2.B_upper,0))+np.sum(np.abs(LP2.Aequalities*x-LP2.Bequalities))
+
 		elapsed= (time.clock() - start)	
 		if (iter%nb_iter_plot)==0:
+			max_violation=max(np.max(LP2.Ainequalities*x-LP2.B_upper),np.max(np.sum(np.abs(LP2.Aequalities*x-LP2.Bequalities))))
+			sum_violation= np.sum(np.maximum(LP2.Ainequalities*x-LP2.B_upper,0))+np.sum(np.abs(LP2.Aequalities*x-LP2.Bequalities))			
 			print ('iter %d time %3.1f dual energy %f, primal %f max violation %f sum_violation %f'%(iter,elapsed ,nE,uE,max_violation,sum_violation))
 			if max_violation==0:
 			
@@ -266,6 +269,9 @@ def DualCoordinateAscent(x,LP,nbmaxiter=20,callbackFunc=None,y_eq=None,y_ineq=No
 			print ('iter %d energy %f'%(iter ,eval(y_eq,y_ineq)))
 		
 		if (not max_time is None) and elapsed>max_time:
-			break			
+			break	
+	max_violation=max(np.max(LP2.Ainequalities*x-LP2.B_upper),np.max(np.sum(np.abs(LP2.Aequalities*x-LP2.Bequalities))))
+	sum_violation= np.sum(np.maximum(LP2.Ainequalities*x-LP2.B_upper,0))+np.sum(np.abs(LP2.Aequalities*x-LP2.Bequalities))			
+	print ('iter %d time %3.1f dual energy %f, primal %f max violation %f sum_violation %f'%(iter,elapsed ,nE,uE,max_violation,sum_violation))		
 	return x, y_eq,y_ineq
 

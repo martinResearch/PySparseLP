@@ -233,6 +233,10 @@ generate random problems with the matlab code available [here](https://github.co
 
 # TODO
 
+* improve the API by removing redundant functions
+
+* translate in pyton the ADMM mthods from https://github.com/nmchaves/admm-for-lp
+
 * add automatic constraint checking if we provide a feasible solution from the begining. It will help debugging constraints.
 
 * document the active-set *hack* for the chambole pock method (in ChambollePockPPDAS.py).

@@ -32,15 +32,15 @@ This project also provides:
 
 ## Windows
 
-If you have python 3.6 64 bits you can instal it using the recompiled wheel 
+If you have python 3.6 64 bits you can install it using the precompiled wheel 
 
 * download the wheel [here](https://ci.appveyor.com/project/martinResearch/pysparselp/build/artifacts)
 * move in the download folder
-* execute th epip command: 
+* execute the pip command: 
 	
 		pip install pysparselp-0.1-cp36-cp36m-win_amd64.whl
  
-Other wise compile from source
+Otherwise compile from source
 
 ## Compiling from source
 

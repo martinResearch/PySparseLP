@@ -4,14 +4,14 @@ This project provides several python codes to solve very sparse linear programs 
 
 ![latex:\large $\mathbf{x}^*=argmin_\mathbf{x} \mathbf{c}^t\mathbf{x} ~  s.t.~  A_e\mathbf{x}=\mathbf{b_e},A_i\mathbf{x}\leq\mathbf{ b_i}, \mathbf{l}\leq \mathbf{x}\leq \mathbf{u}$ ](https://rawgithub.com/martinResearch/PySparseLP/master/images/LPproblem.svg)
 
-The different algorithms that are implemented are documented in the [pdf](./latex/SparseLinearProgramming.pdf): 
+The different algorithms that are implemented here are documented in the [pdf](./latex/SparseLinearProgramming.pdf): 
 
 * a dual coordinate ascent method with exact line search 
 * a dual gradient ascent with exact line search
 * a first order primal-dual algorithm adapted from chambolle pock [2]
 * three methods based on the Alternating Direction Method of Multipliers [3]
 
-**Note** These methods are not meant to be efficient methods to solve generic linear programs. They are simple and quite naive methods i coded while exploring different possibilities to solve very large sparse linear programs that are too big to be solved using the standard simplex method or standard interior point methods.
+**Note** These methods are not meant to be efficient methods to solve generic linear programs. They are simple and quite naive methods I  implemented while exploring different possibilities to solve very large sparse linear programs that are too big to be solved using the standard simplex method or standard interior point methods.
 
 
 This project also provides: 
@@ -62,8 +62,8 @@ If you want to be able to run exernal solvers using mps files in windows then do
 
 # LP problem modeling
 
-A python class *SparseLP* (in SparseLP.py) that makes it easier to build linear programs from python. Easy to derive a specialize class from it and add specialized constraints creations methods (see pott penalization in example 1). 
-SparseLP is written in python and relies an scipy sparse matrices and numpy matrices to represent constraint internally and for its interface. There is no variables class binding to c++ objects. This makes it potentially easier to interface with the python scientific stack. 
+A python class *SparseLP* (in SparseLP.py) that makes it easier to build linear programs from python. It is easy to derive a specialize class from it and add specialized constraints creations methods (see pott penalization in example 1). 
+SparseLP is written in python and relies on scipy sparse matrices and numpy matrices to represent constraint internally and for its interface. There is no variables class binding to c++ objects. This makes it potentially easier to interface with the python scientific stack. 
 
 Creating variables
 
@@ -74,14 +74,13 @@ Various method to add constraints:
 
  * *addLinearConstraintRow*. Add a single row at the bottom of the constraints matrix. cols and vals should be vector of same size (flatten internaly if arrays)
  * *addLinearConstraintRows(self,cols,vals,lowerbounds=None,upperbounds=0)*. Add a set of rows that all have the same number of non zero values at the bottom of the constraints matrix. cols and vals should be 2D arrays of same size with each row cols[i,:] with vals[i,:] defines a different a sparse constraint to add.
-penalization (this is done under the hood by creating planlized slack variables)
+
  * *addLinearConstraintsWithBroadcasting*
  * *addInequalities*. Take a list of tuples (indices,coefs) that are tiled if needed to get the right size. More flexible than addSoftLinearConstraintRows as coefs can heterogenous across tuples (scalar or vector)
  * *addConstraintsSparse*. Just append the sparse matrix under the existing constraints matrix and add bound and costs in 
   bound vectors.
- * *addSoftLinearConstraintRows*. same as addLinearConstraintRows but constraints are soft constraint with some  
+ * *addSoftLinearConstraintRows*. same as addLinearConstraintRows but constraints are soft constraint with some violation penalization (this is done under the hood by creating penalized slack variables)
  
-
 other main methods 
 
  * *setCostsVariables*
@@ -94,21 +93,21 @@ We can check the feasibility of a solution using
 * maxConstraintViolation
 * checkSolution
 
-Often the sparse constraints matrix can naturally be decomposed vertically into blocks. The ADMM Block method aims to exploiting that decompistion. Blocks are defined using the method *startConstraintName* and *endConstraintName*. This allow to inform the ADMM block method where to split the constraints matrix.
+Often the sparse constraints matrix can naturally be decomposed vertically into blocks. The ADMM Block method aims to exploiting that decomposition. Blocks are defined using the methods *startConstraintName* and *endConstraintName*. This allow to inform the ADMM block method where to split the constraints matrix.
  
 ## Debuging
 
-Building a LP problem is often error prone. If we can generate  a valid solution before constructing the LP we can check constraints are not violated as we add them to the LP using checkSolution. This make it easier to pin down where constraint is causing problem. We could add a debug glag so that that check is automatic as we ad constraints.
+Building a LP problem is often error prone. If we can generate  a valid solution before constructing the LP we can check constraints are not violated as we add them to the LP using checkSolution. This make it easier to pin down which constraint is causing problem. We could add a debug flag so that this check is automatic done as we add constraints.
 
 
 ## Other modeling tools
-Other libraries provide modellign tools ([CyLP](http://mpy.github.io/CyLPdoc/index.html) , [GLOP](https://developers.google.com/optimization/lp/glop))
+Other libraries provide modeling tools ([CyLP](http://mpy.github.io/CyLPdoc/index.html) , [GLOP](https://developers.google.com/optimization/lp/glop))
 But they have some limitations:
 
 * CyLP: use operator oveloading so that we can use notation that are close to mathetmatical notations. But variables are defined as 1D vectors
-* GLOP:
+* GLOP
 
-the approach i have taken is a bit lower level than this tools  but provide more control and flexibility on how to define constraints and the objective function. It is made easy by using numpyarrays  to store variables indices.
+the approach I have taken is lower level than this tools but provide more control and flexibility on how to define the constraints and the objective function. It is made easy by using numpy arrays to store variables indices.
 
 # Examples
 

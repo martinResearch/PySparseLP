@@ -215,7 +215,7 @@ we relax it into using
 ## Netlib LP problems 
 
 We have an interface to easily test the solvers on netlib problems from [netlib](http://www.netlib.org/lp/data/). 
-The uncompressed files are downloaded from [here](ftp://ftp.numerical.rl.ac.uk/pub/cuter/netlib/). 
+The uncompressed files are downloaded from [here](ftp://ftp.numerical.rl.ac.uk/pub/cuter/netlib). 
 In order to monitor convergence rates, the exact solutions of these problems are found [here](http://www.zib.de/koch/perplex/data/netlib/txt/)
 
 	from pysparselp.test_netlib import test_netlib

@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import copy
-from SparseLP import SparseLP,solving_methods
+from pysparselp.SparseLP import SparseLP,solving_methods
 import numpy as np
 import matplotlib.pyplot as plt
 import time

@@ -360,6 +360,7 @@ class SparseLP():
 			self.upperbounds[indices.ravel()]=upperbounds.ravel()   
 
 	def getVariablesIndices(self,name):
+		"""Returns the set of indices corresponding to the variables that have have been added with the given name when using addVariablesArray"""
 		return  self.variables_dict[name]
 
 
@@ -425,6 +426,13 @@ class SparseLP():
 			print('you have twice the same variable in the constraint')
 			raise
 		#iptr=vals.shape[1]*np.arange(cols.shape[0]+1)
+		assert(np.ndim(cols)==2)
+		if (np.ndim(vals)==1):
+			vals=np.tile(np.array(vals), (cols.shape[0],1))
+		else:
+			assert(np.ndim(vals)==2)
+		assert(np.all(vals.shape==cols.shape))
+		
 		valsFlat=vals.ravel()
 		colsFlat=cols.ravel()
 		keep=~(vals==0)
@@ -816,6 +824,17 @@ class SparseLP():
 		
 		
 		
+		def scipySimplexCallBack(solution,**kwargs):								
+			if not groundTruth is None:
+					self.distanceToGroundTruth.append(np.mean(np.abs(groundTruth-solution[groundTruthIndices])))
+					self.distanceToGroundTruthAfterRounding.append(np.mean(np.abs(groundTruth-np.round(solution[groundTruthIndices]))))
+			duration=time.clock() -start
+			self.opttime_curve.append(duration)
+			self.pobj_curve.append(self.costsvector.dot(solution['x'].T))
+			maxv=self.maxConstraintViolation(solution['x'])
+			self.max_violated_constraint.append(maxv)
+			
+
 		def simplexCallBack(solution,**kwargs):								
 			if not groundTruth is None:
 					self.distanceToGroundTruth.append(np.mean(np.abs(groundTruth-solution[groundTruthIndices])))
@@ -824,9 +843,7 @@ class SparseLP():
 			self.opttime_curve.append(duration)
 			self.pobj_curve.append(self.costsvector.dot(solution.T))
 			maxv=self.maxConstraintViolation(solution)
-			self.max_violated_constraint.append(maxv)
-			
-		
+			self.max_violated_constraint.append(maxv)		
 		
 		def callbackFunc(niter,solution,energy1,energy2,duration,max_violated_equality,max_violated_inequality,is_active_variable=None):
 			if not groundTruth is None:
@@ -864,7 +881,7 @@ class SparseLP():
 			sol=scipy.optimize.linprog(self.costsvector, A_ub=Aineq.toarray(), b_ub=self.B_upper, A_eq=A_eq, b_eq=b_eq, 
 			                        bounds=np.column_stack((self.lowerbounds,self.upperbounds)), 
 			                        method='simplex',
-			                        callback=simplexCallBack)
+			                        callback=scipySimplexCallBack)
 			#if not sol['success']:
 				#raise BaseException(sol['message'])
 			x=sol['x']

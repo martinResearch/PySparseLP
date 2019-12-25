@@ -58,6 +58,7 @@ def exactDualLineSearch(direction,A,b,c_bar,upperbounds,lowerbounds):
 		t=np.random.rand()
 		alpha_optim=t*alphas[order[k]]+(1-t)*alphas[order[k-1]]#maybe courld draw and random valu in the interval ? 
 	else:
+				
 		alpha_optim=alphas[order[k-1]]	
 	return alpha_optim
 
@@ -183,14 +184,14 @@ def DualGradientAscent(x,LP,nbmaxiter=1000,callbackFunc=None,y_eq=None,y_ineq=No
 				print ('iter %d energy %f max violation %f sum_violation %f'%(iter ,prevE,max_violation,sum_violation)	)	
 		
 			grad_y_eq=LP2.Aequalities*x-LP2.Bequalities
-			
-			grad_y_eq_sparse=scipy.sparse.csr.csr_matrix(grad_y_eq)
-			coef_length_eq=exactDualLineSearch(grad_y_eq_sparse,LP2.Aequalities,LP2.Bequalities,c_bar,LP2.upperbounds,LP2.lowerbounds)
-			#y_ineq_prev+coef_length*grad_y>0
-			assert(coef_length_eq>=0)
-			
-			y_eq=y_eq_prev+coef_length_eq*grad_y_eq	
-					
+			if np.any(grad_y_eq):
+				grad_y_eq_sparse=scipy.sparse.csr.csr_matrix(grad_y_eq)
+				coef_length_eq=exactDualLineSearch(grad_y_eq_sparse,LP2.Aequalities,LP2.Bequalities,c_bar,LP2.upperbounds,LP2.lowerbounds)
+				#y_ineq_prev+coef_length*grad_y>0
+				assert(coef_length_eq>=0)
+				
+				y_eq=y_eq_prev+coef_length_eq*grad_y_eq	
+						
 		
 		#while True:
 			#y_ineq=y_ineq_prev+coef_length*grad_y		

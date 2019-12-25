@@ -173,8 +173,9 @@ def DualCoordinateAscent(x,LP,nbmaxiter=20,callbackFunc=None,y_eq=None,y_ineq=No
 				
 		
 		c_bar=LP2.costsvector+y_eq*LP2.Aequalities+y_ineq*LP2.Ainequalities
-		nE=eval(y_eq,y_ineq)	
-		if nE<E:
+		nE=eval(y_eq,y_ineq)
+		eps=1e-10
+		if nE+eps<E:
 			print ('not expected')
 			
 		E=nE;
@@ -221,7 +222,7 @@ def DualCoordinateAscent(x,LP,nbmaxiter=20,callbackFunc=None,y_eq=None,y_ineq=No
 		
 		
 		nE=eval(y_eq,y_ineq)	
-		if nE<E:
+		if nE+eps<E:
 			print ('not expected')
 			
 					

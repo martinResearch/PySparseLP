@@ -1,2 +1,15 @@
 *.bak
-pysparselp/*.bak
+*.py.bak
+*.pyc
+*.pyd
+pysparselp\*.pyc
+pysparselp\gaussSiedel.cpp
+pysparselp\gaussSiedel.html
+pysparselp\propagateConstraints.html
+pysparselp\propagateConstraints.cpp
+
+build/**/*.bak
+build/**/*.lib
+build/**/*.exp
+build/**/*.pyd
+build/**/*.obj

@@ -1,8 +1,10 @@
 # Goal
 
-This project provides several python codes to solve very sparse linear programs of the form
+This project provides several python codes to solve linear programs of the form
 
 ![latex:\large $\mathbf{x}^*=argmin_\mathbf{x} \mathbf{c}^t\mathbf{x} ~  s.t.~  A_e\mathbf{x}=\mathbf{b_e},A_i\mathbf{x}\leq\mathbf{ b_i}, \mathbf{l}\leq \mathbf{x}\leq \mathbf{u}$ ](https://rawgithub.com/martinResearch/PySparseLP/master/images/LPproblem.svg)
+
+where Ae and Ai are sparse matrices
 
 The different algorithms that are implemented here are documented in the [pdf](./latex/SparseLinearProgramming.pdf): 
 
@@ -81,13 +83,13 @@ Various method to add constraints:
  * *addInequalities*. Take a list of tuples (indices,coefs) that are tiled if needed to get the right size. More flexible than addSoftLinearConstraintRows as coefs can heterogenous across tuples (scalar or vector)
  * *addConstraintsSparse*. Just append the sparse matrix under the existing constraints matrix and add bound and costs in 
   bound vectors.
- * *addSoftLinearConstraintRows*. same as addLinearConstraintRows but constraints are soft constraint with some violation penalization (this is done under the hood by creating penalized slack variables)
+ * *addSoftConstraints*. same as addLinearConstraintRows but constraints are soft constraints. This is done by adding slack variables that are penalized.  
  
 other main methods 
 
- * *setCostsVariables*
- * *getVariablesIndices*
- * *solve(method,getTiming,nb\_iter,max\_time,groundTruth,groundTruthIndices,plotSolution)*
+ * *setCostsVariables*. Overwrite the cost associated with the 
+ * *getVariablesIndices(self,name)*. Returns the set of indices corresponding to the variables that have have been added with the given *name* when using *addVariablesArray*.
+ * *solve(method,getTiming,nb\_iter,max\_time,groundTruth,groundTruthIndices,plotSolution)*. Solve the linear program and return the vector of all the variables values.
  * *saveMPS*
 
 We can check the feasibility of a solution using
@@ -141,7 +143,7 @@ Instead of using a simple Potts model we could try to solve the LP from [5]
 The Sparse Inverse Covariance Estimation aims to find
 a sparse matrix B that approximate the inverse of Covariance matrix A.
 
-![latex:\large $B^*=argmin_B \|B\|_1~ s.t.~ \|A\times B-I_d\|_\infty\leq \lambda$](https://rawgithub.com/martinResearch/PySparseLP/master/images/sparse_inv_covariance.svg)
+![latex:\large $B^*=argmin_B \|B\|_1~ s.t.~ \|A B-I_d\|_\infty\leq \lambda$](https://rawgithub.com/martinResearch/PySparseLP/master/images/sparse_inv_covariance.svg)
 
 let denote f the fonction that take a matrix as an input an yield the vector of coefficient of the matrix in row-major order.
 let b=f(B) we have f(AB)=Mb with M=kron(A,I_d)
@@ -236,7 +238,7 @@ generate random problems with the matlab code available [here](https://github.co
 
 * improve the API by removing redundant functions
 
-* translate in pyton the ADMM mthods from https://github.com/nmchaves/admm-for-lp
+* translate from Matlab ot pyton the ADMM methods from [https://github.com/nmchaves/admm-for-lp](https://github.com/nmchaves/admm-for-lp)
 
 * add automatic constraint checking if we provide a feasible solution from the begining. It will help debugging constraints.
 
@@ -293,26 +295,26 @@ generate random problems with the matlab code available [here](https://github.co
 
 # References
 
-[1] Ian En-Hsu Yen, Kai Zhong, Cho-Jui Hsieh, Pradeep K Ravikumar, Inderjit S Dhillon *Sparse Linear Programming via Primal and Dual Augmented Coordinate Descent*, NIPS 2015
+[1] *Sparse Linear Programming via Primal and Dual Augmented Coordinate Descent* Ian En-Hsu Yen, Kai Zhong, Cho-Jui Hsieh, Pradeep K Ravikumar, Inderjit S Dhillon , NIPS 2015
 
-[2] T. Pock and A.Chambolle *Diagonal preconditioning for first order primal-dual algorithms in convex optimization* ICCV 2011
+[2] *Diagonal preconditioning for first order primal-dual algorithms in convex optimization* T. Pock and A.Chambolle  ICCV 2011
 
-[3] Stephen Boyd *Distributed Optimization and Statistical Learning via the Alternating Direction Method of Multipliers*  Foundations and Trends in Machine Learning 2010
+[3] *Distributed Optimization and Statistical Learning via the Alternating Direction Method of Multipliers* Stephen Boyd  Foundations and Trends in Machine Learning 2010
 
-[4] Yu G Evtushenko, A I Golikov, and N Mollaverdy. *Augmented
-Lagrangian method for large-scale linear programming problems* Optimization Method and Software 2005.
+[4] *Augmented
+Lagrangian method for large-scale linear programming problems* Yu G Evtushenko, A I Golikov, and N Mollaverdy. Optimization Method and Software 2005.
 
-[5] Alternating Direction Method of Multipliers for Linear Programming. He Bingsheng and Yuan Xiaoming. 2015. Paper [here](http://www.optimization-online.org/DB_FILE/2015/06/4951.pdf) 
+[5] *Alternating Direction Method of Multipliers for Linear Programming*. He Bingsheng and Yuan Xiaoming. 2015. Paper [here](http://www.optimization-online.org/DB_FILE/2015/06/4951.pdf) 
 
-[6] Local Linear Convergence of the Alternating Direction Method of Multipliers on Quadratic or Linear Programs. Daniel Boley. SIAM Journal on Optimization. 2013
+[6] *Local Linear Convergence of the Alternating Direction Method of Multipliers on Quadratic or Linear Programs*. Daniel Boley. SIAM Journal on Optimization. 2013
 
-[7] Multiblock ADMM Methods for Linear Programming. Nico Chaves, Junjie (Jason) Zhu. 2016. report and matlab code [here](https://github.com/nmchaves/admm-for-lp)
+[7] *Multiblock ADMM Methods for Linear Programming*. Nico Chaves, Junjie (Jason) Zhu. 2016. report and matlab code [here](https://github.com/nmchaves/admm-for-lp)
 
-[8] A New Alternating Direction Method for Linear Programming. Sinong Wang, Ness Shroff. NIPS 2017
+[8] *A New Alternating Direction Method for Linear Programming*. Sinong Wang, Ness Shroff. NIPS 2017
 paper [here](http://papers.nips.cc/paper/6746-a-new-alternating-direction-method-for-linear-programming.pdf)
 
-[9] Equivalence of Linear Programming and Basis Pursuit. paper [here](http://onlinelibrary.wiley.com/doi/10.1002/pamm.201510351/pdf)
+[9] *Equivalence of Linear Programming and Basis Pursuit*. paper [here](http://onlinelibrary.wiley.com/doi/10.1002/pamm.201510351/pdf)
 
-[10] Factoring nonnegative matrices with linear programs
+[10] *Factoring nonnegative matrices with linear programs*
 Victor Bittorf, Benjamin Recht, Christopher Re, Joel A. Tropp. 2012 
 paper [here](https://arxiv.org/abs/1206.1270)

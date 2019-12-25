@@ -9,7 +9,7 @@ from scipy import linalg
 from sklearn.datasets import make_sparse_spd_matrix
 from sklearn.covariance import GraphLassoCV, ledoit_wolf
 import matplotlib.pyplot as plt
-from SparseLP import SparseLP
+from pysparselp.SparseLP import SparseLP
 
 class SparseInvCov(SparseLP):
 

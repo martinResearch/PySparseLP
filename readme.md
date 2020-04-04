@@ -15,7 +15,6 @@ The different algorithms that are implemented here are documented in the [pdf](.
 
 **Note** These methods are not meant to be efficient methods to solve generic linear programs. They are simple and quite naive methods I  implemented while exploring different possibilities to solve very large sparse linear programs that are too big to be solved using the standard simplex method or standard interior point methods.
 
-
 This project also provides: 
 
 * a python implementation of Mehrotra's Predictor-Corrector Pimal-Dual Interior Point method.
@@ -34,9 +33,7 @@ This project also provides:
 
 ## Windows
 
-
 If you have python 3.6 64 bits you can install it using the precompiled python wheel 
-
 
 * download the wheel [here](https://ci.appveyor.com/project/martinResearch/pysparselp/build/artifacts)
 * move in the download folder
@@ -66,11 +63,10 @@ If you want to be able to run exernal solvers using mps files in windows then do
 
 # LP problem modeling
 
-A python class *SparseLP* (in SparseLP.py) that makes it easier to build linear programs from python. It is easy to derive a specialize class from it and add specialized constraints creations methods (see pott penalization in example 1). 
+This library provides a python class *SparseLP* (in SparseLP.py) that aims at making it easier to build linear programs from python. It is easy to derive a specialize class from it and add specialized constraints creations methods (see pott penalization in example 1). 
 SparseLP is written in python and relies on scipy sparse matrices and numpy matrices to represent constraint internally and for its interface. There is no variables class binding to c++ objects. This makes it potentially easier to interface with the python scientific stack. 
 
 Creating variables
-
 
  * *addVariablesArray(self,shape,lowerbounds,upperbounds,costs=0,name=None,isinteger=False)*
 
@@ -101,7 +97,7 @@ Often the sparse constraints matrix can naturally be decomposed vertically into 
  
 ## Debuging
 
-Building a LP problem is often error prone. If we can generate  a valid solution before constructing the LP we can check constraints are not violated as we add them to the LP using checkSolution. This make it easier to pin down which constraint is causing problem. We could add a debug flag so that this check is automatic done as we add constraints.
+Building a LP problem is often error prone. If we can generate a valid solution before constructing the LP we can check constraints are not violated as we add them to the LP using checkSolution. This make it easier to pin down which constraint is causing problem. We could add a debug flag so that this check is automatic done as we add constraints.
 
 
 ## Other modeling tools

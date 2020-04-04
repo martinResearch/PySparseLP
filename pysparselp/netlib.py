@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # -----------------------------------------------------------------------
-#Copyright © 2016 Martin de la Gorce <martin[dot]delagorce[hat]gmail[dot]com>
+# Copyright © 2016 Martin de la Gorce <martin[dot]delagorce[hat]gmail[dot]com>
 
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -24,9 +24,6 @@
 # -----------------------------------------------------------------------
 
 
-
-
-
 import numpy as np
 from scipy import sparse
 import gzip
@@ -34,55 +31,46 @@ import os
 import urllib
 from MPSparser import MPSParser
 
-            
+
 def getProblem(pbname):
-    thisfilepath=os.path.dirname(os.path.abspath(__file__))
-    
-    
-    filenameLP  =os.path.join(thisfilepath,'data','netlib',pbname.upper()+'.SIF')
-    filenameSol =os.path.join(thisfilepath,'data','perPlex',pbname.lower()+'.txt')
-    
+    thisfilepath = os.path.dirname(os.path.abspath(__file__))
+
+    filenameLP = os.path.join(thisfilepath, "data", "netlib", pbname.upper() + ".SIF")
+    filenameSol = os.path.join(thisfilepath, "data", "perPlex", pbname.lower() + ".txt")
+
     if not os.path.isfile(filenameLP):
-        urllib.urlretrieve ("ftp://ftp.numerical.rl.ac.uk/pub/cuter/netlib/%s.SIF"%pbname.upper(), filenameLP)	
+        urllib.urlretrieve(
+            "ftp://ftp.numerical.rl.ac.uk/pub/cuter/netlib/%s.SIF" % pbname.upper(),
+            filenameLP,
+        )
     if not os.path.isfile(filenameSol):
-        urllib.urlretrieve ("http://www.zib.de/koch/perplex/data/netlib/txt/%s.txt.gz"%pbname.lower(),filenameSol+'.gz')
-        fgz=gzip.open(filenameSol+'.gz')
-        f=open(filenameSol, 'w')
+        urllib.urlretrieve(
+            "http://www.zib.de/koch/perplex/data/netlib/txt/%s.txt.gz" % pbname.lower(),
+            filenameSol + ".gz",
+        )
+        fgz = gzip.open(filenameSol + ".gz")
+        f = open(filenameSol, "w")
         for l in fgz.readlines():
             f.write(l)
         f.close()
-    
-    
-    
+
     # netlib problems ftp://ftp.numerical.rl.ac.uk/pub/cuter/netlib.tar.gz
     # netlib exact solutions http://www.zib.de/koch/perplex/data/netlib/txt/
 
-    fLP=open(filenameLP, 'r')
+    fLP = open(filenameLP, "r")
     if not filenameSol is None:
-        fSol=open(filenameSol, 'r')
+        fSol = open(filenameSol, "r")
     else:
-        fSol=None
-        
-    
-    LPDict=MPSParser(fLP,fSol)
-    return   LPDict     
-           
-    
-    
-    
+        fSol = None
+
+    LPDict = MPSParser(fLP, fSol)
+    return LPDict
+
 
 if __name__ == "__main__":
-    
-    
-   
-    
-    filenameLP ='./data/netlib/AFIRO.SIF'
-    filenameSol='./data/perPlex/afiro.txt'
-    fLP=open(filenameLP, 'r') 
-    fsol=open(filenameSol, 'r') 
-    LP=MPSParser(fLP,fsol)
 
-         
-        
- 
-    
+    filenameLP = "./data/netlib/AFIRO.SIF"
+    filenameSol = "./data/perPlex/afiro.txt"
+    fLP = open(filenameLP, "r")
+    fsol = open(filenameSol, "r")
+    LP = MPSParser(fLP, fsol)

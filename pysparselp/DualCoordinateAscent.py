@@ -44,12 +44,12 @@ def DualCoordinateAscent(
     max_time=None,
     nb_iter_plot=1,
 ):
-    """Method from 'An algorigthm for large scale 0-1 integer 
-	programming with application to airline crew scheduling'
-	we generelized it to the case where A is not 0-1 and
-	the upper bounds can be greater than 1
-	did not generalize and code the approximation method
-	"""
+    """Method from 'An algorigthm for large scale 0-1 integer
+        programming with application to airline crew scheduling'
+        we generelized it to the case where A is not 0-1 and
+        the upper bounds can be greater than 1
+        did not generalize and code the approximation method
+        """
     np.random.seed(1)
     start = time.clock()
     # convert to slack form (augmented form)

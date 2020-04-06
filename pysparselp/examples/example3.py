@@ -1,19 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import time
-import copy
+
 from pysparselp.SparseLP import SparseLP, solving_methods
-import numpy as np
-import matplotlib.pyplot as plt
-import time
-import scipy.sparse
-import scipy.ndimage
-import scipy.signal
-import sys
 
 
 class L1SVM(SparseLP):
-    """ L1-regularized multi-class Support	Vector Machine  J. Zhu, S. Rosset, T. Hastie, and R. Tibshirani. 1-norm support vector machines. NIPS, 2004."""
+    """ L1-regularized multi-class Support	Vector Machine  J. Zhu, S. Rosset, T. Hastie, and R. Tibshirani. 1-norm support vector machines. NIPS, 2004.
+    """
 
     def addAbsPenalization(self, indices, coefpenalization):
 
@@ -22,7 +15,8 @@ class L1SVM(SparseLP):
         if np.isscalar(coefpenalization):
             assert coefpenalization > 0
             self.setCostsVariables(aux, np.ones(aux.shape) * coefpenalization)
-        else:  # allows a penalization that is different for each edge (could be dependent on an edge detector)
+        # allows a penalization that is different for each edge (could be dependent on an edge detector)
+        else:
             assert coefpenalization.shape == aux.shape
             assert np.min(coefpenalization) >= 0
             self.setCostsVariables(aux, np.ones(aux.shape) * coefpenalization)
@@ -76,8 +70,8 @@ class L1SVM(SparseLP):
         sol1, elapsed = self.solve(
             method=method,
             getTiming=True,
-            nb_iter=1000000,
-            max_time=20,
+            nb_iter=2000,
+            max_time=np.inf,
             plotSolution=None,
         )
         self.weights = sol1[self.weightsIndices]
@@ -92,10 +86,8 @@ class L1SVM(SparseLP):
         return classes
 
 
-def run():
-    plt.ion()
+def run(display=True):
 
-    nLabels = 1
     np.random.seed(1)
     nbClasses = 3
     nbExamples = 1000
@@ -113,24 +105,37 @@ def run():
 
     l1svm = L1SVM()
     l1svm.setData(x, classes)
-    l1svm.train()
-    classes2 = l1svm.classify(x)
+    percent_valid = {}
 
-    colors = ["r", "g", "b"]
-    plt.figure()
+    solving_methods.remove('Mehrotra')# too slow
+    solving_methods.remove('ScipyLinProg')
+    solving_methods.remove('DualGradientAscent')# need to debug
+    solving_methods.remove('DualCoordinateAscent')# need to debug
+ 
 
-    for k in range(3):
-        plt.plot(x[classes2 == k, 0], x[classes2 == k, 1], ".", color=colors[k])
-    plt.plot(
-        x[l1svm.activeSet, 0],
-        x[l1svm.activeSet, 1],
-        "ko",
-        markersize=10,
-        fillstyle="none",
-    )
-    plt.axis("equal")
+    for method in solving_methods:
+        l1svm.train(method=method)
+        classes2 = l1svm.classify(x)
+        percent_valid[method] = 100 * np.mean(classes == classes2)
 
-    print("done")
+    if display:
+        colors = ["r", "g", "b"]
+        plt.figure()
+
+        for k in range(3):
+            plt.plot(x[classes2 == k, 0], x[classes2 == k, 1], ".", color=colors[k])
+        plt.plot(
+            x[l1svm.activeSet, 0],
+            x[l1svm.activeSet, 1],
+            "ko",
+            markersize=10,
+            fillstyle="none",
+        )
+        plt.axis("equal")
+
+        print("done")
+        plt.show()
+    return percent_valid
 
 
 if __name__ == "__main__":

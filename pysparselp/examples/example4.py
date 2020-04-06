@@ -31,14 +31,20 @@ def run():
     LP = SparseLP()
     indices = LP.addVariablesArray(Cost.shape, 0, 1, Cost)
     addBipartiteContraint(LP, indices)
-    s = LP.solve(method="Mehrotra", nb_iter=60000, max_time=20)[0]
+
+    s = LP.solve(method="Mehrotra", nb_iter=7, max_time=np.inf)[0]
     print(LP.costsvector.dot(s))
+
     s = LP.solve(
-        method="DualCoordinateAscent", nb_iter=60000, max_time=40, nb_iter_plot=500
+        method="DualCoordinateAscent", nb_iter=2000, max_time=40, nb_iter_plot=500
     )[0]
+    print(LP.costsvector.dot(s))
+
     s = LP.solve(
-        method="ChambollePockPPD", nb_iter=60000, max_time=10, nb_iter_plot=500
+        method="ChambollePockPPD", nb_iter=2000, max_time=10, nb_iter_plot=500
     )[0]
+    print(LP.costsvector.dot(s))
+    
     x = s[indices]
     print(np.round(x * 1000) / 1000)
     print("done")

@@ -71,10 +71,11 @@ def DualGradientAscent(
     y_eq=None,
     y_ineq=None,
     max_time=None,
-    nb_iter_plot=1,
+    nb_iter_plot=1
 ):
-    """gradient ascent in the dual
-	"""
+    """gradient ascent in the dual."""
+
+    np.random.seed(0)
     start = time.clock()
     # convert to slack form (augmented form)
     LP2 = copy.deepcopy(LP)
@@ -124,9 +125,9 @@ def DualGradientAscent(
         E = np.sum(
             np.minimum(c_bar * LP2.upperbounds, c_bar * LP2.lowerbounds)[c_bar != 0]
         )
-        if not LP2.Aequalities is None:
+        if LP2.Aequalities is not None:
             E -= y_eq.dot(LP2.Bequalities)
-        if not LP2.Ainequalities is None:
+        if LP2.Ainequalities is not None:
             E -= y_ineq.dot(LP2.B_upper)
         return E
 
@@ -144,7 +145,7 @@ def DualGradientAscent(
         return x, y_eq, y_ineq
     for iter in range(nbmaxiter):
         c_bar, x = getOptimX(y_eq, y_ineq)
-        if not LP2.Ainequalities is None:
+        if LP2.Ainequalities is not None:
             y_ineq_prev = y_ineq.copy()
             max_violation = np.max(LP2.Ainequalities * x - LP2.B_upper)
             sum_violation = np.sum(np.maximum(LP2.Ainequalities * x - LP2.B_upper, 0))

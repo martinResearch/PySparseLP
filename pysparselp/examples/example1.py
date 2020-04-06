@@ -17,6 +17,9 @@ import os
 
 
 class ImageLP(SparseLP):
+    """Specialization of the generic SparseLP to define linear relaxation of pott image models.
+    """
+
     def addPenalizedDifferences(self, I, J, coefpenalization):
         assert I.size == J.size
         maxDiff = np.maximum(
@@ -28,7 +31,8 @@ class ImageLP(SparseLP):
         )
         if np.isscalar(coefpenalization):
             assert coefpenalization > 0
-        else:  # allows a penalization that is different for each edge (could be dependent on an edge detector)
+        # allows a penalization that is different for each edge (could be dependent on an edge detector)
+        else:
             assert coefpenalization.shape == aux.shape
             assert np.min(coefpenalization) >= 0
         aux_ravel = aux.ravel()
@@ -51,17 +55,14 @@ class ImageLP(SparseLP):
         self.addPottVertical(indices, coefpenalization)
 
 
-def run():
-    thisfilepath = os.path.dirname(os.path.abspath(__file__))
-    plt.ion()
-
+def build_linear_program(imageSize, coefPotts , coefMul):
     nLabels = 1
     np.random.seed(1)
-    imageSize = 50
-    coefPotts = 0.5
+
     size_image = (imageSize, imageSize, nLabels)
     nb_pixels = size_image[0] * size_image[1]
-    coefMul = 500  # we multiply all term by theis constant because the graph cut algorithm take integer weights.
+    # we multiply all term by theis constant because the graph cut algorithm take integer weights.
+
     unary_terms = np.round(
         coefMul
         * ((np.random.rand(size_image[0], size_image[1], size_image[2])) * 2 - 1)
@@ -83,7 +84,6 @@ def run():
     sgm = g.get_grid_segments(nodeids)
     img2 = np.int_(np.logical_not(sgm))
     plt.imshow(img2[:, :, 0], cmap=plt.cm.gray, interpolation="nearest")
-    plt.show()
 
     LP = ImageLP()
 
@@ -95,40 +95,51 @@ def run():
     groundTruthIndices = indices
 
     LP.addPottModel(indices, coefpenalization=coefPotts / coefMul)
+    return LP, groundTruth, groundTruthIndices, unary_terms
+
+
+def run(display=True):
+    thisfilepath = os.path.dirname(os.path.abspath(__file__))
+
+    imageSize = 50
+    coefMul = 500
+    coefPotts = 0.5
+    LP, groundTruth, groundTruthIndices, unary_terms = build_linear_program(
+        imageSize, coefPotts , coefMul)
 
     print("solving")
 
     fig_solutions = plt.figure()
 
-    im = plt.imshow(
-        unary_terms[:, :, 0] / coefMul,
-        cmap=plt.cm.Greys_r,
-        interpolation="nearest",
-        vmin=0,
-        vmax=1,
-    )
-    fig_curves = plt.figure()
-    ax_curves1 = plt.gca()
-    ax_curves1.set_xlabel("nb of iteration")
-    ax_curves1.set_ylabel("distanceToGroundTruth")
-    fig_curves = plt.figure()
-    ax_curves2 = plt.gca()
-    ax_curves2.set_xlabel("duration")
-    ax_curves2.set_ylabel("distanceToGroundTruth")
+    if display:
+        im = plt.imshow(
+            unary_terms[:, :, 0] / coefMul,
+            cmap=plt.cm.Greys_r,
+            interpolation="nearest",
+            vmin=0,
+            vmax=1,
+        )
+        fig_curves = plt.figure()
+        ax_curves1 = plt.gca()
+        ax_curves1.set_xlabel("nb of iteration")
+        ax_curves1.set_ylabel("distanceToGroundTruth")
+        fig_curves = plt.figure()
+        ax_curves2 = plt.gca()
+        ax_curves2.set_xlabel("duration")
+        ax_curves2.set_ylabel("distanceToGroundTruth")
 
     def plotSolution(niter, solution, is_active_variable=None):
-        image = solution[indices]
+        image = solution[groundTruthIndices]
         # imwrite('ter%05d.png'%niter,solution[indices][:,:,0])
         # imwrite('diff_iter%05d.png'%niter,np.diff(solution[indices][:,:,0]))
         im.set_array(image[:, :, 0])
         # im.set_array(np.diff(image[:,:,0]))
         plt.draw()
-        plt.show()
-
-    fig = plt.figure()
-    ax = fig.add_subplot(2, 5, 1, title="graph cut")
-    ax.imshow(groundTruth[:, :, 0], cmap=plt.cm.Greys_r, interpolation="none")
-    ax.axis("off")
+    if display:
+        fig = plt.figure()
+        ax = fig.add_subplot(2, 5, 1, title="graph cut")
+        ax.imshow(groundTruth[:, :, 0], cmap=plt.cm.Greys_r, interpolation="none")
+        ax.axis("off")
 
     # simplex much too slow for images larger than 20 by 20
     # LP2=copy.deepcopy(LP)
@@ -138,6 +149,9 @@ def run():
     solving_methods2 = [
         m for m in solving_methods if (not m in ["ScipyLinProg"])
     ]  # remove ScipyLinProg because it is too slow
+
+    distanceToGroundTruthCurves = {}
+   
     for i, method in enumerate(solving_methods2):
         print(
             "\n\n----------------------------------------------------------\nSolving LP using %s"
@@ -149,31 +163,39 @@ def run():
             nb_iter=1000000,
             max_time=15,
             groundTruth=groundTruth,
-            groundTruthIndices=indices,
+            groundTruthIndices=groundTruthIndices,
             plotSolution=None,
             nb_iter_plot=500,
         )
-        ax_curves1.semilogy(LP.itrn_curve, LP.distanceToGroundTruth, label=method)
-        ax_curves2.semilogy(LP.opttime_curve, LP.distanceToGroundTruth, label=method)
-        ax_curves1.legend()
-        ax_curves2.legend()
-        ax = fig.add_subplot(2, 5, i + 2, title=method)
-        ax.imshow(
-            sol1[indices][:, :, 0],
-            cmap=plt.cm.Greys_r,
-            interpolation="none",
-            vmin=0,
-            vmax=1,
-        )
-        ax.axis("off")
-        plt.draw()
+        if display:
+            ax_curves1.semilogy(LP.itrn_curve, LP.distanceToGroundTruth, label=method)
+            ax_curves2.semilogy(
+                LP.opttime_curve, LP.distanceToGroundTruth, label=method)
+            ax_curves1.legend()
+            ax_curves2.legend()
+            ax = fig.add_subplot(2, 5, i + 2, title=method)
+            ax.imshow(
+                sol1[groundTruthIndices][:, :, 0],
+                cmap=plt.cm.Greys_r,
+                interpolation="none",
+                vmin=0,
+                vmax=1,
+            )
+            ax.axis("off")
+            plt.draw()
+
+        distanceToGroundTruthCurves[method] = LP.distanceToGroundTruth
+
+    if display:
+        plt.tight_layout()
+        # plt.figure()
+        # plt.plot(LP.itrn_curve,LP.dopttime_curve,'g',label='ADMM')
+        # plt.draw()
+        # plt.show()
+        print("done")
         plt.show()
-    plt.tight_layout()
-    # plt.figure()
-    # plt.plot(LP.itrn_curve,LP.dopttime_curve,'g',label='ADMM')
-    # plt.draw()
-    # plt.show()
-    print("done")
+
+    return distanceToGroundTruthCurves
 
 
 if __name__ == "__main__":

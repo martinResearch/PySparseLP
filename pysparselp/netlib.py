@@ -29,7 +29,7 @@ from scipy import sparse
 import gzip
 import os
 import urllib
-from MPSparser import MPSParser
+from .MPSparser import MPSParser
 
 
 def getProblem(pbname):

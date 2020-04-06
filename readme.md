@@ -289,6 +289,11 @@ generate random problems with the matlab code available [here](https://github.co
 * [PCx](http://pages.cs.wisc.edu/~swright/PCx/) PCx is an interior-point predictor-corrector linear programming package. Code available here https://github.com/lpoo/PCx. Free but to public domain. Binaries provided for Linux only.
 * [DSDP](http://www.mcs.anl.gov/hs/software/DSDP/) solve semidefinite programs, which are more general than linear programs. It uses the sparsity of the problem and might still be competitive to solve sparse linear programs. Can be called from python through [cvxopt](http://cvxopt.org/)
 
+## Quadratic programming solver the support linear programming
+	
+* OSQP. Operator Splitting Quaradtic programming https://github.com/oxfordcontrol/osqp-python
+* GPU implementation of OSQP (can be 2 order of magnitude faster)https://github.com/oxfordcontrol/cuosqp
+
 # References
 
 [1] *Sparse Linear Programming via Primal and Dual Augmented Coordinate Descent* Ian En-Hsu Yen, Kai Zhong, Cho-Jui Hsieh, Pradeep K Ravikumar, Inderjit S Dhillon , NIPS 2015

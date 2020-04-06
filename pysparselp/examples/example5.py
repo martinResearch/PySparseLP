@@ -54,7 +54,7 @@ def clusterize(points, k, nCenterCandidates):
     )
     LP.addLinearConstraintRows(cols, vals, lowerbounds=None, upperbounds=0)
 
-    s = LP.solve(method="ADMM", nb_iter=60000, max_time=20, nb_iter_plot=500)[0]
+    s = LP.solve(method="ADMM", nb_iter=1000, max_time=np.inf, nb_iter_plot=500)[0]
 
     print(LP.costsvector.dot(s))
     x = s[labeling]
@@ -65,33 +65,43 @@ def clusterize(points, k, nCenterCandidates):
     label = np.argmax(x, axis=1)
     if not (len(np.unique(label)) == k):
         print("failed")
-    return label
+
+    cost = 0
+    for l in range(nCenterCandidates):
+        group = np.nonzero(label == l)
+        center_id = np.argmin(np.sum(pairdistances[group, :], axis=1))
+        cost += np.sum(pairdistances[group, center_id])
+
+    return label, cost
 
 
-def run():
-
+def run(display=False):
+    np.random.seed(0)
     k = 5
     n = 500
+    
     prng = np.random.RandomState(0)
     centers = prng.randn(k, 2)
     gtlabel = np.floor(prng.rand(n) * 5).astype(np.int)
     points = 0.4 * prng.randn(n, 2) + centers[gtlabel, :]
-    plt.ion()
-    plt.plot(points[:, 0], points[:, 1], ".")
-    plt.draw()
-    plt.show()
+    if display:
+        plt.ion()
+        plt.plot(points[:, 0], points[:, 1], ".")
+        plt.draw()
+        plt.show()
     nCenterCandidates = 50
 
-    label = clusterize(points, k, nCenterCandidates)
-
-    for i in np.arange(n):
-        if any(label == i):
-            plt.plot(points[label == i, 0], points[label == i, 1], "o")
-    plt.draw()
-    plt.show()
-    plt.axis("equal")
-    plt.tight_layout()
-    print("done")
+    label, cost = clusterize(points, k, nCenterCandidates)
+    if display:
+        for i in np.arange(n):
+            if any(label == i):
+                plt.plot(points[label == i, 0], points[label == i, 1], "o")
+        plt.draw()
+        plt.show()
+        plt.axis("equal")
+        plt.tight_layout()
+        print("done")
+    return cost
 
 
 if __name__ == "__main__":

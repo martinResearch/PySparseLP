@@ -275,6 +275,9 @@ generate random problems with the matlab code available [here](https://github.co
 
 ## Linear Program solvers with a python interface
 * Scipy's [linprog](http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html). Only the simplex is implemented in october 2016 (Note: an [interior point method](http://scipy.github.io/devdocs/optimize.linprog-interior-point.html) has been added in august 2017). Note that it is possible to call this solver from within our code using *method='ScipyLinProg'* when callign the *solve* method. The simplex method is implemented in python with many loops and is very slow for problems that involve more than a hundred variables. The interior point method has not been tested here.
+* OSQP. Operator Splitting Quadratic programming [11]. It support support linear programming (with all zeros hessian matrix)
+  [python interface](https://github.com/oxfordcontrol/osqp-python)
+* GPU implementation of OSQP (can be 2 order of magnitude faster)[here](https://github.com/oxfordcontrol/cuosqp)
 * Python bindings for GLPK [here](https://en.wikibooks.org/wiki/GLPK/Python) . Might not be adapted to very large sparse problems as it use simplex or interior point methods. The installation is a bit tedious. The licence is GPL which makes it unsuited for use in commercial products.
 * [GLOP](https://developers.google.com/optimization/lp/glop), Google's linear programming system has a python interface [pywraplp](https://developers.google.com/optimization/introduction/using#python). 
 * [CyLP](http://mpy.github.io/CyLPdoc/index.html) . Python interface to Coin-Or solvers CLP, CBC, and CGL. We can use the first two solvers using mps files using my code. Isntalling CyLP involves quite a few steps. CyLP also provide LP modeling tools.
@@ -288,11 +291,6 @@ generate random problems with the matlab code available [here](https://github.co
 * [Joptimize](http://www.joptimizer.com/linearProgramming.html) implemented in Java. Appache licence
 * [PCx](http://pages.cs.wisc.edu/~swright/PCx/) PCx is an interior-point predictor-corrector linear programming package. Code available here https://github.com/lpoo/PCx. Free but to public domain. Binaries provided for Linux only.
 * [DSDP](http://www.mcs.anl.gov/hs/software/DSDP/) solve semidefinite programs, which are more general than linear programs. It uses the sparsity of the problem and might still be competitive to solve sparse linear programs. Can be called from python through [cvxopt](http://cvxopt.org/)
-
-## Quadratic programming solver the support linear programming
-	
-* OSQP. Operator Splitting Quaradtic programming https://github.com/oxfordcontrol/osqp-python
-* GPU implementation of OSQP (can be 2 order of magnitude faster)https://github.com/oxfordcontrol/cuosqp
 
 # References
 
@@ -319,3 +317,7 @@ paper [here](http://papers.nips.cc/paper/6746-a-new-alternating-direction-method
 [10] *Factoring nonnegative matrices with linear programs*
 Victor Bittorf, Benjamin Recht, Christopher Re, Joel A. Tropp. 2012 
 paper [here](https://arxiv.org/abs/1206.1270)
+
+[11] *OSQP: An Operator Splitting Solver for Quadratic Programs*. B.Stellato,  G. Banjac,  P. Goulart,   A. Bemporad and S. Boyd. ArXiv e-prints 2017 
+
+

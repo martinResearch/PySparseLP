@@ -80,7 +80,7 @@ def propagateConstraints(list_changed_var,\
 
 
 	tol=1e-5 # to cope with small errors
-	for iter in range(nb_iter):
+	for _iter in range(nb_iter):
 		#print '%d variable fixed '% np.sum(x_l==x_u)
 		#list_changed_var=np.unique(list_changed_var)
 		#if len(list_changed_var_cpp)==0:

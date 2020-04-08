@@ -55,7 +55,7 @@ def GaussSeidel(A, np.ndarray[cDOUBLE, ndim=1] b,np.ndarray[cDOUBLE, ndim=1] x, 
 	if not xopt is None:
 		curve=[]
 	
-	for iter in range(maxiter):
+	for _niter in range(maxiter):
 		for j in range(n):
 			i=orderc[j]
 			
@@ -128,7 +128,7 @@ class boundedGaussSeidelClass:
 		
 		
 		
-		for iter in range(maxiter):
+		for _iter in range(maxiter):
 			#for j in range(n):
 				#i=orderc[j]
 			for i in range(n):

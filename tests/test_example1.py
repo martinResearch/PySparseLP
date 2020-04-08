@@ -18,7 +18,7 @@ def trim_length(a, b):
     return a[:min_len], b[:min_len]
 
 
-def test_example1(update_results=True):
+def test_example1(update_results=False):
 
     distanceToGroundTruthCurves = run(display=False)
 

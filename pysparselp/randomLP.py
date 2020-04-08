@@ -1,11 +1,14 @@
-from SparseLP import SparseLP, solving_methods
-import numpy as np
-import scipy.sparse
-import matplotlib.pyplot as plt
+"""Module to generate random LP problems."""
+
 import copy
-import time
-from sklearn import datasets, linear_model, ensemble
-from sklearn.neural_network import MLPRegressor
+
+import matplotlib.pyplot as plt
+
+import numpy as np
+
+import scipy.sparse
+
+from . import SparseLP, solving_methods
 
 
 def randSparse(shape, sparsity):
@@ -95,7 +98,7 @@ if __name__ == "__main__":
     axarr[1].set_title("maximum constraint violation")
     axarr[2].set_title("difference with optimum value")
     max_time = 2
-    for i, method in enumerate(solving_methods2):
+    for method in solving_methods2:
         sol1, elapsed = LP2.solve(
             method=method, max_time=max_time, groundTruth=groundTruth
         )

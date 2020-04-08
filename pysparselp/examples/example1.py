@@ -1,24 +1,17 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import time
-import copy
-from pysparselp.SparseLP import SparseLP, solving_methods
-import numpy as np
-import matplotlib.pyplot as plt
-import time
-import scipy.sparse
-import scipy.ndimage
-import scipy.signal
-import sys
+"""Example using a pott image model that can be exactly solved with graphcut."""
 
-# from imageio import imwrite
+
+import matplotlib.pyplot as plt
+
 import maxflow  # pip install PyMaxflow
-import os
+
+import numpy as np
+
+from pysparselp.SparseLP import SparseLP, solving_methods
 
 
 class ImageLP(SparseLP):
-    """Specialization of the generic SparseLP to define linear relaxation of pott image models.
-    """
+    """Specialization of the generic SparseLP to define linear relaxation of pott image models."""
 
     def addPenalizedDifferences(self, I, J, coefpenalization):
         assert I.size == J.size
@@ -55,12 +48,12 @@ class ImageLP(SparseLP):
         self.addPottVertical(indices, coefpenalization)
 
 
-def build_linear_program(imageSize, coefPotts , coefMul):
+def build_linear_program(imageSize, coefPotts, coefMul):
     nLabels = 1
     np.random.seed(1)
 
     size_image = (imageSize, imageSize, nLabels)
-    nb_pixels = size_image[0] * size_image[1]
+
     # we multiply all term by theis constant because the graph cut algorithm take integer weights.
 
     unary_terms = np.round(
@@ -69,8 +62,6 @@ def build_linear_program(imageSize, coefPotts , coefMul):
     )
     coefPotts = round(coefPotts * coefMul)
 
-    H = unary_terms.shape[0]
-    W = unary_terms.shape[1]
     g = maxflow.Graph[int](0, 0)
     nodeids = g.add_grid_nodes(unary_terms.shape)
 
@@ -99,17 +90,15 @@ def build_linear_program(imageSize, coefPotts , coefMul):
 
 
 def run(display=True):
-    thisfilepath = os.path.dirname(os.path.abspath(__file__))
 
     imageSize = 50
     coefMul = 500
     coefPotts = 0.5
     LP, groundTruth, groundTruthIndices, unary_terms = build_linear_program(
-        imageSize, coefPotts , coefMul)
+        imageSize, coefPotts, coefMul
+    )
 
     print("solving")
-
-    fig_solutions = plt.figure()
 
     if display:
         im = plt.imshow(
@@ -119,11 +108,10 @@ def run(display=True):
             vmin=0,
             vmax=1,
         )
-        fig_curves = plt.figure()
+
         ax_curves1 = plt.gca()
         ax_curves1.set_xlabel("nb of iteration")
         ax_curves1.set_ylabel("distanceToGroundTruth")
-        fig_curves = plt.figure()
         ax_curves2 = plt.gca()
         ax_curves2.set_xlabel("duration")
         ax_curves2.set_ylabel("distanceToGroundTruth")
@@ -135,6 +123,7 @@ def run(display=True):
         im.set_array(image[:, :, 0])
         # im.set_array(np.diff(image[:,:,0]))
         plt.draw()
+
     if display:
         fig = plt.figure()
         ax = fig.add_subplot(2, 5, 1, title="graph cut")
@@ -147,11 +136,11 @@ def run(display=True):
     # sol1,elapsed=LP2.solve(method='ScipyLinProg',force_integer=False,getTiming=True,nb_iter=100,max_time=10,groundTruth=groundTruth,groundTruthIndices=indices,plotSolution=None)
 
     solving_methods2 = [
-        m for m in solving_methods if (not m in ["ScipyLinProg"])
+        m for m in solving_methods if (m not in ["ScipyLinProg"])
     ]  # remove ScipyLinProg because it is too slow
 
     distanceToGroundTruthCurves = {}
-   
+
     for i, method in enumerate(solving_methods2):
         print(
             "\n\n----------------------------------------------------------\nSolving LP using %s"
@@ -170,7 +159,8 @@ def run(display=True):
         if display:
             ax_curves1.semilogy(LP.itrn_curve, LP.distanceToGroundTruth, label=method)
             ax_curves2.semilogy(
-                LP.opttime_curve, LP.distanceToGroundTruth, label=method)
+                LP.opttime_curve, LP.distanceToGroundTruth, label=method
+            )
             ax_curves1.legend()
             ax_curves2.legend()
             ax = fig.add_subplot(2, 5, i + 2, title=method)

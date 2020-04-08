@@ -1,30 +1,22 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import time
+"""Tests using netlib problems."""
+
 import copy
-from pysparselp.SparseLP import SparseLP, solving_methods
-import numpy as np
-import matplotlib.pyplot as plt
-import time
-import scipy.sparse
-import scipy.ndimage
-import scipy.signal
-import sys
-
-import maxflow  # pip install PyMaxflow
-import os
-from pysparselp.netlib import getProblem
-import urllib
-import os.path
-import gzip
-import zlib
-
 import json
+import os
+
+
+import matplotlib.pyplot as plt
+
+import numpy as np
+
+
+from pysparselp.SparseLP import SparseLP, solving_methods
+from pysparselp.netlib import getProblem
 
 __folder__ = os.path.dirname(__file__)
 
 
-def solve_netlib(pbname, display=False, max_time_seconds = 30):
+def solve_netlib(pbname, display=False, max_time_seconds=30):
 
     LPDict = getProblem(pbname)
     groundTruth = LPDict["solution"]
@@ -58,7 +50,7 @@ def solve_netlib(pbname, display=False, max_time_seconds = 30):
     print("gt  cost :%f" % costGT)
 
     # scipySol,elapsed=LP2.solve(method='ScipyLinProg',getTiming=True,nb_iter=100000)
-    
+
     # method='ScipyLinProg'
     # if not scipySol is np.nan:
     # sol1=scipySol
@@ -71,10 +63,10 @@ def solve_netlib(pbname, display=False, max_time_seconds = 30):
 
     # testing our methods
 
-    solving_methods2 = [m for m in solving_methods if (not m in ["ScipyLinProg"])]
+    solving_methods2 = [m for m in solving_methods if (m not in ["ScipyLinProg"])]
     # solving_methods2=['Mehrotra']
     distanceToGroundTruth = {}
-    for i, method in enumerate(solving_methods2):
+    for method in solving_methods2:
         print(
             "\n\n----------------------------------------------------------\nSolving LP using %s"
             % method
@@ -104,25 +96,27 @@ def trim_length(a, b):
     return a[:min_len], b[:min_len]
 
 
-def test_netlib(update_results=False,display=False):
+def test_netlib(update_results=False, display=False):
     max_time_seconds = 10
     pb_names = ["SC105"]
     for pb_name in pb_names:
-        distanceToGroundTruthCurves = solve_netlib(pb_name, display=False,max_time_seconds=max_time_seconds)
+        distanceToGroundTruthCurves = solve_netlib(
+            pb_name, display=False, max_time_seconds=max_time_seconds
+        )
 
-        curves_json_file = os.path.join(__folder__, f'netlib_curves_{pb_name}.json')
+        curves_json_file = os.path.join(__folder__, f"netlib_curves_{pb_name}.json")
         if update_results:
-            with open(curves_json_file, 'w') as f:
+            with open(curves_json_file, "w") as f:
                 json.dump(distanceToGroundTruthCurves, f)
 
-        with open(curves_json_file, 'r') as f:
+        with open(curves_json_file, "r") as f:
             distanceToGroundTruthCurves_expected = json.load(f)
 
         for k, v1 in distanceToGroundTruthCurves.items():
             v2 = distanceToGroundTruthCurves_expected[k]
             tv1, tv2 = trim_length(v1, v2)
             max_diff = np.max(np.abs(np.array(tv1) - np.array(tv2)))
-            print(f'{pb_name} max diff {k} = {max_diff}')
+            print(f"{pb_name} max diff {k} = {max_diff}")
             np.testing.assert_almost_equal(*trim_length(v1, v2))
 
 

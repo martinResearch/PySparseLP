@@ -22,13 +22,13 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 # -----------------------------------------------------------------------
+"""Module to download netlib problems."""
 
 
-import numpy as np
-from scipy import sparse
 import gzip
 import os
 import urllib
+
 from .MPSparser import MPSParser
 
 
@@ -58,7 +58,7 @@ def getProblem(pbname):
     # netlib exact solutions http://www.zib.de/koch/perplex/data/netlib/txt/
 
     fLP = open(filenameLP, "r")
-    if not filenameSol is None:
+    if filenameSol is not None:
         fSol = open(filenameSol, "r")
     else:
         fSol = None

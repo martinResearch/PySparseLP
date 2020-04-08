@@ -22,19 +22,21 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 # -----------------------------------------------------------------------
+"""LP solver using the alternating direction method of multipliers (ADMM) method with a decomposition of the constraint matrix into blocks."""
 
-
-import copy
-import numpy as np
 import time
-from scipy import sparse
-import scipy.ndimage
 
-from pysparselp.tools import (
-    preconditionConstraints,
-    convertToStandardFormWithBounds,
-    chrono,
+import numpy as np
+
+import scipy.ndimage
+from scipy import sparse
+
+from .tools import (
     check_decrease,
+    chrono,
+    convertToStandardFormWithBounds,
+    preconditionConstraints,
+    preconditionLPRight
 )
 
 # import  scikits.sparse.cholmod
@@ -66,7 +68,7 @@ def LP_admmBlockDecomposition(
     n = c.size
     start = time.clock()
     elapsed = start
-    if x0 == None:
+    if x0 is None:
         x0 = np.zeros(c.size)
     # if Aeq!=None:
     # Aeq,beq=preconditionConstraints(Aeq,beq,alpha=2)
@@ -83,7 +85,8 @@ def LP_admmBlockDecomposition(
     xp = np.minimum(xp, ub)
 
     # trying some preconditioning
-    use_preconditionning_rows = False  # left preconditioning seems not to change anything if not used in combination with use_preconditionning_cols  as each subproblem is solved exactly.
+    # left preconditioning seems not to change anything if not used in combination with use_preconditionning_cols  as each subproblem is solved exactly.
+    use_preconditionning_rows = False
     if use_preconditionning_rows:
         Aeq, beq = preconditionConstraints(Aeq, beq, alpha=2)
 
@@ -129,19 +132,20 @@ def LP_admmBlockDecomposition(
     nb_blocks = len(mergegroupes)
 
     if False:
+        import scikits.sparse
         idRows = np.hstack(
-            [np.arange(Aeq.blocks[g][0], Aeq.blocks[g][1] + 1) for g in mergegroupe]
+            [np.arange(Aeq.blocks[g][0], Aeq.blocks[g][1] + 1) for g in mergegroupes]
         )
 
         # we want to cluster the constraints such that the submatrix for each cluster has a sparse cholesky decomposition
         # we need to reach a tradeoff between the number of cluster (less variables copies) and the sparsity of the cholesky decompositions
         # each cluster should have a small tree width ?
-        # can we do an incremental sparse cholseky an then  add one constraint to each cholesky at a time ?
-        # is non sparse cholseky decomposition  (without permutation)incremental ?
+        # can we do an incremental sparse cholesky and then  add one constraint to each cholesky at a time ?
+        # is non sparse cholesky decomposition  (without permutation)incremental ?
         # adding a factor to a block is good if does not add too many new variables to the block and does not augment the treewidth of the block ?
         # we can do incremental merging of blocks
         # marge is good if the interection of the variables used by the two block is large (remove copies) (fast to test)
-        # and if the operation does not increase the cholseky density or graph tree width too much
+        # and if the operation does not increase the cholesky density or graph tree width too much
 
         subA = Aeq[idRows, :]
         t = np.array(np.abs(subA).sum(axis=0)).ravel()
@@ -179,7 +183,8 @@ def LP_admmBlockDecomposition(
             "connected components F"
             + str(scipy.sparse.csgraph.connected_components(FactorConnections))
         )
-        ST = scipy.sparse.csgraph.minimum_spanning_tree(FactorConnections)
+        spanning_tree = scipy.sparse.csgraph.minimum_spanning_tree(FactorConnections)
+        print(spanning_tree)
 
     for idblock, mergegroupe in enumerate(mergegroupes):
         # find the indices of the variables used by the block
@@ -257,14 +262,15 @@ def LP_admmBlockDecomposition(
     x = [x0[list_block_ids[i]] for i in range(nb_blocks)]
     lambda_ineq = [np.zeros(list_block_ids[i].shape) for i in range(nb_blocks)]
 
-    check = check_decrease(tol=1e-10)
-    dpred = [np.zeros(list_block_ids[i].shape) for i in range(nb_blocks)]
-    alpha = 1.95  # relaxation paramter should be in [0,2] , 1.95 seems to be often a good choice
+    check_decrease(tol=1e-10)
+
+    # relaxation paramter should be in [0,2] , 1.95 seems to be often a good choice
+    alpha = 1.95
 
     while i <= nb_iter:
         # solve the penalized problems with respect to each copy x
         # print 'iter'+str(i)+' '+str(L(x, xp,lambda_ineq))
-        # check.set(L(x, xp,lambda_ineq))
+        # check.set_value(L(x, xp,lambda_ineq))
         for idblock in range(nb_blocks):
             y = np.hstack(
                 (
@@ -283,7 +289,7 @@ def LP_admmBlockDecomposition(
                 + (1 - alpha) * xp[list_block_ids[idblock]]
             )
 
-            # check.add(L(x, xp,lambda_ineq))
+            # check.add_value(L(x, xp,lambda_ineq))
         # print 'iter'+str(i)+' '+str(L(x, xp,lambda_ineq))
         # solve the penalized problem with respect to xp
         # c-sum_idblock  gamma_ineq*(x_[idblock]-xp[list_block_ids[idblock]])-lambda_ineq[idblock]=0
@@ -308,7 +314,7 @@ def LP_admmBlockDecomposition(
             # lambda_ineq[idblock]=lambda_ineq[idblock]+(1+max(0,angle))*d # trying some naive heuristic speedup but not working :(
 
         if i % nb_iter_plot == 0:
-            prev_elapsed = elapsed
+
             elapsed = time.clock() - start
             if elapsed > max_time:
                 break
@@ -325,7 +331,7 @@ def LP_admmBlockDecomposition(
                 + str(energy1)
                 + " energy2="
                 + str(energy2)
-                + " elaspsed "
+                + " elapsed "
                 + str(elapsed)
                 + " second"
                 + " max violated inequality:"
@@ -333,7 +339,7 @@ def LP_admmBlockDecomposition(
                 + " max violated equality:"
                 + str(max_violated_equality)
             )
-            if not callbackFunc is None:
+            if callbackFunc is not None:
                 callbackFunc(
                     i,
                     (R * xp)[0:n],

@@ -22,24 +22,28 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 # -----------------------------------------------------------------------
-
-
-import copy
-import numpy as np
+"""Implementation of an LP solver using the alternating direction method of multipliers (ADMM) method."""
 import time
-import scipy.sparse
+
+import numpy as np
+
 import scipy.ndimage
-from pysparselp.tools import (
-    preconditionConstraints,
-    convertToStandardFormWithBounds,
+import scipy.sparse
+
+from .conjugateGradientLinearSolver import conjgrad
+from .gaussSiedel import GaussSeidel
+from .gaussSiedel import boundedGaussSeidelClass
+from .tools import (
     chrono,
-    check_decrease,
+    convertToPySparseFormat,
+    convertToStandardFormWithBounds,
+    preconditionConstraints,
 )
-from pysparselp.gaussSiedel import boundedGaussSeidelClass
-from pysparselp.conjugateGradientLinearSolver import conjgrad
 
 # import  scikits.sparse.cholmod
 # @profile
+
+
 def LP_admm(
     c,
     Aeq,
@@ -55,7 +59,7 @@ def LP_admm(
     nb_iter=100,
     callbackFunc=None,
     max_time=None,
-    use_preconditionning=True,
+    use_preconditioning=True,
     nb_iter_plot=10,
 ):
     # simple ADMM method with an approximate resolution of a quadratic subproblem using conjugate gradient
@@ -67,13 +71,13 @@ def LP_admm(
     useUnboundedGaussSiedel = False
 
     n = c.size
-    if x0 == None:
+    if x0 is None:
         x0 = np.zeros(c.size)
-    if not Aeq is None:
+    if Aeq is not None:
         Aeq, beq = preconditionConstraints(Aeq, beq, alpha=2)
     if (
-        not Aineq is None
-    ):  # it seem important to do this preconditionning before converting to standard form
+        Aineq is not None
+    ):  # it seem important to do this preconditioning before converting to standard form
         Aineq, b_lower, b_upper = preconditionConstraints(
             Aineq, b_lower, b_upper, alpha=2
         )
@@ -83,7 +87,7 @@ def LP_admm(
     x = x0
 
     # trying some preconditioning
-    if use_preconditionning:
+    if use_preconditioning:
         Aeq, beq = preconditionConstraints(Aeq, beq, alpha=2)
 
     AtA = Aeq.T * Aeq
@@ -101,6 +105,7 @@ def LP_admm(
         luM = scipy.sparse.linalg.splu(M)
         # luM = scipy.sparse.linalg.spilu(M,drop_tol=0.01)
     elif useCholesky:
+        import scikits.sparse
         ch = chrono()
         ch.tic()
         Chol = scikits.sparse.cholmod.cholesky(M.tocsc())
@@ -111,6 +116,7 @@ def LP_admm(
         )
 
     elif useAMG:
+        import pyamg
         Mamg = pyamg.ruge_stuben_solver(M)
 
     def L(x, xp, lambda_eq, lambda_ineq):
@@ -203,7 +209,7 @@ def LP_admm(
             raise
 
         if i % nb_iter_plot == 0:
-            prev_elapsed = elapsed
+
             elapsed = time.clock() - start
             if elapsed > max_time:
                 break
@@ -220,7 +226,7 @@ def LP_admm(
                 + str(energy1)
                 + " energy2="
                 + str(energy2)
-                + " elaspsed "
+                + " elapsed "
                 + str(elapsed)
                 + " second"
                 + " max violated inequality:"
@@ -228,7 +234,7 @@ def LP_admm(
                 + " max violated equality:"
                 + str(max_violated_equality)
             )
-            if not callbackFunc is None:
+            if callbackFunc is not None:
                 callbackFunc(
                     i,
                     x[0:n],
@@ -275,32 +281,33 @@ def LP_admm2(
     nb_iter=100,
     callbackFunc=None,
     max_time=None,
-    use_preconditionning=False,
+    use_preconditioning=False,
     nb_iter_plot=10,
 ):
     # simple ADMM method with an approximate resolution of a quadratic subproblem using conjugate gradient
-    # inspiredy by Boyd's paper on ADMM
+    # inspired by Boyd's paper on ADMM
     # Distributed Optimization and Statistical Learning via the Alternating Direction Method of Multipliers
-    # the difference with LP_admm is that the linear quality constrainrs Aeq*beq are enforced during the resolution
+    # the difference with LP_admm is that the linear equality constraints Aeq*x=beq are enforced during the resolution
     # of the subproblem instead of beeing enforced through multipliers
     useLU = True
     useAMG = False
     useCholesky = False
     useCholesky2 = False
 
-    alpha = 1.95  # relaxation paramter should be in [0,2] , 1.95 seems to be often a good choice
+    # relaxation parameter should be in [0,2] , 1.95 seems to be often a good choice
+    alpha = 1.95
 
     start = time.clock()
     elapsed = start
     n = c.size
-    if x0 == None:
+    if x0 is None:
         x0 = np.zeros(c.size)
 
-    if use_preconditionning:
-        if not Aeq is None:
+    if use_preconditioning:
+        if Aeq is not None:
             Aeq, beq = preconditionConstraints(Aeq, beq, alpha=2)
         if (
-            not Aineq is None
+            Aineq is not None
         ):  # it seem important to do this preconditionning before converting to standard form
             Aineq, b_lower, b_upper = preconditionConstraints(
                 Aineq, b_lower, b_upper, alpha=2
@@ -316,7 +323,7 @@ def LP_admm2(
     xp = np.minimum(xp, ub)
     ch = chrono()
     # trying some preconditioning
-    if use_preconditionning:
+    if use_preconditioning:
         Aeq, beq = preconditionConstraints(Aeq, beq, alpha=2)
 
     M = scipy.sparse.vstack(
@@ -333,7 +340,7 @@ def LP_admm2(
         luM = scipy.sparse.linalg.splu(M.tocsc())
         nb_cg_iter = 1
     elif useCholesky:
-
+        import scikits.sparse
         ch.tic()
         # not that it will work only if M is positive definite which nto garantied the way it is constructed
         # unfortunaletly i'm not able to atch the error to fall back on LU decomposition if
@@ -349,12 +356,14 @@ def LP_admm2(
         )
         nb_cg_iter = 1
     elif useCholesky2:
+        import scikits.umfpack  # pipinstall scikit-umfpack
         print("using UMFPACK_STRATEGY_SYMMETRIC through PySparse")
         ch.tic()
         M2 = convertToPySparseFormat(M)
         print("conversion :" + str(ch.toc()))
         ch.tic()
-        LU_umfpack = umfpack.factorize(M2, strategy="UMFPACK_STRATEGY_SYMMETRIC")
+        LU_umfpack = scikits.umfpack.factorize(
+            M2, strategy="UMFPACK_STRATEGY_SYMMETRIC")
         print("nnz per line :" + str(LU_umfpack.nnz / float(M2.shape[0])))
         print("factorization :" + str(ch.toc()))
         nb_cg_iter = 1
@@ -363,6 +372,7 @@ def LP_admm2(
         # Mamg=pyamg.smoothed_aggregation_solver(M.tocsc())
         # Mamg=pyamg.rootnode_solver(M.tocsc())
         # Mamg=pyamg.
+        import pyamg  # pip install pyamg
         Mamg = pyamg.ruge_stuben_solver(
             M.tocsc(), strength=None
         )  # sometimes seems to yield infinte values
@@ -418,7 +428,6 @@ def LP_admm2(
         xp = np.maximum(xp, lb)
         xp = np.minimum(xp, ub)
         if i % nb_iter_plot == 0:
-            prev_elapsed = elapsed
             elapsed = time.clock() - start
             if not (max_time is None) and elapsed > max_time:
                 break
@@ -442,7 +451,7 @@ def LP_admm2(
                 + " max violated equality:"
                 + str(max_violated_equality)
             )
-            if not callbackFunc is None:
+            if callbackFunc is not None:
                 callbackFunc(
                     i,
                     x[0:n],

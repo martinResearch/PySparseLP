@@ -33,26 +33,25 @@
 # images on the server of the aleready compile equations each time a new equation is created
 # Martin de La Gorce April 2016
 # up to date version of that script can found on https://github.com/martinResearch/markdownLatex
-
-import tempfile
+"""Module to automatically convert latex equations in markdown files."""
+import os
+import re
 import shutil
 import sys
+import tempfile
 
 for arg in sys.argv:
-    print arg
+    print(arg)
 
 dirpath = tempfile.mkdtemp()
 # ... do stuff with dirpath
-print "temporary directory for latex compilation = %s" % dirpath
+print("temporary directory for latex compilation = %s" % dirpath)
 if len(sys.argv) == 1:
     texfile = "./readme.md"
 elif len(sys.argv) == 2:
     texfile = sys.argv[1]
 else:
     raise Exception("wrong number of arguments")
-import re
-
-import os, requests
 
 
 def formula_as_file(formula, file, negate=False, header=""):
@@ -92,9 +91,9 @@ for eqn in latex_equations:
         raise Exception("equation image file %s already used" % eqn[1])
 
     listname.add(eqn[1])
-    print "creating %s" % eqn[1]
+    print("creating %s" % eqn[1])
     formula_as_file(eqn[0], eqn[1])
-    print "done"
+    print("done")
 
 # shutil.rmtree(dirpath)
-print "DONE"
+print("DONE")

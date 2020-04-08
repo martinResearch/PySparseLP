@@ -22,16 +22,18 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 # -----------------------------------------------------------------------
-
+"""LP solver using alternated  coordinate ascend on the dual."""
 
 import copy
-import numpy as np
 import time
-import scipy.sparse
+
+import numpy as np
+
 import scipy.ndimage
-from pysparselp.DualGradientAscent import exactDualLineSearch
-import matplotlib.pyplot as plt
-from pysparselp.constraintPropagation import greedy_round
+import scipy.sparse
+
+from .DualGradientAscent import exactDualLineSearch
+from .constraintPropagation import greedy_round
 
 
 def DualCoordinateAscent(
@@ -44,12 +46,14 @@ def DualCoordinateAscent(
     max_time=None,
     nb_iter_plot=1,
 ):
-    """Method from 'An algorigthm for large scale 0-1 integer
-        programming with application to airline crew scheduling'
-        we generelized it to the case where A is not 0-1 and
-        the upper bounds can be greater than 1
-        did not generalize and code the approximation method
-        """
+    """Solve LP using coordinate ascend in the dual.
+
+    Method from 'An algorithm for large scale 0-1 integer
+    programming with application to airline crew scheduling'
+    we generalized it to the case where A is not 0-1 and
+    the upper bounds can be greater than 1
+    did not generalize and code the approximation method
+    """
     np.random.seed(1)
     start = time.clock()
     # convert to slack form (augmented form)
@@ -78,9 +82,9 @@ def DualCoordinateAscent(
 
     def getOptimX(y_eq, y_ineq, tiemethod="round"):
         c_bar = LP2.costsvector.copy()
-        if not LP2.Aequalities is None:
+        if LP2.Aequalities is not None:
             c_bar += y_eq * LP2.Aequalities
-        if not LP2.Ainequalities is None:
+        if LP2.Ainequalities is not None:
             c_bar += y_ineq * LP2.Ainequalities
         x = np.zeros(LP2.costsvector.size)
         x[c_bar > 0] = LP2.lowerbounds[c_bar > 0]
@@ -110,7 +114,7 @@ def DualCoordinateAscent(
         # x[(c_bar==0) & (LP2.costsvector<0)]=LP2.upperbounds[(c_bar==0) & (LP2.costsvector<0)]
         return c_bar, x
 
-    def eval(y_eq, y_ineq):
+    def evaluate(y_eq, y_ineq):
         c_bar, x = getOptimX(y_eq, y_ineq)
         E = -y_eq.dot(LP2.Bequalities) - y_ineq.dot(LP2.B_upper) + np.sum(x * c_bar)
         # LP2.costsvector.dot(x)+y_ineq.dot(LP2.Ainequalities*x-LP2.B_upper)
@@ -153,16 +157,16 @@ def DualCoordinateAscent(
 
     # x[c_bar==0]=0.5
 
-    # alpha_i= vector containing the step lenghts that lead to a sign change on any of the gradient component
+    # alpha_i= vector containing the step lengths that lead to a sign change on any of the gradient component
     # when incrementing y[i]
     #
-    E = eval(y_eq, y_ineq)
+    E = evaluate(y_eq, y_ineq)
 
     print("iter %d energy %f" % (0, E))
     c_bar, x = getOptimX(y_eq, y_ineq)
     direction = np.zeros(y_ineq.shape)
 
-    for iter in range(nbmaxiter):
+    for niter in range(nbmaxiter):
         y_ineq_prev = y_ineq.copy()
         c_bar = LP2.costsvector + y_eq * LP2.Aequalities + y_ineq * LP2.Ainequalities
 
@@ -170,11 +174,11 @@ def DualCoordinateAscent(
         for i in np.nonzero(grad_y_eq)[0]:
             if i % 100 == 0:
                 elapsed = time.clock() - start
-                if (not max_time is None) and elapsed > max_time:
+                if (max_time is not None) and elapsed > max_time:
                     break
 
             # i=32
-            # print eval(y)
+            # print evaluate(y)
             if False:
                 import matplotlib.pyplot as plt
 
@@ -183,7 +187,7 @@ def DualCoordinateAscent(
                 alphasgrid = np.linspace(-1, 1, 1000)
                 for alpha in alphasgrid:
                     y2[i] = y_eq[i] + alpha
-                    vals.append(eval(y2, y_ineq))
+                    vals.append(evaluate(y2, y_ineq))
                 plt.plot(alphasgrid, vals, ".")
                 deriv = np.diff(vals) / np.diff(alphasgrid)
                 plt.plot(alphasgrid[:-1], deriv, ".")
@@ -197,7 +201,7 @@ def DualCoordinateAscent(
             c_bar[Ai.indices] += diff_y_eq * Ai.data
 
         c_bar = LP2.costsvector + y_eq * LP2.Aequalities + y_ineq * LP2.Ainequalities
-        nE = eval(y_eq, y_ineq)
+        nE = evaluate(y_eq, y_ineq)
         eps = 1e-10
         if nE + eps < E:
             print("not expected")
@@ -211,7 +215,7 @@ def DualCoordinateAscent(
         for i in np.nonzero(grad_y_ineq)[0]:
             if i % 100 == 0:
                 elapsed = time.clock() - start
-                if (not max_time is None) and elapsed > max_time:
+                if (max_time is not None) and elapsed > max_time:
                     break
 
             Ai = LP2.Ainequalities[i, :]
@@ -225,7 +229,7 @@ def DualCoordinateAscent(
                 alphasgrid = np.linspace(-4, 0, 1000)
                 for alpha in alphasgrid:
                     y2[i] = y_ineq[i] + alpha
-                    vals.append(eval(y_eq, y2))
+                    vals.append(evaluate(y_eq, y2))
                 plt.plot(alphasgrid, vals, ".")
                 deriv = np.diff(vals) / np.diff(alphasgrid)
                 plt.plot(alphasgrid[:-1], deriv, ".")
@@ -233,17 +237,17 @@ def DualCoordinateAscent(
             # c_bar=LP2.costsvector+y_eq*LP2.Aequalities+y_ineq*LP2.Ainequalities
             alpha_optim = exactCoordinateLineSearch(Ai, LP2.B_upper[i], c_bar)
 
-            # prev_energy=eval(y_eq,y_ineq)
+            # prev_energy=evaluate(y_eq,y_ineq)
             prev_y_ineq = y_ineq[i]
             y_ineq[i] += alpha_optim
             y_ineq[i] = max(y_ineq[i], 0)
             diff_y_ineq = y_ineq[i] - prev_y_ineq
             c_bar[Ai.indices] += diff_y_ineq * Ai.data
-            # new_energy=eval(y_eq,y_ineq)
+            # new_energy=evaluate(y_eq,y_ineq)
             # assert(new_energy>=prev_energy-1e-5)
             # assert(np.max(y_ineq)<=0)
 
-        nE = eval(y_eq, y_ineq)
+        nE = evaluate(y_eq, y_ineq)
         if nE + eps < E:
             print("not expected")
 
@@ -263,7 +267,7 @@ def DualCoordinateAscent(
         uE = LP2.costsvector.dot(x)
 
         elapsed = time.clock() - start
-        if (iter % nb_iter_plot) == 0:
+        if (niter % nb_iter_plot) == 0:
             max_violation = max(
                 np.max(LP2.Ainequalities * x - LP2.B_upper),
                 np.max(np.sum(np.abs(LP2.Aequalities * x - LP2.Bequalities))),
@@ -273,7 +277,7 @@ def DualCoordinateAscent(
             ) + np.sum(np.abs(LP2.Aequalities * x - LP2.Bequalities))
             print(
                 "iter %d time %3.1f dual energy %f, primal %f max violation %f sum_violation %f"
-                % (iter, elapsed, nE, uE, max_violation, sum_violation)
+                % (niter, elapsed, nE, uE, max_violation, sum_violation)
             )
             if max_violation == 0:
 
@@ -288,8 +292,8 @@ def DualCoordinateAscent(
                     break
 
         E = nE
-        if not callbackFunc is None:
-            callbackFunc(iter, x, 0, 0, elapsed, 0, 0)
+        if callbackFunc is not None:
+            callbackFunc(niter, x, 0, 0, elapsed, 0, 0)
         if False:
             diff = y_ineq - y_ineq_prev
             direction = scipy.sparse.csr.csr_matrix(direction * 0.9 + 0.1 * diff)
@@ -305,9 +309,9 @@ def DualCoordinateAscent(
             y_ineq = np.maximum(y_ineq, 0)
             # y_ineq=y_ineq+*0.1
             # y_ineq=np.maximum(y_ineq, 0)
-            print("iter %d energy %f" % (iter, eval(y_eq, y_ineq)))
+            print("iter %d energy %f" % (niter, evaluate(y_eq, y_ineq)))
 
-        if (not max_time is None) and elapsed > max_time:
+        if (max_time is not None) and elapsed > max_time:
             break
     max_violation = max(
         np.max(LP2.Ainequalities * x - LP2.B_upper),
@@ -318,6 +322,6 @@ def DualCoordinateAscent(
     )
     print(
         "iter %d time %3.1f dual energy %f, primal %f max violation %f sum_violation %f"
-        % (iter, elapsed, nE, uE, max_violation, sum_violation)
+        % (niter, elapsed, nE, uE, max_violation, sum_violation)
     )
     return x, y_eq, y_ineq

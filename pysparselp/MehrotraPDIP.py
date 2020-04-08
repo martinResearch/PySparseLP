@@ -1,17 +1,17 @@
+"""Interior Point LP Solver.
+
+For reference, please refer to "On the Implementation of a Primal-Dual
+Interior Point Method" by Sanjay Mehrotra.
+https://www.researchgate.net/publication/230873223_On_the_Implementation_of_a_Primal-Dual_Interior_Point_Method
+this code is largely inspired from https://github.com/YimingYAN/mpc.
+"""
 import numpy as np
-
-# For reference, please refer to "On the Implementation of a Primal-Dual
-# Interior Point Method" by Sanjay Mehrotra.
-# https://www.researchgate.net/publication/230873223_On_the_Implementation_of_a_Primal-Dual_Interior_Point_Method
-# this code is largely inspired from https://github.com/YimingYAN/mpc
-
-from scipy.sparse.linalg import norm as snorm
-from scipy import sparse
 from numpy.linalg import norm
 
-# from scikits.sparse.cholmod import cholesky
-# import scikits.sparse.cholmod
-from pysparselp.xorshift import xorshift
+from scipy import sparse
+from scipy.sparse.linalg import spsolve
+
+from .xorshift import xorshift
 
 
 def initialPoint(A, b, c):
@@ -21,7 +21,7 @@ def initialPoint(A, b, c):
 
     # solution for min norm(s) s.t. A'*y + s = c
     # y =sparse.linalg.cg(A*A.T, A*c,tol=1e-7)[0]
-    y = sparse.linalg.spsolve(A * A.T, A * c)
+    y = spsolve(A * A.T, A * c)
 
     # y2 =sparse.linalg.cgs(A*A.T, A*c)[0]
     # y2 =sparse.linalg.gmres(A*A.T, A*c,)[0]
@@ -135,7 +135,9 @@ def mpcSol(
     bc = 1 + max([norm(b), norm(c)])
 
     # Start the loop
-    for iter in range(maxN):
+    N = 0
+
+    for niter in range(maxN):
         # Compute residuals and update mu
         Rb = A * x - b
         Rc = A.T * y + s - c
@@ -146,10 +148,10 @@ def mpcSol(
         residual = norm(np.hstack((Rb, Rc, Rxs)) / bc)
 
         if verbose > 1:
-            print("%3d %9.2e %9.2e %9.4g %9.4g" % (iter, mu, residual, alphax, alphas))
+            print("%3d %9.2e %9.2e %9.4g %9.4g" % (niter, mu, residual, alphax, alphas))
 
-        if not callBack is None:
-            callBack(x, iter)
+        if callBack is not None:
+            callBack(x, niter)
 
         if residual < eps:
             break
@@ -190,13 +192,13 @@ def mpcSol(
         y = y + alphas * dy
         s = s + alphas * ds
 
-        if iter == maxN and param.verbose > 1:
+        if niter == maxN and verbose > 1:
             print("maxN reached!\n")
+        N = niter
 
     if verbose > 0:
-        print("\nDONE! [m,n] = [%d, %d], N = %d\n" % (m, n, iter))
+        print("\nDONE! [m,n] = [%d, %d], N = %d\n" % (m, n, niter))
 
-    N = iter
     f = c.T.dot(x)
     return f, x, y, s, N
 

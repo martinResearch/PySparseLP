@@ -22,14 +22,18 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 # -----------------------------------------------------------------------
+"""Model that implements various utils functions used in LP solvers."""
 
+import time
 
 import numpy as np
+
 import scipy.sparse
-import time
 
 
 class chrono:
+    """Small class to compute durations."""
+
     def __init__(self):
         pass
 
@@ -41,20 +45,23 @@ class chrono:
 
 
 class check_decrease:
+    """Class to help checking decrease of a value."""
+
     def __init__(self, val=None, tol=1e-10):
         self.val = val
         self.tol = tol
 
-    def set(self, val):
+    def set_value(self, val):
         self.val = val
 
-    def add(self, val):
+    def add_value(self, val):
         assert self.val >= val - self.tol
         self.val = val
 
 
 def convertToPySparseFormat(A):
-    # check symetric
+    # check symmetric
+    import spmatrix
     assert (A - A.T).nnz == 0
     L = spmatrix.ll_mat_sym(A.shape[0], A.nnz)
     Acoo = scipy.sparse.triu(A).tocoo()
@@ -64,31 +71,24 @@ def convertToPySparseFormat(A):
 
 
 class CholeskyOrLu:
-    def __init__(self, M, type):
-        if type == "scipySparseLu":
+    """Class to wrap linear solvers."""
 
+    def __init__(self, M, method):
+        if method == "scipySparseLu":
             self.LU = scipy.sparse.linalg.splu(M.tocsc())
             self.solve = self.LU.solve
-        elif type == "scikitsCholesky":
+        elif method == "scikitsCholesky":
+            import scikits.sparse
             self.LU = scikits.sparse.cholmod.cholesky(M.tocsc())
             self.solve = self.LU.solve_A
-        elif type == "umfpackLU":
-            M2 = convertToPySparseFormat(M)
-            self.LU_umfpack = umfpack.factorize(
-                M2, strategy="UMFPACK_STRATEGY_SYMMETRIC"
-            )
-            print("nnz per line :" + str(LU_umfpack.nnz / float(M2.shape[0])))
-            print("factorization :" + str(c.toc()))
-
-            LU_umfpack.solve(b, x)
 
 
 def convertToStandardFormWithBounds(c, Aeq, beq, Aineq, b_lower, b_upper, lb, ub, x0):
 
-    if not Aineq is None:
+    if Aineq is not None:
         ni = Aineq.shape[0]
         # need to convert in standard form by adding an auxiliary variables for each inequality
-        if not Aeq is None:
+        if Aeq is not None:
             Aeq2 = scipy.sparse.vstack(
                 (
                     scipy.sparse.hstack(
@@ -124,7 +124,7 @@ def convertToStandardFormWithBounds(c, Aeq, beq, Aineq, b_lower, b_upper, lb, ub
 
 
 def convertToOnesideInequalitySystem(Aineq, b_lower, b_upper):
-    if (not Aineq is None) and (not b_lower is None):
+    if (Aineq is not None) and (b_lower is not None):
 
         idskeep_upper = np.nonzero(b_upper != np.inf)[0]
         idskeep_lower = np.nonzero(b_lower != -np.inf)[0]
@@ -167,11 +167,13 @@ def check_constraints(i, x_r, mask, Acsr, Acsc, b_lower, b_upper):
 
 
 class solutionStat:
+    """Class that compute statistics of solution of an LP problem."""
+
     def __init__(self, c, AeqCSC, beq, AineqCSC, bineq, callbackFunc):
         self.c = c
         self.Aeq = AeqCSC
         self.beq = beq
-        self.Aineq = Aineq
+        self.Aineq = AineqCSC
         self.bineq = bineq
         self.best_integer_solution_energy = np.inf
         self.best_integer_solution = None
@@ -182,33 +184,35 @@ class solutionStat:
         self.start = time.clock()
         self.elapsed = self.start
 
-    def eval(self, x, i):
+    def evaluate(self, x, i):
 
         self.prev_elapsed = self.elapsed
-        self.elapsed = time.clock() - start
+        elapsed = time.clock() - self.start
         nb_iter_since_last_call = i - self.self.iprev
-        mean_iter_period = (elapsed - prev_elapsed) / nb_iter_since_last_call
+        mean_iter_period = (
+            elapsed - self.prev_elapsed) / nb_iter_since_last_call
 
         energy1 = self.c.dot(x)
         max_violated_equality = 0
         max_violated_inequality = 0
         r_eq = (self.Aeq * x) - self.beq
         r_ineq = (self.Aineq * x) - self.bineq
-        if not self.Aeq is None:
+        if self.Aeq is not None:
             max_violated_equality = np.max(np.abs(r_eq))
-        if not self.Aineq is None:
+        if self.Aineq is not None:
             max_violated_inequality = np.max(r_ineq)
 
         xrounded = np.round(x)
-        energy_rounded = c.dot(xrounded)
-        nb_violated_equality_rounded = np.sum(np.abs(Aeq * xrounded - beq))
-        nb_violated_inequality_rounded = np.sum(np.maximum(Aineq * xrounded - bineq, 0))
+        energy_rounded = self.c.dot(xrounded)
+        nb_violated_equality_rounded = np.sum(np.abs(self.Aeq * xrounded - self.beq))
+        nb_violated_inequality_rounded = np.sum(
+            np.maximum(self.Aineq * xrounded - self.bineq, 0))
 
         if nb_violated_equality_rounded == 0 and nb_violated_inequality_rounded == 0:
             print(
                 "##########   found feasible solution with energy" + str(energy_rounded)
             )
-            if energy_rounded < best_integer_solution_energy:
+            if energy_rounded < self.best_integer_solution_energy:
                 self.best_integer_solution_energy = energy_rounded
                 self.best_integer_solution = xrounded
 
@@ -217,7 +221,7 @@ class solutionStat:
             + str(i)
             + ": energy1= "
             + str(energy1)
-            + " elaspsed "
+            + " elapsed "
             + str(elapsed)
             + " second"
             + " max violated inequality:"
@@ -225,33 +229,20 @@ class solutionStat:
             + " max violated equality:"
             + str(max_violated_equality)
             + "mean_iter_period="
-            + str(mean_iter_priod)
+            + str(mean_iter_period)
             + "rounded : %f ineq %f eq"
             % (nb_violated_inequality_rounded, nb_violated_equality_rounded)
         )
-        #'y_eq has '+str(100 * np.mean(y_eq==0))+' % of zeros '+\
+        # 'y_eq has '+str(100 * np.mean(y_eq==0))+' % of zeros '+\
         #    'y_ineq has '+str(100 * np.mean(y_ineq==0))+' % of zeros '+\
         self.iprev = i
 
-        if self.callbackFunc != None:
-
-            self.callbackFunc(
-                i,
-                x,
-                energy1,
-                energy2,
-                elapsed,
-                max_violated_equality,
-                max_violated_inequality,
-                is_active_variable=is_active_variable,
-            )
-
 
 def save_arguments(filename):
-    """Returns tuple containing dictionary of calling function's
-	   named arguments and a list of calling function's unnamed
-	   positional arguments.
-	"""
+    """Return tuple containing dictionary of calling function's
+    named arguments and a list of calling function's unnamed
+    positional arguments.
+    """
     from inspect import getargvalues, stack
     import inspect
 
@@ -280,7 +271,7 @@ def preconditionConstraints(A, b, b2=None, alpha=2):
     Sigma = scipy.sparse.diags([diagSigmA], [0]).tocsr()
     Ap = Sigma * A
     Ap.__dict__["blocks"] = A.blocks
-    if not b is None:
+    if b is not None:
         bp = Sigma * b
     else:
         bp = None

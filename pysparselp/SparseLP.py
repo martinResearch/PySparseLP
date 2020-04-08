@@ -22,20 +22,22 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 # -----------------------------------------------------------------------
+"""Module that implement the class SparseLP to help modeling the LP problem."""
 
+import copy
+import time
 
 import numpy as np
 
-import time
-import scipy.sparse
 import scipy.ndimage
+import scipy.sparse
 
-from .ADMM import *
-from .ChambollePockPPD import *
-from .ChambollePockPPDAS import *
-from .ADMMBlocks import *
-from .DualGradientAscent import *
-from .DualCoordinateAscent import *
+from .ADMM import LP_admm, LP_admm2
+from .ADMMBlocks import LP_admmBlockDecomposition
+from .ChambollePockPPD import ChambollePockPPD
+from .ChambollePockPPDAS import ChambollePockPPDAS
+from .DualCoordinateAscent import DualCoordinateAscent
+from .DualGradientAscent import DualGradientAscent
 from .MehrotraPDIP import mpcSol
 
 
@@ -55,8 +57,8 @@ try:
 
     solving_methods.append("ECOS")
     solving_methods.append("SCS")
-except:
-    print("could not import cvxpy, the solvers ECOS and SCS will not be available")
+except Exception:
+    print("could not import cvxpy, theuse_preconditioningl not be available")
 
 
 def csr_matrix_append_row(A, n, cols, vals):
@@ -112,6 +114,8 @@ def unique_rows(data, prec=5):
 
 
 class SparseLP:
+    """Class to help modeling the LP problem."""
+
     def __init__(self):
         # start writing the linear program
 
@@ -143,29 +147,29 @@ class SparseLP:
                 maxv, np.max(np.abs(self.Aequalities * solution - self.Bequalities))
             )
         if self.Ainequalities.shape[0] > 0:
-            if not self.B_upper is None:
+            if self.B_upper is not None:
                 maxv = max(maxv, np.max(self.Ainequalities * solution - self.B_upper))
-            if not self.B_lower is None:
+            if self.B_lower is not None:
                 maxv = max(maxv, np.max(self.B_lower - self.Ainequalities * solution))
         return maxv
 
     def checkSolution(self, solution, tol=1e-6):
         types, lb, ub = self.getVariablesBounds()
         valid = True
-        if not lb is None:
+        if lb is not None:
             valid = valid & (np.max(lb - solution) < tol)
-        if not ub is None:
+        if ub is not None:
             valid = valid & (np.max(solution - ub) < tol)
-        if (not self.Aequalities is None) and self.Aequalities.shape[0] > 0:
+        if (self.Aequalities is not None) and self.Aequalities.shape[0] > 0:
             valid = valid & (
                 np.max(np.abs(self.Aequalities * solution - self.Bequalities)) < tol
             )
-        if (not self.Ainequalities is None) and self.Ainequalities.shape[0] > 0:
-            if not self.B_upper is None:
+        if (self.Ainequalities is not None) and self.Ainequalities.shape[0] > 0:
+            if self.B_upper is not None:
                 valid = valid & (
                     np.max(self.Ainequalities * solution - self.B_upper) < tol
                 )
-            if not self.B_lower is None:
+            if self.B_lower is not None:
                 valid = valid & (
                     np.max(self.B_lower - self.Ainequalities * solution) < tol
                 )
@@ -184,7 +188,6 @@ class SparseLP:
         return self.Ainequalities.shape[0]
 
     def endConstraintName(self, name):
-
         if not (name is None or name == ""):
             assert self.lastNameStart == name
             if self.nbEqualityConstraints() > self.lastNameEqualityStart:
@@ -204,14 +207,14 @@ class SparseLP:
                     }
                 )
 
-    def getInequalityConstraintNameFromId(self, id):
+    def getInequalityConstraintNameFromId(self, idv):
         for d in self.inequalityConstraintNames:
-            if id >= d["start"] and id <= d["end"]:
+            if idv >= d["start"] and id <= d["end"]:
                 return d
 
-    def getEqualityConstraintNameFromId(self, id):
+    def getEqualityConstraintNameFromId(self, idv):
         for d in self.equalityConstraintNames:
-            if id >= d["start"] and id <= d["end"]:
+            if idv >= d["start"] and id <= d["end"]:
                 return d
 
     def findInequalityConstraintsFromName(self, name):
@@ -254,7 +257,7 @@ class SparseLP:
             f.write("    X%-9dOBJ       %f\n" % (i, self.costsvector[i]))
 
             while kEq < nEqEntries and Aeq.col[kEq] == i:
-                f.write("    X%-9dE%-9d%f\n" % (i, Aeq.row[kEq], Aeq.data[kEq]))
+                f.write("    X%-9dE%-9d%f\n" % (i, Aeq.ruse_preconditioning))
                 kEq += 1
             while kIneq < nIneqEntries and Aineq.col[kIneq] == i:
                 f.write("    X%-9dI%-9d%f\n" % (i, Aineq.row[kIneq], Aineq.data[kIneq]))
@@ -307,7 +310,7 @@ class SparseLP:
         f.close()
 
     def save_Ian_E_H_Yen(self, folder):
-        if not self.B_lower is None:
+        if self.B_lower is not None:
             print(
                 "self.B_lower is not None, you should convert your problem with convertToOnesideInequalitySystem first"
             )
@@ -331,7 +334,7 @@ class SparseLP:
         nbvariables = self.costsvector.size
         upperbounded = np.nonzero(~np.isinf(self.upperbounds))[0]
         nbupperbounded = len(upperbounded)
-        Aineq2 = sparse.coo_matrix(
+        Aineq2 = scipy.sparse.coo_matrix(
             (np.ones(nbupperbounded), (np.arange(nbupperbounded), upperbounded)),
             (nbupperbounded, nbvariables),
         )
@@ -359,13 +362,10 @@ class SparseLP:
 
         return types, bl, bu
 
-    def getVariablesIndices(self, name):
-        return self.variables_dict[name]
-
     def addVariablesArray(
         self, shape, lowerbounds, upperbounds, costs=0, name=None, isinteger=False
     ):
-        if type(shape) == type(0):
+        if isinstance(shape, type(0)):
             shape = (shape,)
 
         nb_variables_added = np.prod(shape)
@@ -375,7 +375,7 @@ class SparseLP:
         self.Ainequalities._shape = (self.Ainequalities.shape[0], self.nb_variables)
         self.Aequalities._shape = (self.Aequalities.shape[0], self.nb_variables)
 
-        if type(costs) == type(0) or type(costs) == type(0.0):
+        if isinstance(costs, type(0)) or isinstance(costs , type(0.0)):
             v = costs
             costs = np.empty(shape, dtype=np.float)
             costs.fill(v)
@@ -400,19 +400,19 @@ class SparseLP:
         return indices
 
     def convertBoundsToVectors(self, shape, lowerbounds, upperbounds):
-        nb_variables = np.prod(np.array(shape))
+
         if (
-            type(lowerbounds) == type(0)
-            or type(lowerbounds) == type(0.0)
-            or type(lowerbounds) == np.float64
+            isinstance(lowerbounds , type(0))
+            or isinstance(lowerbounds, type(0.0))
+            or isinstance(lowerbounds, np.float64)
         ):
             v = lowerbounds
             lowerbounds = np.empty(shape, dtype=np.float)
             lowerbounds.fill(v)
         if (
-            type(upperbounds) == type(0)
-            or type(upperbounds) == type(0.0)
-            or type(upperbounds) == np.float64
+            isinstance(upperbounds, type(0))
+            or isinstance(upperbounds, type(0.0))
+            or isinstance(upperbounds, np.float64)
         ):
             v = upperbounds
             upperbounds = np.empty(shape, dtype=np.float)
@@ -435,17 +435,17 @@ class SparseLP:
 
     def setBoundsOnVariables(self, indices, lowerbounds, upperbounds):
         # could use task.putboundslice if we were sure that the indices is an increasing sequence n with increments of 1 i.e,n+1,n+2,....n+k
-        if type(lowerbounds) == type(0) or type(lowerbounds) == type(0.0):
+        if isinstance(lowerbounds, type(0)) or isinstance(lowerbounds, type(0.0)):
             self.lowerbounds[indices.ravel()] = lowerbounds
         else:
             self.lowerbounds[indices.ravel()] = lowerbounds.ravel()
-        if type(upperbounds) == type(0) or type(upperbounds) == type(0.0):
+        if isinstance(upperbounds, type(0)) or isinstance(upperbounds, type(0.0)):
             self.upperbounds[indices.ravel()] = upperbounds
         else:
             self.upperbounds[indices.ravel()] = upperbounds.ravel()
 
     def getVariablesIndices(self, name):
-        """Returns the set of indices corresponding to the variables that have have been added with the given name when using addVariablesArray"""
+        """Return the set of indices corresponding to the variables that have have been added with the given name when using addVariablesArray"""
         return self.variables_dict[name]
 
     def setCostsVariables(self, indices, costs):
@@ -461,16 +461,16 @@ class SparseLP:
 
         else:
             csr_matrix_append_row(self.Ainequalities, self.nb_variables, ids, coefs)
-            if lowerbound == None:
-                if not self.B_lower is None:
+            if lowerbound is None:
+                if self.B_lower is not None:
                     self.B_lower = np.append(self.B_lower, -np.inf)
             else:
                 if self.B_lower is None:
                     print("not coded yet")
                 else:
                     self.B_lower = np.append(self.B_lower, lowerbound)
-            if upperbound == None:
-                if not self.B_upper is None:
+            if upperbound is None:
+                if self.B_upper is not None:
                     self.B_upper = np.append(self.B_upper, np.inf)
             else:
                 if self.B_upper is None:
@@ -489,7 +489,7 @@ class SparseLP:
         # take advantage of the snipy sparse marices to ease things
 
         if (
-            type(lowerbounds) == type(0) or type(lowerbounds) == type(0.0)
+            isinstance(lowerbounds, type(0)) or isinstance(lowerbounds, type(0.0))
         ) and lowerbounds == upperbounds:
             lowerbounds, upperbounds = self.convertBoundsToVectors(
                 (A.shape[0],), lowerbounds, upperbounds
@@ -543,12 +543,12 @@ class SparseLP:
             )
 
             cols2 = np.column_stack((cols, aux))
-            if not upperbounds is None:
+            if upperbounds is not None:
                 vals2 = np.column_stack((vals, -np.ones((vals.shape[0], 1))))
                 self.addLinearConstraintRows(
                     cols2, vals2, lowerbounds=None, upperbounds=upperbounds
                 )
-            if not lowerbounds is None:
+            if lowerbounds is not None:
                 vals2 = np.column_stack((vals, np.ones((vals.shape[0], 1))))
                 self.addLinearConstraintRows(
                     cols2, vals2, lowerbounds, upperbounds=None
@@ -578,7 +578,7 @@ class SparseLP:
         self.addLinearConstraintRows(
             np.column_stack(cols), np.column_stack(vals), lowerbounds, upperbounds
         )
-        if (not self.solution is None) and check:
+        if (self.solution is not None) and check:
             assert self.checkSolution(self.solution)
 
     def removeFixedVariables(self):
@@ -595,9 +595,9 @@ class SparseLP:
         shift[~free] = self.lowerbounds[~free]
 
         self.Bequalities = self.Bequalities - self.Aequalities * shift
-        if not self.B_lower is None:
+        if self.B_lower is not None:
             self.B_lower = self.B_lower - self.Ainequalities * shift
-        if not self.B_upper is None:
+        if self.B_upper is not None:
             self.B_upper = self.B_upper - self.Ainequalities * shift
 
         # self.Bequalities equalities= self.Bequalities-self.Aequalities*shift
@@ -626,12 +626,11 @@ class SparseLP:
         return Mchange, shift
 
     def convertToSlackForm(self):
-        """convert to the form min_y c.t Ay=b y>=0 by adding slack variables and shift on x
-        the solution of the original problem is obtained using x = Mchange*y+ shift with 
+        """Convert to the form min_y c.t Ay=b y>=0 by adding slack variables and shift on x
+        the solution of the original problem is obtained using x = Mchange*y+ shift with
         y the solution of the new problem
         have a look at https://ocw.mit.edu/courses/sloan-school-of-management/15-053-optimization-methods-in-management-science-spring-2013/tutorials/MIT15_053S13_tut06.pdf
         """
-
         self.convertToOnesideInequalitySystem()
 
         # inverse variables that are only bounded above using a change of variable x=M*y
@@ -643,10 +642,10 @@ class SparseLP:
             M1 = scipy.sparse.spdiags([d], [0], self.nb_variables, self.nb_variables)
             Ainequalities = None
             Aequalities = None
-            if not self.Ainequalities is None:
+            if self.Ainequalities is not None:
                 Ainequalities = self.Ainequalities * M1
                 Ainequalities.__dict__["blocks"] = [(0, Ainequalities.shape[0] - 1)]
-            if not self.Aequalities is None:
+            if self.Aequalities is not None:
                 Aequalities = self.Aequalities * M1
                 Aequalities.__dict__["blocks"] = [(0, Aequalities.shape[0] - 1)]
             lowerbounds = copy.copy(self.lowerbounds)
@@ -668,7 +667,7 @@ class SparseLP:
         assert self.B_lower is None
         B_upper = self.B_upper - Ainequalities * shift
 
-        if not self.Bequalities is None:
+        if self.Bequalities is not None:
             Bequalities = self.Bequalities - Aequalities * shift
         else:
             Bequalities = None
@@ -725,10 +724,10 @@ class SparseLP:
             nb_variables = nbnotfree + 2 * nbfree
             lowerbounds = np.zeros(nb_variables)
             costsvector = costsvector * Mchange
-            if not Aequalities is None:
+            if Aequalities is not None:
                 Aequalities = Aequalities * Mchange
                 Aequalities.__dict__["blocks"] = [(0, Aequalities.shape[0] - 1)]
-            if not Ainequalities is None:
+            if Ainequalities is not None:
                 Ainequalities = Ainequalities * Mchange
                 Ainequalities.__dict__["blocks"] = [(0, Ainequalities.shape[0] - 1)]
         else:
@@ -768,12 +767,13 @@ class SparseLP:
         return Mchange, shift
 
     def convertToAllEqualities(self):
-        """convert to the form min c.t Ax=b lb<=x<=ub by adding slack variables
-        the solution of th original problem is obtained using the first elements in x"""
-        if not self.Ainequalities is None:
+        """Convert to the form min c.t Ax=b lb<=x<=ub by adding slack variables
+        the solution of th original problem is obtained using the first elements in x.
+        """
+        if self.Ainequalities is not None:
             m = self.Ainequalities.shape[0]
             n = self.Ainequalities.shape[1]
-            slacks_lower = self.addVariablesArray(m, self.B_lower, self.B_upper)
+            self.addVariablesArray(m, self.B_lower, self.B_upper)
             self.Ainequalities._shape = (self.Ainequalities.shape[0], n)
             self.addConstraintsSparse(
                 scipy.sparse.hstack((self.Ainequalities, -scipy.sparse.eye(m))), 0, 0
@@ -783,8 +783,8 @@ class SparseLP:
             self.Ainequalities = None
 
     def convertToOnesideInequalitySystem(self):
-        """convert to the form min c.t Aineq x<=b_ineq Ax=b lb<=x<=ub by adding augmenting the size of Aineq"""
-        if (not self.Ainequalities is None) and (not self.B_lower is None):
+        """Convert to the form min c.t Aineq x<=b_ineq Ax=b lb<=x<=ub by adding augmenting the size of Aineq."""
+        if (self.Ainequalities is not None) and (self.B_lower is not None):
             idskeep_upper = np.nonzero(self.B_upper != np.inf)[0]
             mapping_upper = np.hstack(([0], np.cumsum(self.B_upper != np.inf)))
             idskeep_lower = np.nonzero(self.B_lower != -np.inf)[0]
@@ -829,8 +829,8 @@ class SparseLP:
             self.B_lower = None
 
     def convertToAllInequalities(self):
-        """convert to the form min c.t b_lower<=Aineq x<=b_upper lb<=x<=ub by adding augmenting the size of Aineq"""
-        if not self.Aequalities is None:
+        """Convert to the form min c.t b_lower<=Aineq x<=b_upper lb<=x<=ub by adding augmenting the size of Aineq."""
+        if self.Aequalities is not None:
 
             newInequalityConstraintNames = []
             for d in self.equalityConstraintNames:
@@ -896,8 +896,8 @@ class SparseLP:
         else:
             constraints.append(x <= self.upperbounds)
 
-        if not Aineq is None:
-            if not self.B_upper is None:
+        if Aineq is not None:
+            if self.B_upper is not None:
                 if np.all(np.isinf(self.B_upper)):
                     pass
                 elif np.any(np.isinf(self.B_upper)):
@@ -905,7 +905,7 @@ class SparseLP:
                     raise
                 else:
                     constraints.append(Aineq * x <= self.B_upper)
-            if not self.B_lower is None:
+            if self.B_lower is not None:
                 if np.all(np.isinf(self.B_lower)):
                     pass
                 elif np.any(np.isinf(self.B_lower)):
@@ -913,8 +913,8 @@ class SparseLP:
                     raise
                 else:
                     constraints.append(self.B_lower <= Aineq * x)
-        if not Aeq is None:
-            constraints.append(Aeq * x == self.Bequalities)
+        if Aeq is not None:
+            constraints.append(Aeq * x == Beq)
         prob = cvxpy.Problem(objective, constraints)
         return prob, x
 
@@ -959,7 +959,7 @@ class SparseLP:
         self.itrn_curve = []
 
         def scipySimplexCallBack(solution, **kwargs):
-            if not groundTruth is None:
+            if groundTruth is not None:
                 self.distanceToGroundTruth.append(
                     np.mean(np.abs(groundTruth - solution[groundTruthIndices]))
                 )
@@ -975,7 +975,7 @@ class SparseLP:
             self.max_violated_constraint.append(maxv)
 
         def simplexCallBack(solution, **kwargs):
-            if not groundTruth is None:
+            if groundTruth is not None:
                 self.distanceToGroundTruth.append(
                     np.mean(np.abs(groundTruth - solution[groundTruthIndices]))
                 )
@@ -1000,7 +1000,7 @@ class SparseLP:
             max_violated_inequality,
             is_active_variable=None,
         ):
-            if not groundTruth is None:
+            if groundTruth is not None:
                 self.distanceToGroundTruth.append(
                     np.mean(np.abs(groundTruth - solution[groundTruthIndices]))
                 )
@@ -1018,10 +1018,10 @@ class SparseLP:
             self.max_violated_constraint.append(maxv)
             self.max_violated_equality.append(max_violated_equality)
             self.max_violated_inequality.append(max_violated_inequality)
-            if not plotSolution is None:
+            if plotSolution is not None:
                 plotSolution(niter, solution, is_active_variable=is_active_variable)
 
-        if not method in solving_methods:
+        if method not in solving_methods:
             print("method %s not valid" % method)
             print("avalaible method are")
             for vmethod in solving_methods:
@@ -1107,7 +1107,7 @@ class SparseLP:
             prob, x = self.convertToCVXPY()
             # The optimal objective is returned by prob.solve().
             result = prob.solve(verbose=True, solver=cvxpy.ECOS)
-            x = np.array(x.value).flatten()
+            x = np.array(result).flatten()
 
         elif method == "ADMM":
             x = LP_admm(
@@ -1233,7 +1233,7 @@ class SparseLP:
                     max_violated_inequality,
                 )
 
-            x = ChambollePockPPDAS(
+            x, best_integer_x = ChambollePockPPDAS(
                 LPreduced,
                 x0=x0,
                 alpha=1,
@@ -1302,7 +1302,6 @@ class SparseLP:
         elapsed = time.clock() - start
 
         if getTiming:
-
             return x, elapsed
         else:
             return x

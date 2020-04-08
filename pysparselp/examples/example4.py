@@ -1,17 +1,9 @@
-# maximum bipartite matching example
+"""Maximum bipartite matching example."""
 
-import matplotlib.pyplot as plt
-import time
-import copy
-from pysparselp.SparseLP import SparseLP, solving_methods
+
 import numpy as np
-import matplotlib.pyplot as plt
-import time
-import scipy.sparse
-import scipy.ndimage
-import scipy.signal
-import sys
-import os
+
+from pysparselp.SparseLP import SparseLP
 
 
 def addBipartiteContraint(LP, indices):
@@ -44,7 +36,7 @@ def run():
         method="ChambollePockPPD", nb_iter=2000, max_time=10, nb_iter_plot=500
     )[0]
     print(LP.costsvector.dot(s))
-    
+
     x = s[indices]
     print(np.round(x * 1000) / 1000)
     print("done")

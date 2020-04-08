@@ -22,13 +22,15 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 # -----------------------------------------------------------------------
-
+"""LP solver using gradient ascend in the dual. ot efficient but use as baseline"""
 
 import copy
-import numpy as np
 import time
-import scipy.sparse
+
+import numpy as np
+
 import scipy.ndimage
+import scipy.sparse
 
 
 def exactDualLineSearch(direction, A, b, c_bar, upperbounds, lowerbounds):
@@ -71,10 +73,9 @@ def DualGradientAscent(
     y_eq=None,
     y_ineq=None,
     max_time=None,
-    nb_iter_plot=1
+    nb_iter_plot=1,
 ):
-    """gradient ascent in the dual."""
-
+    """Gradient ascent in the dual."""
     np.random.seed(0)
     start = time.clock()
     # convert to slack form (augmented form)
@@ -104,9 +105,9 @@ def DualGradientAscent(
 
     def getOptimX(y_eq, y_ineq):
         c_bar = LP2.costsvector.copy()
-        if not LP2.Aequalities is None:
+        if LP2.Aequalities is not None:
             c_bar += y_eq * LP2.Aequalities
-        if not LP2.Ainequalities is None:
+        if LP2.Ainequalities is not None:
             c_bar += y_ineq * LP2.Ainequalities
         x = np.zeros(LP2.costsvector.size)
         x[c_bar > 0] = LP2.lowerbounds[c_bar > 0]
@@ -117,7 +118,7 @@ def DualGradientAscent(
 
         return c_bar, x
 
-    def eval(y_eq, y_ineq):
+    def evaluate(y_eq, y_ineq):
         c_bar, x = getOptimX(y_eq, y_ineq)
 
         # E=-y_eq.dot(LP2.Bequalities)-y_ineq.dot(LP2.B_upper)+np.sum(x*c_bar)
@@ -136,24 +137,24 @@ def DualGradientAscent(
     # alpha_i= vector containing the step lenghts that lead to a sign change on any of the gradient component
     # when incrementing y[i]
     #
-    print("iter %d energy %f" % (0, eval(y_eq, y_ineq)))
+    print("iter %d energy %f" % (0, evaluate(y_eq, y_ineq)))
 
-    prevE = eval(y_eq, y_ineq)
+    prevE = evaluate(y_eq, y_ineq)
     if prevE == -np.inf:
         print("initial dual point not feasible, you could bound all variables")
         c_bar, x = getOptimX(y_eq, y_ineq)
         return x, y_eq, y_ineq
-    for iter in range(nbmaxiter):
+    for niter in range(nbmaxiter):
         c_bar, x = getOptimX(y_eq, y_ineq)
         if LP2.Ainequalities is not None:
             y_ineq_prev = y_ineq.copy()
             max_violation = np.max(LP2.Ainequalities * x - LP2.B_upper)
             sum_violation = np.sum(np.maximum(LP2.Ainequalities * x - LP2.B_upper, 0))
             np.sum(np.maximum(LP2.Ainequalities * x - LP2.B_upper, 0))
-            if (iter % nb_iter_plot) == 0:
+            if (niter % nb_iter_plot) == 0:
                 print(
                     "iter %d energy %f max violation %f sum_violation %f"
-                    % (iter, prevE, max_violation, sum_violation)
+                    % (niter, prevE, max_violation, sum_violation)
                 )
 
             grad_y_ineq = LP2.Ainequalities * x - LP2.B_upper
@@ -184,24 +185,24 @@ def DualGradientAscent(
                 # vals=[]
                 # for alpha in alphasgrid:
                 # y2=y_ineq+alpha*grad_y
-                # vals.append(eval(y_eq,y2))
+                # vals.append(evaluate(y_eq,y2))
                 # plt.plot(alphasgrid,vals,'.')
 
-                # coef_length=0.001/(iter+2000000)
-                # coef_length=min(0.01/(iter+200000),maxstep)
+                # coef_length=0.001/(niter+2000000)
+                # coef_length=min(0.01/(niter+200000),maxstep)
                 y_ineq = y_ineq_prev + coef_length_ineq * grad_y_ineq
                 # assert(np.min(y_ineq)>=-1e-8)
                 y_ineq = np.maximum(y_ineq, 0)
 
-        if not LP2.Aequalities is None and LP2.Aequalities.shape[0] > 0:
+        if LP2.Aequalities is not None and LP2.Aequalities.shape[0] > 0:
 
             y_eq_prev = y_eq.copy()
             max_violation = np.max(np.abs(LP2.Aequalities * x - LP2.Bequalities))
             sum_violation = np.sum(np.abs(LP2.Aequalities * x - LP2.Bequalities))
-            if (iter % nb_iter_plot) == 0:
+            if (niter % nb_iter_plot) == 0:
                 print(
                     "iter %d energy %f max violation %f sum_violation %f"
-                    % (iter, prevE, max_violation, sum_violation)
+                    % (niter, prevE, max_violation, sum_violation)
                 )
 
             grad_y_eq = LP2.Aequalities * x - LP2.Bequalities
@@ -222,20 +223,20 @@ def DualGradientAscent(
 
         # while True:
         # y_ineq=y_ineq_prev+coef_length*grad_y
-        # newE=eval(y_eq,y_ineq)
+        # newE=evaluate(y_eq,y_ineq)
         # if newE< prevE:
         # coef_length=coef_length*0.5
         # print 'reducing step lenght'
         # else:
         # coef_length=coef_length*1.5
         # break
-        newE = eval(y_eq, y_ineq)
+        newE = evaluate(y_eq, y_ineq)
         prevE = newE
         elapsed = time.clock() - start
-        if not callbackFunc is None and iter % 100 == 0:
-            callbackFunc(iter, x, 0, 0, elapsed, 0, 0)
+        if callbackFunc is not None and niter % 100 == 0:
+            callbackFunc(niter, x, 0, 0, elapsed, 0, 0)
 
-        if (not max_time is None) and elapsed > max_time:
+        if (max_time is not None) and elapsed > max_time:
             break
 
     print("done")

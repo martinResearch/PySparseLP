@@ -1,12 +1,14 @@
-import numpy as np
+"""Example using L1-regularized multi-class Support	Vector Machine."""
+
 import matplotlib.pyplot as plt
+
+import numpy as np
 
 from pysparselp.SparseLP import SparseLP, solving_methods
 
 
 class L1SVM(SparseLP):
-    """ L1-regularized multi-class Support	Vector Machine  J. Zhu, S. Rosset, T. Hastie, and R. Tibshirani. 1-norm support vector machines. NIPS, 2004.
-    """
+    """L1-regularized multi-class Support	Vector Machine  J. Zhu, S. Rosset, T. Hastie, and R. Tibshirani. 1-norm support vector machines. NIPS, 2004."""
 
     def addAbsPenalization(self, indices, coefpenalization):
 
@@ -107,11 +109,10 @@ def run(display=True):
     l1svm.setData(x, classes)
     percent_valid = {}
 
-    solving_methods.remove('Mehrotra')# too slow
-    solving_methods.remove('ScipyLinProg')
-    solving_methods.remove('DualGradientAscent')# need to debug
-    solving_methods.remove('DualCoordinateAscent')# need to debug
- 
+    solving_methods.remove("Mehrotra")  # too slow
+    solving_methods.remove("ScipyLinProg")
+    solving_methods.remove("DualGradientAscent")  # need to debug
+    solving_methods.remove("DualCoordinateAscent")  # need to debug
 
     for method in solving_methods:
         l1svm.train(method=method)

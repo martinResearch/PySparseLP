@@ -23,21 +23,23 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 # -----------------------------------------------------------------------
 
+"""Naive methods to round the solution of a continuous linear program solution to an integer solution using
+- constraints propagation and backtracking
+- greedy reduction of the number of violated constraints using local search
+"""
 
-# These function implement a very naive methods to round the solution of a continuous
-# linear program solution to an integer solution using
-# - constraints propagation and backtracking
-# - greedy reduction of the number of violated constraints using local search
-import numpy as np
 import copy
 
+import numpy as np
+
+import scipy.sparse
 
 try:
 
-    import propagateConstraints as cythonPropagateConstraints
+    from . import propagateConstraints as cythonPropagateConstraints
 
     propagateConstraints_installed = True
-except:
+except BaseException:
     print(
         "could not import propagateConstraints maybe the compilation did not work , will be slower"
     )
@@ -45,7 +47,7 @@ except:
 
 
 def check_constraints(i, x_r, mask, Acsr, Acsc, b_lower, b_upper):
-    """check that the variable i is not involed in any violated constraint"""
+    """Check that the variable i is not involed in any violated constraint."""
     violated = False
     constraints_to_check = np.nonzero(Acsc[:, i])[0]
     for j in constraints_to_check:
@@ -103,7 +105,7 @@ def propagateConstraints(
         )
     tol = 1e-5  # to cope with small errors
 
-    for iter in range(nb_iter):
+    for _niter in range(nb_iter):
         # print '%d variable fixed '% np.sum(x_l==x_u)
         # list_changed_var=np.unique(list_changed_var)
         if len(list_changed_var) == 0:
@@ -192,7 +194,7 @@ def greedy_round(
         d = {"x": x, "LP": LP}
         with open("greedy_test.pkl", "wb") as f:
             pickle.dump(d, f)
-    if not callbackFunc is None:
+    if callbackFunc is not None:
         callbackFunc(0, np.round(x), 0, 0, 0, 0, 0)
     LP2 = copy.copy(LP)
     LP2.convertToAllInequalities()
@@ -201,7 +203,7 @@ def greedy_round(
     x_u = LP2.upperbounds.copy()
     x_l = LP2.lowerbounds.copy()
 
-    if not fixed is None:
+    if fixed is not None:
         x_l[fixed] = x[fixed]
         x_u[fixed] = x[fixed]
 
@@ -252,7 +254,7 @@ def greedy_round(
             depth = depth - 1
             revert(back_ops[depth], x_l, x_u)
             print("step back to depth %d" % depth)
-            if not displayFunc is None:
+            if displayFunc is not None:
                 displayFunc(x_r)
             continue
 
@@ -265,7 +267,7 @@ def greedy_round(
             mask[idvar] = 2
         elif mask[idvar] == 0:
             x_r[idvar] = np.round(x[idvar])
-            if not displayFunc is None:
+            if displayFunc is not None:
                 displayFunc(x_r)
             mask[idvar] = 1
             back_ops[depth] = []
@@ -281,7 +283,7 @@ def greedy_round(
                 [idvar], x_l, x_u, A_csr, A_csc, b_l, b_u, back_ops[depth]
             )
             x_r[x_l == x_u] = x_l[x_l == x_u]
-            if not displayFunc is None:
+            if displayFunc is not None:
                 displayFunc(x_r)
             x_l[idvar]
             if valid:
@@ -395,26 +397,26 @@ def greedy_fix(x, LP, nbmaxiter=1000, callbackFunc=None, useXorMoves=False):
         for xorsintervals in xors:
             for r in range(xorsintervals["start"], xorsintervals["end"] + 1):
                 ids = LP2.Ainequalities[r, :].indices
-                data = LP2.Ainequalities[r, :].data
+                # data = LP2.Ainequalities[r, :].data
                 assert len(ids) == 4
 
                 vec = -xr[ids]
                 xorid_to_moves_interval[r] = len(xormoves)
-                for i, id in enumerate(ids):
+                for i, _id in enumerate(ids):  # _id not used , is that a bug ?
                     vec2 = vec.copy()
                     vec2[i] += 1
                     xormoves.append((ids, vec2, r))
 
         xor_score_decrease = np.zeros(len(xormoves))
         for i, move in enumerate(xormoves):
-            for j, id in enumerate(move[0]):
-                new_r_ineq = r_ineq[id] + move[1][j]
+            for j, idv in enumerate(move[0]):
+                new_r_ineq = r_ineq[idv] + move[1][j]
                 new_r_ineq_threholded = np.maximum(new_r_ineq, 0)
                 xor_score_decrease[i] += (
-                    new_r_ineq_threholded - r_ineq_threholded[id]
-                ) * constraints_costs[id]
+                    new_r_ineq_threholded - r_ineq_threholded[idv]
+                ) * constraints_costs[idv]
 
-    for iter in range(nbmaxiter):
+    for _niter in range(nbmaxiter):
         if check:
             r_ineq = LP2.Ainequalities * xr - LP2.B_upper
             r_ineq_threholded = np.maximum(r_ineq, 0)
@@ -432,12 +434,12 @@ def greedy_fix(x, LP, nbmaxiter=1000, callbackFunc=None, useXorMoves=False):
             dr_ineq = dr_ineq_matrix[:, j]
             assert dr_ineq.format == "csc"
 
-            for j, id in enumerate(dr_ineq.indices):
-                new_r_ineq = r_ineq[id] + dr_ineq.data[j]
+            for j, idv in enumerate(dr_ineq.indices):
+                new_r_ineq = r_ineq[idv] + dr_ineq.data[j]
                 new_r_ineq_threholded = np.maximum(new_r_ineq, 0)
                 score_decrease[i] += (
-                    new_r_ineq_threholded - r_ineq_threholded[id]
-                ) * constraints_costs[id]
+                    new_r_ineq_threholded - r_ineq_threholded[idv]
+                ) * constraints_costs[idv]
 
             if check:
 
@@ -461,7 +463,7 @@ def greedy_fix(x, LP, nbmaxiter=1000, callbackFunc=None, useXorMoves=False):
         #
         if min(score_decrease) >= 0:
             print("could not find more moves")
-            if not callbackFunc is None:
+            if callbackFunc is not None:
                 callbackFunc(0, xr, 0, 0, 0, 0, 0)
 
             r_ineq = LP2.Ainequalities * xr - LP2.B_upper
@@ -484,13 +486,13 @@ def greedy_fix(x, LP, nbmaxiter=1000, callbackFunc=None, useXorMoves=False):
         dr_ineq = AinequalitiesCSC * Dx[:, i]
 
         score_decrease_best = 0
-        for j, id in enumerate(dr_ineq.indices):
-            r_ineq[id] = r_ineq[id] + dr_ineq.data[j]
-            new_r_ineq_threholded = np.maximum(r_ineq[id], 0)
+        for j, idv in enumerate(dr_ineq.indices):
+            r_ineq[idv] = r_ineq[idv] + dr_ineq.data[j]
+            new_r_ineq_threholded = np.maximum(r_ineq[idv], 0)
             score_decrease_best += (
-                new_r_ineq_threholded - r_ineq_threholded[id]
-            ) * constraints_costs[id]
-            r_ineq_threholded[id] = new_r_ineq_threholded
+                new_r_ineq_threholded - r_ineq_threholded[idv]
+            ) * constraints_costs[idv]
+            r_ineq_threholded[idv] = new_r_ineq_threholded
 
         assert np.abs(score_decrease_best - score_decrease[ibest]) < 1e-8
 
@@ -499,7 +501,7 @@ def greedy_fix(x, LP, nbmaxiter=1000, callbackFunc=None, useXorMoves=False):
         # xr[ibest]=1-xr[ibest]
         dx = Dx[:, ibest]
         xr[dx.indices] += dx.data
-        if not callbackFunc is None:
+        if callbackFunc is not None:
             callbackFunc(0, xr, 0, 0, 0, 0, 0)
 
         # update switching score of variables that may have changed

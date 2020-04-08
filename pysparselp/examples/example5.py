@@ -1,20 +1,15 @@
-# kmedians LP relaxation example
-# LP formulation inspired from https://cseweb.ucsd.edu/~dasgupta/291-geom/kmedian.pdf,
-#                              http://papers.nips.cc/paper/3478-clustering-via-lp-based-stabilities.pdf
-#                              https://www.cs.princeton.edu/courses/archive/fall14/cos521/projects/kmedian.pdf
+"""Example using K-Medians
 
+LP formulation inspired from
+https://cseweb.ucsd.edu/~dasgupta/291-geom/kmedian.pdf,
+http://papers.nips.cc/paper/3478-clustering-via-lp-based-stabilities.pdf
+https://www.cs.princeton.edu/courses/archive/fall14/cos521/projects/kmedian.pdf
+"""
 import matplotlib.pyplot as plt
-import time
-import copy
-from pysparselp.SparseLP import SparseLP, solving_methods
+
 import numpy as np
-import matplotlib.pyplot as plt
-import time
-import scipy.sparse
-import scipy.ndimage
-import scipy.signal
-import sys
-import os
+
+from pysparselp.SparseLP import SparseLP
 
 
 def kmediansContraint(LP, indices):
@@ -79,7 +74,7 @@ def run(display=False):
     np.random.seed(0)
     k = 5
     n = 500
-    
+
     prng = np.random.RandomState(0)
     centers = prng.randn(k, 2)
     gtlabel = np.floor(prng.rand(n) * 5).astype(np.int)

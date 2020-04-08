@@ -1,1 +1,1 @@
-from . import *
+"""Module pysparselp."""

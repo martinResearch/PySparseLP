@@ -1,16 +1,19 @@
-"""
-Sparse inverse covariance estimation
-"""
+"""Sparse inverse covariance estimation."""
 
+import matplotlib.pyplot as plt
 
 import numpy as np
-from scipy import linalg
-from sklearn.datasets import make_sparse_spd_matrix
-import matplotlib.pyplot as plt
+
 from pysparselp.SparseLP import SparseLP
+
+from scipy import linalg
+
+from sklearn.datasets import make_sparse_spd_matrix
 
 
 class SparseInvCov(SparseLP):
+    """Class to model the sparse inverse covariance problem."""
+
     def addAbsPenalization(self, I, coefpenalization):
 
         aux = self.addVariablesArray(
@@ -93,7 +96,11 @@ def run(display=True):
         for i, (name, this_cov) in enumerate(covs):
             plt.subplot(2, 3, i + 1)
             plt.imshow(
-                this_cov, interpolation="nearest", vmin=-vmax, vmax=vmax, cmap=plt.cm.RdBu_r
+                this_cov,
+                interpolation="nearest",
+                vmin=-vmax,
+                vmax=vmax,
+                cmap=plt.cm.RdBu_r,
             )
             plt.xticks(())
             plt.yticks(())
@@ -122,7 +129,7 @@ def run(display=True):
         plt.show()
 
     sum_abs_diff = np.sum(np.abs(lp_prec_ - prec))
-    nb_zeros_lp = np.sum(lp_prec_==0)
+    nb_zeros_lp = np.sum(lp_prec_ == 0)
     return sum_abs_diff, nb_zeros_lp
 
 

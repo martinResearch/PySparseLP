@@ -1,9 +1,10 @@
+"""Setup script"""
+
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
 
-from distutils.extension import Extension
 from Cython.Build import cythonize
 
 import numpy as np

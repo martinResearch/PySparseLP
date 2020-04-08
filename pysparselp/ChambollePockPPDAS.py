@@ -22,15 +22,21 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 # -----------------------------------------------------------------------
-
-
+"""LP Solver inspired byt the Chambolle-Pock algorithm with a speedup using only a subset of the constraints at each iteration. Doe snot converge well"""
 import copy
-import numpy as np
 import time
-import scipy.sparse
+
+
+import numpy as np
+
 import scipy.ndimage
+import scipy.sparse
+
+from .tools import convertToStandardFormWithBounds
 
 # @profile
+
+
 def ChambollePockPPDAS(
     LP,
     x0=None,
@@ -84,8 +90,8 @@ def ChambollePockPPDAS(
     elapsed = start
 
     use_vec_sparsity = False
-    if not x0 is None:
-        x = xo.copy()
+    if x0 is not None:
+        x = x0.copy()
     else:
         x = np.zeros(c.size)
 
@@ -118,7 +124,7 @@ def ChambollePockPPDAS(
     if useColumnPreconditioning:
         # constructing the preconditioning diagonal matrices
         tmp = 0
-        if not Aeq is None:
+        if Aeq is not None:
             print("Aeq shape=" + str(Aeq.shape))
 
             assert scipy.sparse.issparse(Aeq)
@@ -129,7 +135,7 @@ def ChambollePockPPDAS(
             SumAeq = np.ones((1, AeqCopy.shape[0])) * AeqCopy
             tmp = tmp + SumAeq
             # AeqT=Aeq.T
-        if not Aineq is None:
+        if Aineq is not None:
             print("Aineq shape=" + str(Aineq.shape))
             assert scipy.sparse.issparse(Aineq)
             assert Aineq.shape[1] == c.size
@@ -139,37 +145,37 @@ def ChambollePockPPDAS(
             SumAineq = np.ones((1, AineqCopy.shape[0])) * AineqCopy
             tmp = tmp + SumAineq
             # AineqT=Aineq.T
-        if Aeq == None and Aineq == None:
+        if Aeq is None and Aineq is None:
             x = np.zeros_like(lb)
             x[c > 0] = lb[c > 0]
             x[c < 0] = ub[c < 0]
             return x
         tmp[tmp == 0] = 1
         diagT = 1 / tmp[0, :]
-        T = scipy.sparse.diags(diagT[None, :], [0]).tocsr()
+        # T = scipy.sparse.diags(diagT[None, :], [0]).tocsr()
     else:
         scipy.sparse.eye(len(x))
         diagT = np.ones(x.shape)
 
-    if not Aeq is None:
+    if Aeq is not None:
         AeqCopy = Aeq.copy()
         AeqCopy.data = np.abs(AeqCopy.data) ** (alpha)
         SumAeq = AeqCopy * np.ones((AeqCopy.shape[1]))
         tmp = SumAeq
         tmp[tmp == 0] = 1
         diagSigma_eq = 1 / tmp
-        Sigma_eq = scipy.sparse.diags([diagSigma_eq], [0]).tocsr()
+        # Sigma_eq = scipy.sparse.diags([diagSigma_eq], [0]).tocsr()
         y_eq = np.zeros(Aeq.shape[0])
         del AeqCopy
         del SumAeq
-    if not Aineq is None:
+    if Aineq is not None:
         AineqCopy = Aineq.copy()
         AineqCopy.data = np.abs(AineqCopy.data) ** (alpha)
         SumAineq = AineqCopy * np.ones((AineqCopy.shape[1]))
         tmp = SumAineq
         tmp[tmp == 0] = 1
         diagSigma_ineq = 1 / tmp
-        Sigma_ineq = scipy.sparse.diags([diagSigma_ineq], [0]).tocsr()
+        # Sigma_ineq = scipy.sparse.diags([diagSigma_ineq], [0]).tocsr()
         y_ineq = np.zeros(Aineq.shape[0])
         del AineqCopy
         del SumAineq
@@ -190,10 +196,10 @@ def ChambollePockPPDAS(
 
     list_active_variables = np.arange(x.size)
     is_active_variable = np.ones(x.shape, dtype=np.bool)
-    if not Aineq is None:
+    if Aineq is not None:
         is_active_inequality_constraint = np.ones(Aineq.shape[0], dtype=np.bool)
         list_active_inequality_constraints = np.arange(Aineq.shape[0])
-    if not Aeq is None:
+    if Aeq is not None:
         is_active_equality_constraint = np.ones(Aeq.shape[0], dtype=np.bool)
         list_active_equality_constraints = np.arange(Aeq.shape[0])
         AeqCSC = Aeq.tocsc()
@@ -205,7 +211,7 @@ def ChambollePockPPDAS(
 
         subAeqCSR2 = subAeqCSC2.tocsr()
     d = c.copy()
-    if not Aineq is None:
+    if Aineq is not None:
         AineqCSC = Aineq.tocsc()
         AineqCSR = Aineq.tocsr()
         r_ineq = (Aineq * x) - bineq
@@ -227,11 +233,15 @@ def ChambollePockPPDAS(
 
     x3 = x
     x3_active = x3[list_active_variables]
+
+    diff_active_y_eq = None
+    diff_active_y_ineq = None
+
     for i in range(nb_iter):
 
         # Update he primal variables
 
-        if not Aeq is None:
+        if Aeq is not None:
             if use_vec_sparsity:
                 yeq_sparse = scipy.sparse.coo_matrix(y_eq).T
                 d = (
@@ -254,7 +264,7 @@ def ChambollePockPPDAS(
                     )  # will be usefull when few active variables
                 # d+=y_eq*Aeq# strangley this does not work, give wrong results
 
-        if not Aineq is None:
+        if Aineq is not None:
             if use_vec_sparsity:
                 yineq_sparse = scipy.sparse.coo_matrix(y_ineq).T
                 d = (
@@ -285,7 +295,7 @@ def ChambollePockPPDAS(
             # update d for the variables that where inactive
 
             d = c + y_ineq * AineqCSR
-            if not Aeq is None:
+            if Aeq is not None:
                 d += y_eq * AeqCSR
 
             # tmp=np.minimum(x-lb,np.maximum(diagT*d,0))+np.minimum(ub-x,np.maximum(-diagT*d,0))
@@ -302,7 +312,7 @@ def ChambollePockPPDAS(
 
             # update list active constraints
             # ideally find largest values in duals steps diagSigma_ineq*r_ineq
-            if not Aeq is None:
+            if Aeq is not None:
                 r_eq = (AeqCSC * x3) - beq
             r_ineq = (AineqCSC * x3) - bineq
             # tmp=np.abs(diagSigma_ineq*r_ineq)*((y_ineq>0) | (diagSigma_ineq*r_ineq>0 ))
@@ -312,7 +322,7 @@ def ChambollePockPPDAS(
                 is_active_inequality_constraint
             )
 
-            if not Aeq is None:
+            if Aeq is not None:
                 tmp = np.abs(diagSigma_eq * r_eq)
                 is_active_equality_constraint = tmp > 1e-6
                 (list_active_equality_constraints,) = np.nonzero(
@@ -328,11 +338,11 @@ def ChambollePockPPDAS(
 
             # subAeqCSC=AeqCSC[list_active_equality_constraints,:]
             # subAeqCSC=AeqCSR[list_active_equality_constraints,:].tocsc()
-            if not Aeq is None:
+            if Aeq is not None:
                 r_eq_active = r_eq[list_active_equality_constraints]
             # subAineqCSC=AineqCSC[list_active_inequality_constraints,:]
             # subAineqCSC=AineqCSR[list_active_inequality_constraints,:].tocsc()
-            if not Aeq is None:
+            if Aeq is not None:
                 subAeqCSR = AeqCSR[list_active_equality_constraints, :]
                 subAeqCSC2 = subAeqCSR.tocsc()[:, list_active_variables]
                 subAeqCSR2 = subAeqCSC2.tocsr()
@@ -385,7 +395,7 @@ def ChambollePockPPDAS(
 
         if use_vec_sparsity:
             x3_sparse = scipy.sparse.coo_matrix(x3).T
-        if not Aeq is None:
+        if Aeq is not None:
             if use_vec_sparsity:
                 r_eq = (Aeq * x3_sparse).toarray().ravel() - beq
             else:
@@ -398,7 +408,7 @@ def ChambollePockPPDAS(
                 r_eq_active += subAeqCSC2 * diff_active_x3
                 # r_eq=r_eq+increment.toarray().ravel()
 
-        if not Aineq is None:
+        if Aineq is not None:
             if use_vec_sparsity:
                 r_ineq = (Aineq * x3_sparse).toarray().ravel() - bineq
             else:
@@ -413,16 +423,16 @@ def ChambollePockPPDAS(
 
         if i > 0 and i % nb_iter_plot == 0:
             x[list_active_variables] = x_active
-            if not Aineq is None:
+            if Aineq is not None:
                 y_ineq[list_active_inequality_constraints] = active_y_ineq
                 r_ineq = (AineqCSC * x) - bineq
-            if not Aeq is None:
+            if Aeq is not None:
                 r_eq = (AeqCSC * x) - beq
 
             prev_elapsed = elapsed
             elapsed = time.clock() - start
             mean_iter_priod = (elapsed - prev_elapsed) / 10
-            if (not max_time is None) and elapsed > max_time:
+            if (max_time is not None) and elapsed > max_time:
                 break
             energy1 = c.dot(x)
 
@@ -447,11 +457,11 @@ def ChambollePockPPDAS(
 
             max_violated_equality = 0
             max_violated_inequality = 0
-            if not Aeq is None:
+            if Aeq is not None:
                 energy1 += y_eq.T.dot(Aeq * x - beq)
                 energy2 -= y_eq.dot(beq)
                 max_violated_equality = np.max(np.abs(r_eq))
-            if not Aineq is None:
+            if Aineq is not None:
                 energy1 += y_ineq.T.dot(Aineq * x - bineq)
                 energy2 -= y_ineq.dot(bineq)
                 max_violated_inequality = np.max(r_ineq)
@@ -460,11 +470,11 @@ def ChambollePockPPDAS(
             # xrounded=greedy_round(x,c,Aeq,beq,Aineq,np.full(bineq.shape,-np.inf),bineq,lb.copy(),ub.copy(),callbackFunc=callbackFunc)
 
             energy_rounded = c.dot(xrounded)
-            if not Aeq is None:
+            if Aeq is not None:
                 nb_violated_equality_rounded = np.sum(np.abs(Aeq * xrounded - beq))
             else:
                 nb_violated_equality_rounded = 0
-            if not Aineq is None:
+            if Aineq is not None:
                 nb_violated_inequality_rounded = np.sum(
                     np.maximum(Aineq * xrounded - bineq, 0)
                 )
@@ -502,10 +512,10 @@ def ChambollePockPPDAS(
                 + "rounded : %f ineq %f eq"
                 % (nb_violated_inequality_rounded, nb_violated_equality_rounded)
             )
-            #'y_eq has '+str(100 * np.mean(y_eq==0))+' % of zeros '+\
+            # 'y_eq has '+str(100 * np.mean(y_eq==0))+' % of zeros '+\
             #    'y_ineq has '+str(100 * np.mean(y_ineq==0))+' % of zeros '+\
 
-            if not callbackFunc is None:
+            if callbackFunc is not None:
 
                 callbackFunc(
                     i,
@@ -520,7 +530,7 @@ def ChambollePockPPDAS(
 
         # Update the dual variables
 
-        if not Aeq is None:
+        if Aeq is not None:
             diff_active_y_eq = (
                 diagSigma_eq[list_active_equality_constraints] * r_eq_active
             )
@@ -531,15 +541,16 @@ def ChambollePockPPDAS(
             # y_eq=y_eq+diagSigma_eq*r_eq
             # y_eq+=diagSigma_eq*r_eq
 
-        if not Aineq is None:
+        if Aineq is not None:
             # active_y_ineq=y_ineq[list_active_inequality_constraints]
             new_active_y_ineq = active_y_ineq + diagSigma_ineq_active * r_ineq_active
             new_active_y_ineq = np.maximum(new_active_y_ineq, 0)
             diff_active_y_ineq = new_active_y_ineq - active_y_ineq
-            active_y_ineq = new_active_y_ineq  # np.mean(diff_active_y_ineq!=0) often give me 0.05 on the facade , can i use that for more speedups ?
+            # np.mean(diff_active_y_ineq!=0) often give me 0.05 on the facade , can i use that for more speedups ?
+            active_y_ineq = new_active_y_ineq
             # y_ineq[list_active_inequality_constraints]=active_y_ineq
 
             # y_ineq+=diagSigma_ineq*r_ineq
             # np.maximum(y_ineq, 0,y_ineq)
 
-    return x[:n]
+    return x[:n], best_integer_solution

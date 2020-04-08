@@ -22,12 +22,15 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 # -----------------------------------------------------------------------
-
+"""LP Solver based on a chambolle-pock algorithm."""
+import time
 
 import numpy as np
-import time
-import scipy.sparse
+
 import scipy.ndimage
+import scipy.sparse
+
+from .tools import convertToStandardFormWithBounds
 
 
 def ChambollePockPPD(
@@ -68,7 +71,7 @@ def ChambollePockPPD(
         Aeq = None
         beq = None
 
-    if (not Aineq is None) and (not b_lower is None):
+    if (Aineq is not None) and (b_lower is not None):
 
         idskeep_upper = np.nonzero(b_upper != np.inf)[0]
         idskeep_lower = np.nonzero(b_lower != -np.inf)[0]
@@ -85,8 +88,8 @@ def ChambollePockPPD(
         bineq = b_upper
 
     use_vec_sparsity = False
-    if not x0 is None:
-        x = xo.copy()
+    if x0 is not None:
+        x = x0.copy()
     else:
         x = np.zeros(c.size)
     assert lb.size == c.size
@@ -110,7 +113,7 @@ def ChambollePockPPD(
 
     n = c.size
     useStandardForm = False
-    if useStandardForm and (not Aineq is None):
+    if useStandardForm and (Aineq is not None):
         c, Aeq, beq, lb, ub, x0 = convertToStandardFormWithBounds(
             c, Aeq, beq, Aineq, bineq, lb, ub, x0
         )
@@ -120,7 +123,7 @@ def ChambollePockPPD(
     if useColumnPreconditioning:
         # constructing the preconditioning diagonal matrices
         tmp = 0
-        if not Aeq is None:
+        if Aeq is not None:
             print("Aeq shape=" + str(Aeq.shape))
 
             assert scipy.sparse.issparse(Aeq)
@@ -131,7 +134,7 @@ def ChambollePockPPD(
             SumAeq = np.ones((1, AeqCopy.shape[0])) * AeqCopy
             tmp = tmp + SumAeq
             # AeqT=Aeq.T
-        if not Aineq is None:
+        if Aineq is not None:
             print("Aineq shape=" + str(Aineq.shape))
             assert scipy.sparse.issparse(Aineq)
             assert Aineq.shape[1] == c.size
@@ -141,18 +144,18 @@ def ChambollePockPPD(
             SumAineq = np.ones((1, AineqCopy.shape[0])) * AineqCopy
             tmp = tmp + SumAineq
             # AineqT=Aineq.T
-        if Aeq == None and Aineq == None:
+        if Aeq is None and Aineq is None:
             x = np.zeros_like(lb)
             x[c > 0] = lb[c > 0]
             x[c < 0] = ub[c < 0]
             return x
         tmp[tmp == 0] = 1
         diagT = 1 / tmp[0, :]
-        T = scipy.sparse.diags(diagT[None, :], [0]).tocsr()
+        # T = scipy.sparse.diags(diagT[None, :], [0]).tocsr()
     else:
         scipy.sparse.eye(len(x))
         diagT = np.ones(x.shape)
-    if not Aeq is None:
+    if Aeq is not None:
         AeqCopy = Aeq.copy()
         AeqCopy.data = np.abs(AeqCopy.data) ** (alpha)
         SumAeq = AeqCopy * np.ones((AeqCopy.shape[1]))
@@ -163,7 +166,7 @@ def ChambollePockPPD(
         y_eq = np.zeros(Aeq.shape[0])
         del AeqCopy
         del SumAeq
-    if not Aineq is None:
+    if Aineq is not None:
         AineqCopy = Aineq.copy()
         AineqCopy.data = np.abs(AineqCopy.data) ** (alpha)
         SumAineq = AineqCopy * np.ones((AineqCopy.shape[1]))
@@ -192,7 +195,7 @@ def ChambollePockPPD(
 
         # Update he primal variables
         d = c
-        if not Aeq is None:
+        if Aeq is not None:
             if use_vec_sparsity:
                 yeq_sparse = scipy.sparse.coo_matrix(y_eq).T
                 d = (
@@ -202,7 +205,7 @@ def ChambollePockPPD(
                 d = d + y_eq * Aeq
                 # d+=y_eq*Aeq# strangley this does not work, give wrong results
 
-        if not Aineq is None:
+        if Aineq is not None:
             if use_vec_sparsity:
                 yineq_sparse = scipy.sparse.coo_matrix(y_ineq).T
                 d = (
@@ -224,12 +227,12 @@ def ChambollePockPPD(
         x = x2
         if use_vec_sparsity:
             x3_sparse = scipy.sparse.coo_matrix(x3).T
-        if not Aeq is None:
+        if Aeq is not None:
             if use_vec_sparsity:
                 r_eq = (Aeq * x3_sparse).toarray().ravel() - beq
             else:
                 r_eq = (Aeq * x3) - beq
-        if not Aineq is None:
+        if Aineq is not None:
             if use_vec_sparsity:
                 r_ineq = (Aineq * x3_sparse).toarray().ravel() - bineq
             else:
@@ -239,7 +242,7 @@ def ChambollePockPPD(
             prev_elapsed = elapsed
             elapsed = time.clock() - start
             mean_iter_priod = (elapsed - prev_elapsed) / 10
-            if (not max_time is None) and elapsed > max_time:
+            if (max_time is not None) and elapsed > max_time:
                 break
             energy1 = c.dot(x)
 
@@ -259,11 +262,11 @@ def ChambollePockPPD(
             energy2 = c.dot(x4)
             max_violated_equality = 0
             max_violated_inequality = 0
-            if not Aeq is None:
+            if Aeq is not None:
                 energy1 += y_eq.T.dot(Aeq * x - beq)
                 energy2 += y_eq.T.dot(Aeq * x4 - beq)
                 max_violated_equality = np.max(np.abs(r_eq))
-            if not Aineq is None:
+            if Aineq is not None:
                 energy1 += y_ineq.T.dot(Aineq * x - bineq)
                 energy2 += y_ineq.T.dot(Aineq * x4 - bineq)
                 max_violated_inequality = np.max(r_ineq)
@@ -272,7 +275,7 @@ def ChambollePockPPD(
             else:
                 xrounded = x
             energy_rounded = c.dot(xrounded)
-            if not Aeq is None:
+            if Aeq is not None:
                 max_violated_equality_rounded = np.max(np.abs(Aeq * xrounded - beq))
             else:
                 max_violated_equality_rounded = 0
@@ -293,7 +296,7 @@ def ChambollePockPPD(
                 + str(energy1)
                 + " energy2="
                 + str(energy2)
-                + " elaspsed "
+                + " elapsed "
                 + str(elapsed)
                 + " second"
                 + " max violated inequality:"
@@ -309,10 +312,10 @@ def ChambollePockPPD(
                 + "mean_iter_period="
                 + str(mean_iter_priod)
             )
-            #'y_eq has '+str(100 * np.mean(y_eq==0))+' % of zeros '+\
+            # 'y_eq has '+str(100 * np.mean(y_eq==0))+' % of zeros '+\
             #    'y_ineq has '+str(100 * np.mean(y_ineq==0))+' % of zeros '+\
 
-            if not callbackFunc is None:
+            if callbackFunc is not None:
 
                 callbackFunc(
                     i,
@@ -326,17 +329,17 @@ def ChambollePockPPD(
 
         # Update the dual variables
 
-        if not Aeq is None:
+        if Aeq is not None:
             y_eq = y_eq + Sigma_eq * r_eq
             # y_eq=y_eq+diagSigma_eq*r_eq
             # y_eq+=diagSigma_eq*r_eq
 
-        if not Aineq is None:
+        if Aineq is not None:
             y_ineq = y_ineq + Sigma_ineq * r_ineq
             # y_ineq+=diagSigma_ineq*r_ineq
             np.maximum(y_ineq, 0, y_ineq)
             # y_ineq=np.maximum(y_ineq, 0)
 
-    if not best_integer_solution is None:
+    if best_integer_solution is not None:
         best_integer_solution = best_integer_solution[:n]
     return x[:n], best_integer_solution

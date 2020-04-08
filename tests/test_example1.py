@@ -1,8 +1,14 @@
-from pysparselp.examples.example1 import run
+
+"""Test based on the example1 (pott image model)."""
+
 import json
+import os
+
 import numpy as np
 import numpy.testing
-import os
+
+from pysparselp.examples.example1 import run
+
 
 __folder__ = os.path.dirname(__file__)
 
@@ -16,19 +22,19 @@ def test_example1(update_results=True):
 
     distanceToGroundTruthCurves = run(display=False)
 
-    curves_json_file = os.path.join(__folder__, 'example1_curves.json')
+    curves_json_file = os.path.join(__folder__, "example1_curves.json")
     if update_results:
-        with open(curves_json_file, 'w') as f:
+        with open(curves_json_file, "w") as f:
             json.dump(distanceToGroundTruthCurves, f)
 
-    with open(curves_json_file, 'r') as f:
+    with open(curves_json_file, "r") as f:
         distanceToGroundTruthCurves_expected = json.load(f)
 
     for k, v1 in distanceToGroundTruthCurves.items():
         v2 = distanceToGroundTruthCurves_expected[k]
         tv1, tv2 = trim_length(v1, v2)
         max_diff = np.max(np.abs(np.array(tv1) - np.array(tv2)))
-        print(f'max diff {k} = {max_diff}')
+        print(f"max diff {k} = {max_diff}")
         numpy.testing.assert_almost_equal(*trim_length(v1, v2))
 
 

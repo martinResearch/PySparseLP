@@ -1,3 +1,4 @@
+"""Simple pseudo-random generator base on the xorshift algorithm."""
 # cython: profile=True
 # cython: boundscheck=False
 # cython: wraparound=False
@@ -12,25 +13,28 @@ import numpy
 # cython#cimport cython
 
 # cython#cdef\
+
+
 class xorshift:
-    # simple pseudo-random generator base on the xorshift algorithm
-    # the goal is to get a random generator that can easily be reimpleted in various languages(matlab for example) in order to be able to generate
-    # the same random number sequences in various languages
-    # http://stackoverflow.com/questions/5829499/how-to-let-boostrandom-and-matlab-produce-the-same-random-numbers
-    # http://stackoverflow.com/questions/3722138/is-it-possible-to-reproduce-randn-of-matlab-with-numpy
+    """Simple pseudo-random generator base on the xorshift algorithm.
+
+    the goal is to get a random generator that can easily be re-implemented in various languages(matlab for example) in order to be able to generate
+    the same random number sequences in various languages
+    http://stackoverflow.com/questions/5829499/how-to-let-boostrandom-and-matlab-produce-the-same-random-numbers
+    http://stackoverflow.com/questions/3722138/is-it-possible-to-reproduce-randn-of-matlab-with-numpy
+    """
 
     # cython#cdef unsigned long x,y,z,w
     # cython#cdef float max
 
     def __init__(self):
-
         self.x = 123456789
         self.y = 362436069
         self.z = 521288629
         self.w = 88675123
         self.max = 2 ** 32
 
-    def next(self):
+    def next_value(self):
         t = self.x ^ (self.x << 11) & 0xFFFFFFFF  # <-- keep 32 bits
         self.x = self.y
         self.y = self.z
@@ -44,22 +48,22 @@ class xorshift:
         r = numpy.empty((m, n))
         for i in range(m):
             for j in range(n):
-                r[i, j] = float(self.next()) / self.max
+                r[i, j] = float(self.next_value()) / self.max
         return r
 
     def randint(self, a, b):
         r = int(a + (b - a + 1) * self.rand())
         return r
 
-    def choice(self, set):
-        i = self.randint(0, len(set) - 1)
-        return set[i]
+    def choice(self, elements):
+        i = self.randint(0, len(elements) - 1)
+        return elements[i]
 
     def randn(self, m=1, n=1):
         return self.normal(0, 1, m=m, n=n)
 
     def normal(self, mean, std, m=1, n=1):
-        # generate nromal distributed pseudo random numbers using the box-muller transform
+        # generate normal distributed pseudo random numbers using the box-muller transform
         # http://en.wikipedia.org/wiki/Box-Muller_transform
         u1 = self.rand(m, n)
         u2 = self.rand(m, n)

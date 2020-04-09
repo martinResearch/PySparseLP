@@ -7,6 +7,7 @@ import os
 import numpy as np
 import numpy.testing
 
+import pysparselp
 from pysparselp.examples.example1 import run
 
 

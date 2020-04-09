@@ -1,6 +1,5 @@
 """Example using a pott image model that can be exactly solved with graphcut."""
 
-
 import matplotlib.pyplot as plt
 
 import maxflow  # pip install PyMaxflow
@@ -146,6 +145,7 @@ def run(display=True):
             "\n\n----------------------------------------------------------\nSolving LP using %s"
             % method
         )
+
         sol1, elapsed = LP.solve(
             method=method,
             getTiming=True,

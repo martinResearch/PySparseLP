@@ -166,7 +166,10 @@ def DualCoordinateAscent(
     c_bar, x = getOptimX(y_eq, y_ineq)
     direction = np.zeros(y_ineq.shape)
 
+    timeout = False
     for niter in range(nbmaxiter):
+        if timeout:
+            break
         y_ineq_prev = y_ineq.copy()
         c_bar = LP2.costsvector + y_eq * LP2.Aequalities + y_ineq * LP2.Ainequalities
 
@@ -175,6 +178,7 @@ def DualCoordinateAscent(
             if i % 100 == 0:
                 elapsed = time.clock() - start
                 if (max_time is not None) and elapsed > max_time:
+                    timeout = True
                     break
 
             # i=32
@@ -200,6 +204,9 @@ def DualCoordinateAscent(
             diff_y_eq = y_eq[i] - prev_y_eq
             c_bar[Ai.indices] += diff_y_eq * Ai.data
 
+        if timeout:
+            break
+
         c_bar = LP2.costsvector + y_eq * LP2.Aequalities + y_ineq * LP2.Ainequalities
         nE = evaluate(y_eq, y_ineq)
         eps = 1e-10
@@ -216,6 +223,7 @@ def DualCoordinateAscent(
             if i % 100 == 0:
                 elapsed = time.clock() - start
                 if (max_time is not None) and elapsed > max_time:
+                    timeout = True
                     break
 
             Ai = LP2.Ainequalities[i, :]
@@ -246,7 +254,8 @@ def DualCoordinateAscent(
             # new_energy=evaluate(y_eq,y_ineq)
             # assert(new_energy>=prev_energy-1e-5)
             # assert(np.max(y_ineq)<=0)
-
+        if timeout:
+            break
         nE = evaluate(y_eq, y_ineq)
         if nE + eps < E:
             print("not expected")
@@ -312,6 +321,7 @@ def DualCoordinateAscent(
             print("iter %d energy %f" % (niter, evaluate(y_eq, y_ineq)))
 
         if (max_time is not None) and elapsed > max_time:
+            timeout = True
             break
     max_violation = max(
         np.max(LP2.Ainequalities * x - LP2.B_upper),

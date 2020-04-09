@@ -1,9 +1,9 @@
 """Setup script"""
 
 try:
-    from setuptools import setup
+    from setuptools import setup, find_packages
 except ImportError:
-    from distutils.core import setup
+    from distutils.core import setup, find_packages
 
 from Cython.Build import cythonize
 
@@ -18,7 +18,7 @@ setup(
     author="Martin de La Gorce",
     author_email="martin.delagorce@gmail.com",
     description="Python algorithms to solve linear programming problems with with sparse matrices",
-    packages=["pysparselp"],
+    packages=find_packages(),
     license="MIT",
     ext_modules=my_modules,  # additional source file(s)),
     include_dirs=[np.get_include()],

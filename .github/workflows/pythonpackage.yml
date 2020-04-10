@@ -24,7 +24,7 @@ jobs:
       run: |
         pip install flake8 pep8-naming flake8-bugbear flake8-builtins flake8-docstrings flake8-import-order     
         # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --show-source --statistics
     - name: Install pysparselp package
       run:  |
         python setup.py install

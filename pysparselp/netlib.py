@@ -27,7 +27,7 @@
 
 import gzip
 import os
-import urllib
+import urllib.request
 
 from .MPSparser import MPSParser
 
@@ -39,12 +39,12 @@ def getProblem(pbname):
     filenameSol = os.path.join(thisfilepath, "data", "perPlex", pbname.lower() + ".txt")
 
     if not os.path.isfile(filenameLP):
-        urllib.urlretrieve(
+        urllib.request.urlretrieve(
             "ftp://ftp.numerical.rl.ac.uk/pub/cuter/netlib/%s.SIF" % pbname.upper(),
             filenameLP,
         )
     if not os.path.isfile(filenameSol):
-        urllib.urlretrieve(
+        urllib.request.urlretrieve(
             "http://www.zib.de/koch/perplex/data/netlib/txt/%s.txt.gz" % pbname.lower(),
             filenameSol + ".gz",
         )

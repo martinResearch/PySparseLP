@@ -62,7 +62,7 @@ def lp_admm(
     use_preconditioning=True,
     nb_iter_plot=10,
 ):
-    # simple ADMM method with an approximaae resolutioa of a quadratic subproblem using conjagate gradil_matnt
+    # simple ADMM method with an approximate resolution of a quadratic subproblem using conjugate gradient
     use_lu = False
     use_cholesky = False
     use_amg = False
@@ -164,13 +164,13 @@ def lp_admm(
             # x=xprev+1*speed	# predict the minimum , can yield to some speedup
             if (
                 False
-            ):  # optimal sep along the direction given by the last two iterates, does not seem to imrove much speed
+            ):  # optimal sep along the direction given by the last two iterates, does not seem to improve much speed
                 direction = speed
                 t = -direction.dot(m * xprev - y)
                 print(t)
                 if abs(t) > 0:
-                    step_lenght = t / (direction.dot(m * direction))
-                    x = xprev + step_lenght * direction
+                    step_length = t / (direction.dot(m * direction))
+                    x = xprev + step_length * direction
             else:
                 pass
                 # x=xprev+0.8*speed
@@ -183,13 +183,13 @@ def lp_admm(
 
             if (
                 True
-            ):  # optimal sep along the direction given by the last two iterates, doe not seem to improve things in term of numbe rof iteration , and slow down iterations...
-                # maybe use next step as a conguate step would help ?
+            ):  # optimal sep along the direction given by the last two iterates, doe not seem to improve things in term of number of iteration , and slow down iterations...
+                # maybe use next step as a conjugate step would help ?
                 direction = speed
                 t = -direction.dot(m * x - y)
                 if abs(t) > 0:
-                    step_lenght = t / (direction.dot(m * direction))
-                    x = x + step_lenght * direction
+                    step_length = t / (direction.dot(m * direction))
+                    x = x + step_length * direction
             else:
                 # x=xprev+1*speed			# does not work with cg, explode
                 pass
@@ -260,7 +260,7 @@ def lp_admm(
             a_eq * x - beq
         )  # could use heavy ball instead of gradient step ?
 
-        # could try to update the penality ?
+        # could try to update the penalty ?
         # gamma_ineq=gamma_ineq+
         # M=gamma_eq*a_t_a+gamma_ineq*Id
         i += 1
@@ -308,7 +308,7 @@ def lp_admm2(
             a_eq, beq = precondition_constraints(a_eq, beq, alpha=2)
         if (
             a_ineq is not None
-        ):  # it seem important to do this preconditionning before converting to standard form
+        ):  # it seem important to do this preconditioning before converting to standard form
             a_ineq, b_lower, b_upper = precondition_constraints(
                 a_ineq, b_lower, b_upper, alpha=2
             )
@@ -343,8 +343,8 @@ def lp_admm2(
         import scikits.sparse
         ch.tic()
         # not that it will work only if M is positive definite which nto garantied the way it is constructed
-        # unfortunaletly i'm not able to atch the error to fall back on LU decomposition if
-        # chelesky fails because the matric is not positive definite
+        # unfortunately i'm not able to catch the error to fall back on LU decomposition if
+        # cholesky fails because the matrix is not positive definite
         chol = scikits.sparse.cholmod.cholesky(
             m.tocsc(), mode="simplicial"
         )  # pip install scikit-sparse, but difficult to compile in windows
@@ -375,7 +375,7 @@ def lp_admm2(
         import pyamg  # pip install pyamg
         m_amg = pyamg.ruge_stuben_solver(
             m.tocsc(), strength=None
-        )  # sometimes seems to yield infinte values
+        )  # sometimes seems to yield infinite values
         # I=scipy.sparse.eye(1000)
         # Mamg=pyamg.ruge_stuben_solver(I.tocsc())
 

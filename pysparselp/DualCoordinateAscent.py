@@ -149,7 +149,7 @@ def dual_coordinate_ascent(
             t = np.random.rand()
             alpha_optim = (
                 t * alphas[order[k]] + (1 - t) * alphas[order[k - 1]]
-            )  # maybe courld draw and random valu in the interval ?
+            )  # maybe could draw and random value in the interval ?
             # alpha_optim=alphas[order[k-1]]
         else:
             alpha_optim = alphas[order[k - 1]]

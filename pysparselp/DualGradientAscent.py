@@ -58,7 +58,7 @@ def exact_dual_line_search(direction, a, b, c_bar, upper_bounds, lower_bounds):
         t = np.random.rand()
         alpha_optim = (
             t * alphas[order[k]] + (1 - t) * alphas[order[k - 1]]
-        )  # maybe courld draw and random valu in the interval ?
+        )  # maybe could draw and random value in the interval ?
     else:
 
         alpha_optim = alphas[order[k - 1]]
@@ -134,7 +134,7 @@ def dual_gradient_ascent(
 
     # x[c_bar==0]=0.5
 
-    # alpha_i= vector containing the step lenghts that lead to a sign change on any of the gradient component
+    # alpha_i= vector containing the step lengths that lead to a sign change on any of the gradient component
     # when incrementing y[i]
     #
     print("iter %d energy %f" % (0, evaluate(y_eq, y_ineq)))
@@ -226,7 +226,7 @@ def dual_gradient_ascent(
         # newEnergy=evaluate(y_eq,y_ineq)
         # if newEnergy< prevEnergy:
         # coef_length=coef_length*0.5
-        # print 'reducing step lenght'
+        # print 'reducing step length'
         # else:
         # coef_length=coef_length*1.5
         # break

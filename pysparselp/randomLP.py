@@ -33,7 +33,7 @@ def generate_random_lp(nbvar, n_eq, n_ineq, sparsity):
     feasible_x = rand_sparse(nbvar, sparsity=1)
 
     if n_ineq > 0:
-        while True:  # make sure the mattrix is not empy=ty
+        while True:  # make sure the matrix is not empty
             a_ineq = scipy.sparse.csr_matrix(rand_sparse((n_ineq, nbvar), sparsity))
             keep = (
                 (a_ineq != 0).dot(np.ones(nbvar))

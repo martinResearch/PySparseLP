@@ -169,8 +169,8 @@ def mpc_sol(
         )
 
         # Get affine-scaling step length
-        alphax_aff, alphas_aff = step_size(x, s, dx_aff, ds_aff, 1)
-        mu_aff = (x + alphax_aff * dx_aff).dot(s + alphas_aff * ds_aff) / n
+        alpha_x_aff, alpha_s_aff = step_size(x, s, dx_aff, ds_aff, 1)
+        mu_aff = (x + alpha_x_aff * dx_aff).dot(s + alpha_s_aff * ds_aff) / n
 
         # Set central parameter
         sigma = (mu_aff / mu) ** 3

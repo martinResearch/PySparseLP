@@ -23,7 +23,7 @@ class L1SVM(SparseLP):
             assert np.min(coef_penalization) >= 0
             self.set_costs_variables(aux, np.ones(aux.shape) * coef_penalization)
 
-        # start by adding auxilary variables
+        # start by adding auxiliary variables
 
         aux_ravel = aux.ravel()
         indices_ravel = indices.ravel()

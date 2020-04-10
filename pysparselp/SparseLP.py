@@ -292,16 +292,16 @@ class SparseLP:
             fmt=" LI bound     X%-9d%f",
             newline="\n",
         )
-        continous_indices = np.nonzero(~self.is_integer)[0]
+        continuous_indices = np.nonzero(~self.is_integer)[0]
         np.savetxt(
             f,
-            np.column_stack((continous_indices, self.upper_bounds[continous_indices])),
+            np.column_stack((continuous_indices, self.upper_bounds[continuous_indices])),
             fmt=" UP bound     X%-9d%f",
             newline="\n",
         )
         np.savetxt(
             f,
-            np.column_stack((continous_indices, self.lower_bounds[continous_indices])),
+            np.column_stack((continuous_indices, self.lower_bounds[continuous_indices])),
             fmt=" LO bound     X%-9d%f",
             newline="\n",
         )

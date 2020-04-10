@@ -47,7 +47,7 @@ except BaseException:
 
 
 def check_constraints(i, x_r, mask, a_csr, a_csc, b_lower, b_upper):
-    """Check that the variable i is not involed in any violated constraint."""
+    """Check that the variable i is not involved in any violated constraint."""
     violated = False
     constraints_to_check = np.nonzero(a_csc[:, i])[0]
     for j in constraints_to_check:
@@ -373,9 +373,7 @@ def greedy_fix(x, lp, nb_max_iter=1000, callback_func=None, use_xor_moves=False)
     r_ineq = lp2.a_inequalities * xr - lp2.b_upper
     r_ineq_thresholded = np.maximum(r_ineq, 0)
     score_ineq = np.sum(r_ineq_thresholded * constraints_costs)
-    # test switching single variable
-    # constraints_gradient=r_ineq_theholded*LP2.a_inequalities
-
+ 
     score_decrease = np.zeros(x.size)
 
     a_ineq = lp2.a_inequalities.copy()
@@ -459,7 +457,7 @@ def greedy_fix(x, lp, nb_max_iter=1000, callback_func=None, use_xor_moves=False)
             # if score_decrease[i]<0:
             # print "found move"
 
-        # swith the variable that decreases the most the constraints violation score
+        # find the variable that decreases the most the constraints violation score
         #
         if min(score_decrease) >= 0:
             print("could not find more moves")
@@ -475,14 +473,9 @@ def greedy_fix(x, lp, nb_max_iter=1000, callback_func=None, use_xor_moves=False)
             return xr
 
         i_best = np.argmin(score_decrease)
-        # idbestxormove=np.argmin(xor_score_decrease)
-        #
-
-        # r_ineq=
+       
         i = i_best
-        # dxi=1-2*xr[i]
 
-        # dr_ineq=a_inequalities_csc[:,i]*dxi
         dr_ineq = a_inequalities_csc * d_x[:, i]
 
         score_decrease_best = 0

@@ -55,8 +55,8 @@ def chambolle_pock_ppd(
     # method adapted from
     # Diagonal preconditioning for first order primal-dual algorithms in convex optimization
     # by Thomas Pack and Antonin Chambolle
-    # the adaptatio makes the code able to handle a more flexible specification of the LP problem
-    # (we could transform genric LPs into the equality form , but i am note sure the convergence would be the same)
+    # the adaptation makes the code able to handle a more flexible specification of the LP problem
+    # (we could transform generic LPs into the equality form , but i am note sure the convergence would be the same)
     # minimizes c.T*x
     # such that
     # a_eq*x=beq
@@ -203,7 +203,7 @@ def chambolle_pock_ppd(
                 )  # faster when few constraint are activated
             else:
                 d = d + y_eq * a_eq
-                # d+=y_eq*a_eq# strangley this does not work, give wrong results
+                # d+=y_eq*a_eq# strangely this does not work, give wrong results
 
         if a_ineq is not None:
             if use_vec_sparsity:
@@ -248,8 +248,8 @@ def chambolle_pock_ppd(
 
             # x4 is obtained my minimizing with respect to the primal variable while keeping the langrangian coef fix , which give a lower bound on the optimal solution
             # energy2 is the lower bound
-            # energy1  is the value of the lagrangian at the curretn (hopefull sadle) point
-            # on problem is that the minimmization with respect to the primal variables may actually lead to invintly negative lower bounds...
+            # energy1  is the value of the lagrangian at the current (hopefull saddle) point
+            # on problem is that the minimization with respect to the primal variables may actually lead to infintely negative lower bounds...
             x4 = (
                 -d * 100000
             )  # pb : the curve is very dependant on that value which make this lower bound a bit useless

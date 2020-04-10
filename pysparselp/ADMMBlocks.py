@@ -56,14 +56,14 @@ def lp_admm_block_decomposition(
     nb_iter=100,
     callback_func=None,
     max_time=None,
-    use_preconditionning=True,
+    use_preconditioning=True,
     use_lu=True,
     nb_iter_plot=10,
 ):
     # simple ADMM method with an approximate resolution of a quadratic subproblem using conjugate gradient
-    # inspiredy by Boyd's paper on ADMM
+    # inspired by Boyd's paper on ADMM
     # Distributed Optimization and Statistical Learning via the Alternating Direction Method of Multipliers
-    # the difference with admm_solver is that the linear quality constrainrs a_eq*beq are enforced during the resolution
+    # the difference with admm_solver is that the linear quality constraints a_eq*beq are enforced during the resolution
     # of the subproblem instead of beeing enforced through multipliers
     n = c.size
     start = time.clock()
@@ -72,7 +72,7 @@ def lp_admm_block_decomposition(
         x0 = np.zeros(c.size)
     # if a_eq!=None:
     # a_eq,beq=precondition_constraints(a_eq,beq,alpha=2)
-    # if a_ineq!=None:# it seem important to do this preconditionning before converting to standard form
+    # if a_ineq!=None:# it seem important to do this preconditioning before converting to standard form
     # a_ineq,b_lower,b_upper=precondition_constraints(a_ineq,b_lower,b_upper,alpha=2)
 
     c, a_eq, beq, lb, ub, x0 = convert_to_standard_form_with_bounds(
@@ -85,14 +85,14 @@ def lp_admm_block_decomposition(
     xp = np.minimum(xp, ub)
 
     # trying some preconditioning
-    # left preconditioning seems not to change anything if not used in combination with use_preconditionning_cols  as each subproblem is solved exactly.
-    use_preconditionning_rows = False
-    if use_preconditionning_rows:
+    # left preconditioning seems not to change anything if not used in combination with use_preconditioning_cols  as each subproblem is solved exactly.
+    use_preconditioning_rows = False
+    if use_preconditioning_rows:
         a_eq, beq = precondition_constraints(a_eq, beq, alpha=2)
 
     # global right preconditioning
-    use_preconditionning_cols = False
-    if use_preconditionning_cols:
+    use_preconditioning_cols = False
+    if use_preconditioning_cols:
         r, c, a_eq, beq, lb, ub, x0 = precondition_lp_right(
             c, a_eq, beq, lb, ub, x0, alpha=3
         )
@@ -113,22 +113,7 @@ def lp_admm_block_decomposition(
 
     merge_groups = []
     merge_groups = [[k] for k in range(len(a_eq.blocks))]
-    # mergegroupes.append(np.arange(len(a_eq.blocks)))#single block
 
-    # mergegroupes.append([0,1,2,3, 4, 5])
-    # mergegroupes.append([6,7,8,9,10,11])
-    # mergegroupes.append([12,13,14])
-    # mergegroupes.append([0,1,2,3, 4, 5,12])
-    # mergegroupes.append([6,7,8,9,10,11,13])
-    # mergegroupes.append([14])
-
-    # mergegroupes.append([0,1,2,3,4,5,12,13,])
-    # mergegroupes.append([6,7,8,9,10,11,14,15])
-    # mergegroupes.append([0,1,2,3,4,5])
-    # mergegroupes.append([6,7,8,9,10,11])
-    # mergegroupes.append([12,13])
-    # mergegroupes.append([14,15])
-    # mergegroupes.append([12,13,14,15])
     nb_blocks = len(merge_groups)
 
     if False:
@@ -153,7 +138,7 @@ def lp_admm_block_decomposition(
         list_block_ids.append(ids)
 
         sub_a2 = sub_a[:, ids]
-        # precompute the LU factorizartion of the matrix that needs to be inverted for the block
+        # precompute the LU factorization of the matrix that needs to be inverted for the block
         m = scipy.sparse.vstack(
             (
                 scipy.sparse.hstack(
@@ -198,7 +183,7 @@ def lp_admm_block_decomposition(
         # increment th number of time each variable is copied
         nb_used[ids] += 1
         sub_a2 = sub_a[:, ids]
-        # precompute the LU factorizartion of the matrix that needs to be inverted for the block
+        # precompute the LU factorization of the matrix that needs to be inverted for the block
         m = scipy.sparse.vstack(
             (
                 scipy.sparse.hstack(

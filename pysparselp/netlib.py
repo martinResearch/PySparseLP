@@ -32,24 +32,24 @@ import urllib.request
 from .MPSparser import mps_parser
 
 
-def get_problem(pbname):
+def get_problem(problem_name):
     thisfilepath = os.path.dirname(os.path.abspath(__file__))
 
     netlib_folder = os.path.join(thisfilepath, "data", "netlib")
     sol_folder = os.path.join(thisfilepath, "data", "perPlex")
     os.makedirs(netlib_folder, exist_ok=True)
     os.makedirs(sol_folder, exist_ok=True)
-    filename_lp = os.path.join(netlib_folder, pbname.upper() + ".SIF")
-    filename_sol = os.path.join(sol_folder, pbname.lower() + ".txt")
+    filename_lp = os.path.join(netlib_folder, problem_name.upper() + ".SIF")
+    filename_sol = os.path.join(sol_folder, problem_name.lower() + ".txt")
 
     if not os.path.isfile(filename_lp):
         urllib.request.urlretrieve(
-            "ftp://ftp.numerical.rl.ac.uk/pub/cuter/netlib/%s.SIF" % pbname.upper(),
+            "ftp://ftp.numerical.rl.ac.uk/pub/cuter/netlib/%s.SIF" % problem_name.upper(),
             filename_lp,
         )
     if not os.path.isfile(filename_sol):
         urllib.request.urlretrieve(
-            "http://www.zib.de/koch/perplex/data/netlib/txt/%s.txt.gz" % pbname.lower(),
+            "http://www.zib.de/koch/perplex/data/netlib/txt/%s.txt.gz" % problem_name.lower(),
             filename_sol + ".gz",
         )
         fgz = gzip.open(filename_sol + ".gz")

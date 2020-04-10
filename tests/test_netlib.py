@@ -16,9 +16,9 @@ from pysparselp.netlib import get_problem
 __folder__ = os.path.dirname(__file__)
 
 
-def solve_netlib(pbname, display=False, max_time_seconds=30):
+def solve_netlib(problem_name, display=False, max_time_seconds=30):
 
-    lp_dict = get_problem(pbname)
+    lp_dict = get_problem(problem_name)
     ground_truth = lp_dict["solution"]
 
     lp = SparseLP()

@@ -53,8 +53,8 @@ def chambolle_pock_ppdas(
     # method adapted from
     # Diagonal preconditioning for first order primal-dual algorithms in convex optimization
     # by Thomas Pack and Antonin Chambolle
-    # the adaptatio makes the code able to handle a more flexible specification of the LP problem
-    # (we could transform genric LPs into the equality form , but i am note sure the convergence would be the same)
+    # the adaptation makes the code able to handle a more flexible specification of the LP problem
+    # (we could transform generic LPs into the equality form , but i am note sure the convergence would be the same)
     # minimizes c.T*x
     # such that
     # a_eq*x=beq
@@ -215,8 +215,6 @@ def chambolle_pock_ppdas(
         a_ineq_csc = a_ineq.tocsc()
         a_ineq_csr = a_ineq.tocsr()
         r_ineq = (a_ineq * x) - b_ineq
-        # subAeqCSC=a_eq_csc[list_active_equality_constraints,:]
-        # suba_ineq_csc=a_ineq_csc[list_active_inequality_constraints,:]
         r_ineq_active = r_ineq[list_active_inequality_constraints]
         sub_a_ineq_csr = a_ineq_csr[list_active_inequality_constraints, :]
         sub_a_ineq_csc2 = sub_a_ineq_csr.tocsc()[:, list_active_variables]
@@ -257,12 +255,12 @@ def chambolle_pock_ppdas(
 
                     # increment=sparse_diff_y_eq*a_eq_csr
                     # d=d+increment.toarray().ravel()
-                    # d[increment.indices]=d[increment.indices]+increment.data#  does numpoy exploit the fact that second term is sparse ?
+                    # d[increment.indices]=d[increment.indices]+increment.data#  does numpy exploit the fact that second term is sparse ?
                     # d=d+diff_active_y_eq*sub_a_eq_csr
                     d_active = (
                         d_active + diff_active_y_eq * sub_a_eq_csr2
                     )  # will be usefull when few active variables
-                # d+=y_eq*a_eq# strangley this does not work, give wrong results
+                # d+=y_eq*a_eq# strangely this does not work, give wrong results
 
         if a_ineq is not None:
             if use_vec_sparsity:
@@ -436,9 +434,10 @@ def chambolle_pock_ppdas(
                 break
             energy1 = c.dot(x)
 
-            # x4 is obtained my minimizing with respect to the primal variable while keeping the langrangian coef fix , which give a lower bound on the optimal solution
+            # x4 is obtained my minimizing with respect to the primal variable while keeping the langrangian coefficients fixed, 
+            # which give a lower bound on the optimal solution
             # energy2 is the lower bound
-            # energy1  is the value of the lagrangian at the curretn (hopefull sadle) point
+            # energy1  is the value of the lagrangian at the current (hopefull saddle) point
             x4 = np.zeros(lb.size)
 
             # c_bar=LP2.costsvector.copy()

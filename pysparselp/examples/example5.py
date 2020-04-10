@@ -12,13 +12,13 @@ import numpy as np
 from pysparselp.SparseLP import SparseLP
 
 
-def kmediansContraint(LP, indices):
+def kmedians_contraint(LP, indices):
     cols = indices
     vals = np.ones(cols.shape)
-    LP.addLinearConstraintRows(cols, vals, lowerbounds=1, upperbounds=1)
+    LP.add_linear_constraint_rows(cols, vals, lowerbounds=1, upperbounds=1)
     cols = indices.T
     vals = np.ones(cols.shape)
-    LP.addLinearConstraintRows(cols, vals, lowerbounds=-np.inf, upperbounds=1)
+    LP.add_linear_constraint_rows(cols, vals, lowerbounds=-np.inf, upperbounds=1)
 
 
 def clusterize(points, k, nCenterCandidates):
@@ -31,13 +31,13 @@ def clusterize(points, k, nCenterCandidates):
     )
 
     LP = SparseLP()
-    labeling = LP.addVariablesArray(pairdistances.shape, 0, 1, pairdistances)
+    labeling = LP.add_variables_array(pairdistances.shape, 0, 1, pairdistances)
 
-    usedAsCenter = LP.addVariablesArray(nCenterCandidates, 0, 1, 0)
-    LP.addLinearConstraintRow(
+    usedAsCenter = LP.add_variables_array(nCenterCandidates, 0, 1, 0)
+    LP.add_linear_constraint_row(
         usedAsCenter, np.ones((nCenterCandidates)), lowerbound=0, upperbound=k
     )
-    LP.addLinearConstraintRows(
+    LP.add_linear_constraint_rows(
         labeling, np.ones((n, nCenterCandidates)), lowerbounds=1, upperbounds=1
     )
     # max(labeling,axis=0)<usedAsCenter
@@ -47,7 +47,7 @@ def clusterize(points, k, nCenterCandidates):
     vals = np.column_stack(
         (np.ones((n * nCenterCandidates)), -np.ones((n * nCenterCandidates)))
     )
-    LP.addLinearConstraintRows(cols, vals, lowerbounds=None, upperbounds=0)
+    LP.add_linear_constraint_rows(cols, vals, lowerbounds=None, upperbounds=0)
 
     s = LP.solve(method="ADMM", nb_iter=1000, max_time=np.inf, nb_iter_plot=500)[0]
 
@@ -55,7 +55,7 @@ def clusterize(points, k, nCenterCandidates):
     x = s[labeling]
     print(np.round(x * 1000) / 1000)
 
-    LP.maxConstraintViolation(s)
+    LP.max_constraint_violation(s)
 
     label = np.argmax(x, axis=1)
     if not (len(np.unique(label)) == k):

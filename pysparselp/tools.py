@@ -59,7 +59,7 @@ class check_decrease:
         self.val = val
 
 
-def convertToPySparseFormat(A):
+def convert_to_py_sparse_format(A):
     # check symmetric
     import spmatrix
     assert (A - A.T).nnz == 0
@@ -83,7 +83,7 @@ class CholeskyOrLu:
             self.solve = self.LU.solve_A
 
 
-def convertToStandardFormWithBounds(c, Aeq, beq, Aineq, b_lower, b_upper, lb, ub, x0):
+def convert_to_standard_form_with_bounds(c, Aeq, beq, Aineq, b_lower, b_upper, lb, ub, x0):
 
     if Aineq is not None:
         ni = Aineq.shape[0]
@@ -123,7 +123,7 @@ def convertToStandardFormWithBounds(c, Aeq, beq, Aineq, b_lower, b_upper, lb, ub
     return c, Aeq2, beq2, lb, ub, x0
 
 
-def convertToOnesideInequalitySystem(Aineq, b_lower, b_upper):
+def convert_to_one_sided_inequality_system(Aineq, b_lower, b_upper):
     if (Aineq is not None) and (b_lower is not None):
 
         idskeep_upper = np.nonzero(b_upper != np.inf)[0]
@@ -169,7 +169,7 @@ def check_constraints(i, x_r, mask, Acsr, Acsc, b_lower, b_upper):
 class solutionStat:
     """Class that compute statistics of solution of an LP problem."""
 
-    def __init__(self, c, AeqCSC, beq, AineqCSC, bineq, callbackFunc):
+    def __init__(self, c, AeqCSC, beq, AineqCSC, bineq, callback_func):
         self.c = c
         self.Aeq = AeqCSC
         self.beq = beq
@@ -178,9 +178,9 @@ class solutionStat:
         self.best_integer_solution_energy = np.inf
         self.best_integer_solution = None
         self.iprev = 0
-        self.callbackFunc = callbackFunc
+        self.callback_func = callback_func
 
-    def startTimer(self):
+    def start_timer(self):
         self.start = time.clock()
         self.elapsed = self.start
 
@@ -260,7 +260,7 @@ def save_arguments(filename):
         pickle.dump(d, f)
 
 
-def preconditionConstraints(A, b, b2=None, alpha=2):
+def precondition_constraints(A, b, b2=None, alpha=2):
     # alpha=2
     ACopy = A.copy()
     ACopy.data = np.abs(ACopy.data) ** (alpha)
@@ -282,7 +282,7 @@ def preconditionConstraints(A, b, b2=None, alpha=2):
         return Ap, bp, Sigma * b2
 
 
-def preconditionLPRight(c, Aeq, beq, lb, ub, x0, alpha=2):
+def precondition_lp_right(c, Aeq, beq, lb, ub, x0, alpha=2):
     # alpha=2
     AeqCopy = Aeq.copy()
     AeqCopy.data = np.abs(AeqCopy.data) ** (alpha)

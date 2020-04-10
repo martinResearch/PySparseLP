@@ -43,7 +43,7 @@ ctypedef np.double_t cDOUBLE
 @cython.boundscheck(False)
 @cython.wraparound(False) 
 @cython.cdivision(True)
-def propagateConstraints(list_changed_var,\
+def propagate_constraints(list_changed_var,\
 			np.ndarray[cDOUBLE, ndim=1] x_l,\
 			np.ndarray[cDOUBLE, ndim=1] x_u,\
 			np.ndarray[cINT32, ndim=1] Acsc_indices,\

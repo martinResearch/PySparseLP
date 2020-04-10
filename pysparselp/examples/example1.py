@@ -12,13 +12,13 @@ from pysparselp.SparseLP import SparseLP, solving_methods
 class ImageLP(SparseLP):
     """Specialization of the generic SparseLP to define linear relaxation of pott image models."""
 
-    def addPenalizedDifferences(self, I, J, coefpenalization):
+    def add_penalized_differences(self, I, J, coefpenalization):
         assert I.size == J.size
         maxDiff = np.maximum(
             self.upperbounds[I] - self.lowerbounds[J],
             self.upperbounds[J] - self.lowerbounds[I],
         )
-        aux = self.addVariablesArray(
+        aux = self.add_variables_array(
             I.shape, upperbounds=maxDiff, lowerbounds=0, costs=coefpenalization
         )
         if np.isscalar(coefpenalization):
@@ -32,19 +32,19 @@ class ImageLP(SparseLP):
         J_ravel = J.ravel()
         cols = np.column_stack((I_ravel, J_ravel, aux_ravel))
         vals = np.tile(np.array([1, -1, -1]), [I.size, 1])
-        self.addLinearConstraintRows(cols, vals, lowerbounds=None, upperbounds=0)
+        self.add_linear_constraint_rows(cols, vals, lowerbounds=None, upperbounds=0)
         vals = np.tile(np.array([-1, 1, -1]), [I.size, 1])
-        self.addLinearConstraintRows(cols, vals, lowerbounds=None, upperbounds=0)
+        self.add_linear_constraint_rows(cols, vals, lowerbounds=None, upperbounds=0)
 
-    def addPottHorizontal(self, indices, coefpenalization):
-        self.addPenalizedDifferences(indices[:, 1:], indices[:, :-1], coefpenalization)
+    def add_pott_horizontal(self, indices, coefpenalization):
+        self.add_penalized_differences(indices[:, 1:], indices[:, :-1], coefpenalization)
 
-    def addPottVertical(self, indices, coefpenalization):
-        self.addPenalizedDifferences(indices[1:, :], indices[:-1, :], coefpenalization)
+    def add_pott_vertical(self, indices, coefpenalization):
+        self.add_penalized_differences(indices[1:, :], indices[:-1, :], coefpenalization)
 
-    def addPottModel(self, indices, coefpenalization):
-        self.addPottHorizontal(indices, coefpenalization)
-        self.addPottVertical(indices, coefpenalization)
+    def add_pott_model(self, indices, coefpenalization):
+        self.add_pott_horizontal(indices, coefpenalization)
+        self.add_pott_vertical(indices, coefpenalization)
 
 
 def build_linear_program(imageSize, coefPotts, coefMul):
@@ -77,14 +77,14 @@ def build_linear_program(imageSize, coefPotts, coefMul):
 
     LP = ImageLP()
 
-    indices = LP.addVariablesArray(
+    indices = LP.add_variables_array(
         shape=size_image, lowerbounds=0, upperbounds=1, costs=unary_terms / coefMul
     )
 
     groundTruth = img2
     groundTruthIndices = indices
 
-    LP.addPottModel(indices, coefpenalization=coefPotts / coefMul)
+    LP.add_pott_model(indices, coefpenalization=coefPotts / coefMul)
     return LP, groundTruth, groundTruthIndices, unary_terms
 
 
@@ -115,7 +115,7 @@ def run(display=True):
         ax_curves2.set_xlabel("duration")
         ax_curves2.set_ylabel("distanceToGroundTruth")
 
-    def plotSolution(niter, solution, is_active_variable=None):
+    def plot_solution(niter, solution, is_active_variable=None):
         image = solution[groundTruthIndices]
         # imwrite('ter%05d.png'%niter,solution[indices][:,:,0])
         # imwrite('diff_iter%05d.png'%niter,np.diff(solution[indices][:,:,0]))
@@ -131,8 +131,8 @@ def run(display=True):
 
     # simplex much too slow for images larger than 20 by 20
     # LP2=copy.deepcopy(LP)
-    # LP2.convertToOnesideInequalitySystem()
-    # sol1,elapsed=LP2.solve(method='ScipyLinProg',force_integer=False,getTiming=True,nb_iter=100,max_time=10,groundTruth=groundTruth,groundTruthIndices=indices,plotSolution=None)
+    # LP2.convert_to_one_sided_inequality_system()
+    # sol1,elapsed=LP2.solve(method='ScipyLinProg',force_integer=False,getTiming=True,nb_iter=100,max_time=10,groundTruth=groundTruth,groundTruthIndices=indices,plot_solution=None)
 
     solving_methods2 = [
         m for m in solving_methods if (m not in ["ScipyLinProg"])
@@ -153,7 +153,7 @@ def run(display=True):
             max_time=15,
             groundTruth=groundTruth,
             groundTruthIndices=groundTruthIndices,
-            plotSolution=None,
+            plot_solution=None,
             nb_iter_plot=500,
         )
         if display:

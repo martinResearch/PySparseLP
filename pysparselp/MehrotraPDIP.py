@@ -14,7 +14,7 @@ from scipy.sparse.linalg import spsolve
 from .xorshift import xorshift
 
 
-def initialPoint(A, b, c):
+def initial_point(A, b, c):
 
     n = A.shape[1]
     e = np.ones((n,))
@@ -48,7 +48,7 @@ def initialPoint(A, b, c):
     return x0, y0, s0
 
 
-def newtonDirection(Rb, Rc, Rxs, A, m, n, x, s, lu, errorCheck=0):
+def newton_direction(Rb, Rc, Rxs, A, m, n, x, s, lu, errorCheck=0):
 
     rhs = np.hstack((-Rb, -Rc + Rxs / x))
     D_2 = -np.minimum(1e16, s / x)
@@ -94,7 +94,7 @@ def newtonDirection(Rb, Rc, Rxs, A, m, n, x, s, lu, errorCheck=0):
     return dx, dy, ds, lu
 
 
-def stepSize(x, s, Dx, Ds, eta=0.9995):
+def step_size(x, s, Dx, Ds, eta=0.9995):
     alphax = -1 / min(min(Dx / x), -1)
     alphax = min(1, eta * alphax)
     alphas = -1 / min(min(Ds / s), -1)
@@ -102,7 +102,7 @@ def stepSize(x, s, Dx, Ds, eta=0.9995):
     return alphax, alphas
 
 
-def mpcSol(
+def mpc_sol(
     A,
     b,
     c,
@@ -130,7 +130,7 @@ def mpcSol(
         )
 
     # Choose initial point
-    x, y, s = initialPoint(A, b, c)
+    x, y, s = initial_point(A, b, c)
 
     bc = 1 + max([norm(b), norm(c)])
 
@@ -159,12 +159,12 @@ def mpcSol(
         # ----- Predictor step -----
 
         # Get affine-scaling direction
-        dx_aff, dy_aff, ds_aff, lu = newtonDirection(
+        dx_aff, dy_aff, ds_aff, lu = newton_direction(
             Rb, Rc, Rxs, A, m, n, x, s, None, errorCheck
         )
 
         # Get affine-scaling step length
-        alphax_aff, alphas_aff = stepSize(x, s, dx_aff, ds_aff, 1)
+        alphax_aff, alphas_aff = step_size(x, s, dx_aff, ds_aff, 1)
         mu_aff = (x + alphax_aff * dx_aff).dot(s + alphas_aff * ds_aff) / n
 
         # Set central parameter
@@ -176,7 +176,7 @@ def mpcSol(
         Rxs = Rxs + dx_aff * ds_aff - sigma * mu * np.ones((n))
 
         # Get corrector's direction
-        dx_cc, dy_cc, ds_cc, lu = newtonDirection(
+        dx_cc, dy_cc, ds_cc, lu = newton_direction(
             Rb, Rc, Rxs, A, m, n, x, s, lu, errorCheck
         )
 
@@ -185,7 +185,7 @@ def mpcSol(
         dy = dy_aff + dy_cc
         ds = ds_aff + ds_cc
 
-        alphax, alphas = stepSize(x, s, dx, ds, theta)
+        alphax, alphas = step_size(x, s, dx, ds, theta)
 
         # Update iterates
         x = x + alphax * dx
@@ -213,4 +213,4 @@ if __name__ == "__main__":
     b = A * r.rand(n, 1)
     c = A.T * r.rand(m, 1)
     c = c + r.rand(n, 1)
-    f, x, y, s, N = mpcSol(A, b, c)
+    f, x, y, s, N = mpc_sol(A, b, c)

@@ -34,15 +34,15 @@ from scipy import sparse
 from .tools import (
     check_decrease,
     chrono,
-    convertToStandardFormWithBounds,
-    preconditionConstraints,
-    preconditionLPRight
+    convert_to_standard_form_with_bounds,
+    precondition_constraints,
+    precondition_lp_right
 )
 
 # import  scikits.sparse.cholmod
 
 
-def LP_admmBlockDecomposition(
+def lp_admm_block_decomposition(
     c,
     Aeq,
     beq,
@@ -54,7 +54,7 @@ def LP_admmBlockDecomposition(
     x0=None,
     gamma_ineq=0.7,
     nb_iter=100,
-    callbackFunc=None,
+    callback_func=None,
     max_time=None,
     use_preconditionning=True,
     useLU=True,
@@ -63,7 +63,7 @@ def LP_admmBlockDecomposition(
     # simple ADMM method with an approximate resolution of a quadratic subproblem using conjugate gradient
     # inspiredy by Boyd's paper on ADMM
     # Distributed Optimization and Statistical Learning via the Alternating Direction Method of Multipliers
-    # the difference with LP_admm is that the linear quality constrainrs Aeq*beq are enforced during the resolution
+    # the difference with admm_solver is that the linear quality constrainrs Aeq*beq are enforced during the resolution
     # of the subproblem instead of beeing enforced through multipliers
     n = c.size
     start = time.clock()
@@ -71,11 +71,11 @@ def LP_admmBlockDecomposition(
     if x0 is None:
         x0 = np.zeros(c.size)
     # if Aeq!=None:
-    # Aeq,beq=preconditionConstraints(Aeq,beq,alpha=2)
+    # Aeq,beq=precondition_constraints(Aeq,beq,alpha=2)
     # if Aineq!=None:# it seem important to do this preconditionning before converting to standard form
-    # Aineq,b_lower,b_upper=preconditionConstraints(Aineq,b_lower,b_upper,alpha=2)
+    # Aineq,b_lower,b_upper=precondition_constraints(Aineq,b_lower,b_upper,alpha=2)
 
-    c, Aeq, beq, lb, ub, x0 = convertToStandardFormWithBounds(
+    c, Aeq, beq, lb, ub, x0 = convert_to_standard_form_with_bounds(
         c, Aeq, beq, Aineq, b_lower, b_upper, lb, ub, x0
     )
     x = x0
@@ -88,12 +88,12 @@ def LP_admmBlockDecomposition(
     # left preconditioning seems not to change anything if not used in combination with use_preconditionning_cols  as each subproblem is solved exactly.
     use_preconditionning_rows = False
     if use_preconditionning_rows:
-        Aeq, beq = preconditionConstraints(Aeq, beq, alpha=2)
+        Aeq, beq = precondition_constraints(Aeq, beq, alpha=2)
 
     # global right preconditioning
     use_preconditionning_cols = False
     if use_preconditionning_cols:
-        R, c, Aeq, beq, lb, ub, x0 = preconditionLPRight(
+        R, c, Aeq, beq, lb, ub, x0 = precondition_lp_right(
             c, Aeq, beq, lb, ub, x0, alpha=3
         )
     else:
@@ -241,7 +241,7 @@ def LP_admmBlockDecomposition(
             )
 
             # LU.__=LU.solve_A
-            # M2=convertToPySparseFormat(M)
+            # M2=convert_to_py_sparse_format(M)
             # LU = umfpack.factorize(M2, strategy="UMFPACK_STRATEGY_SYMMETRIC")
             # print "nnz per line :"+str(LU.nnz/float(M2.shape[0]) )
 
@@ -339,8 +339,8 @@ def LP_admmBlockDecomposition(
                 + " max violated equality:"
                 + str(max_violated_equality)
             )
-            if callbackFunc is not None:
-                callbackFunc(
+            if callback_func is not None:
+                callback_func(
                     i,
                     (R * xp)[0:n],
                     energy1,

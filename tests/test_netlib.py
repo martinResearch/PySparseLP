@@ -11,26 +11,26 @@ import numpy as np
 
 
 from pysparselp.SparseLP import SparseLP, solving_methods
-from pysparselp.netlib import getProblem
+from pysparselp.netlib import get_problem
 
 __folder__ = os.path.dirname(__file__)
 
 
 def solve_netlib(pbname, display=False, max_time_seconds=30):
 
-    LPDict = getProblem(pbname)
+    LPDict = get_problem(pbname)
     groundTruth = LPDict["solution"]
 
     LP = SparseLP()
     nbvar = len(LPDict["costVector"])
-    LP.addVariablesArray(
+    LP.add_variables_array(
         nbvar,
         lowerbounds=LPDict["lowerbounds"],
         upperbounds=np.minimum(LPDict["upperbounds"], np.max(groundTruth) * 2),
         costs=LPDict["costVector"],
     )
-    LP.addEqualityConstraintsSparse(LPDict["Aeq"], LPDict["Beq"])
-    LP.addConstraintsSparse(LPDict["Aineq"], LPDict["B_lower"], LPDict["B_upper"])
+    LP.add_equality_constraints_sparse(LPDict["Aeq"], LPDict["Beq"])
+    LP.add_constraints_sparse(LPDict["Aineq"], LPDict["B_lower"], LPDict["B_upper"])
 
     print("solving")
     if display:
@@ -40,12 +40,12 @@ def solve_netlib(pbname, display=False, max_time_seconds=30):
         axarr[2].set_title("difference with optimum value")
 
     LP2 = copy.deepcopy(LP)
-    LP2.convertToOnesideInequalitySystem()
+    LP2.convert_to_one_sided_inequality_system()
 
-    # LP2.saveMPS(os.path.join(thisfilepath,'data','example_reexported.mps'))
+    # LP2.save_mps(os.path.join(thisfilepath,'data','example_reexported.mps'))
 
     LP = LP2
-    assert LP.checkSolution(groundTruth)
+    assert LP.check_solution(groundTruth)
     costGT = LP.costsvector.dot(groundTruth.T)
     print("gt  cost :%f" % costGT)
 
@@ -54,7 +54,7 @@ def solve_netlib(pbname, display=False, max_time_seconds=30):
     # method='ScipyLinProg'
     # if not scipySol is np.nan:
     # sol1=scipySol
-    # maxv=LP.maxConstraintViolation(sol1)
+    # maxv=LP.max_constraint_violation(sol1)
     # compute the primal and dual infeasibility
     # print ('%s found  solution with maxviolation=%2.2e and  cost %f (vs %f for ground truth) in %f seconds'%(method,maxv,LP.costsvector.dot(sol1),costGT,elapsed))
     # print ('mean of absolute distance to gt solution =%f'%np.mean(np.abs(groundTruth-sol1)))
@@ -77,7 +77,7 @@ def solve_netlib(pbname, display=False, max_time_seconds=30):
             nb_iter=1000000,
             max_time=max_time_seconds,
             groundTruth=groundTruth,
-            plotSolution=None,
+            plot_solution=None,
             nb_iter_plot=500,
         )
         distanceToGroundTruth[method] = LP.distanceToGroundTruth
@@ -96,7 +96,9 @@ def trim_length(a, b):
     return a[:min_len], b[:min_len]
 
 
-def test_netlib(pb_names, max_time_seconds: int = 10, update_results: bool = False, display: bool = False):
+def test_netlib(pb_names=None, max_time_seconds: int = 10, update_results: bool = False, display: bool = False):
+    if pb_names is None:
+        pb_names = ["SC105"]
 
     for pb_name in pb_names:
         distanceToGroundTruthCurves = solve_netlib(

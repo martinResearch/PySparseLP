@@ -32,15 +32,15 @@ import numpy as np
 import scipy.ndimage
 import scipy.sparse
 
-from .DualGradientAscent import exactDualLineSearch
+from .DualGradientAscent import exact_dual_line_search
 from .constraintPropagation import greedy_round
 
 
-def DualCoordinateAscent(
+def dual_coordinate_ascent(
     x,
     LP,
     nbmaxiter=20,
-    callbackFunc=None,
+    callback_func=None,
     y_eq=None,
     y_ineq=None,
     max_time=None,
@@ -59,9 +59,9 @@ def DualCoordinateAscent(
     # convert to slack form (augmented form)
     LP2 = copy.deepcopy(LP)
     LP = None
-    # LP2.convertToSlackForm()
+    # LP2.convert_to_slack_form()
     # LP2.convertTo
-    LP2.convertToOnesideInequalitySystem()
+    LP2.convert_to_one_sided_inequality_system()
 
     # LP2.upperbounds=np.minimum(10,LP2.upperbounds)
     # LP2.lowerbounds=np.maximum(-10,LP2.lowerbounds)
@@ -80,7 +80,7 @@ def DualCoordinateAscent(
         assert np.min(y_ineq) >= 0
     # assert (LP2.B_lower is None)
 
-    def getOptimX(y_eq, y_ineq, tiemethod="round"):
+    def get_optim_x(y_eq, y_ineq, tiemethod="round"):
         c_bar = LP2.costsvector.copy()
         if LP2.Aequalities is not None:
             c_bar += y_eq * LP2.Aequalities
@@ -115,7 +115,7 @@ def DualCoordinateAscent(
         return c_bar, x
 
     def evaluate(y_eq, y_ineq):
-        c_bar, x = getOptimX(y_eq, y_ineq)
+        c_bar, x = get_optim_x(y_eq, y_ineq)
         E = -y_eq.dot(LP2.Bequalities) - y_ineq.dot(LP2.B_upper) + np.sum(x * c_bar)
         # LP2.costsvector.dot(x)+y_ineq.dot(LP2.Ainequalities*x-LP2.B_upper)
         E = (
@@ -127,7 +127,7 @@ def DualCoordinateAscent(
         )
         return E
 
-    def exactCoordinateLineSearch(Ai, bi, c_bar):
+    def exact_coordinate_line_search(Ai, bi, c_bar):
         alphas = -c_bar[Ai.indices] / Ai.data
         order = np.argsort(alphas)
         AiU = Ai.data * LP2.upperbounds[Ai.indices]
@@ -163,7 +163,7 @@ def DualCoordinateAscent(
     E = evaluate(y_eq, y_ineq)
 
     print("iter %d energy %f" % (0, E))
-    c_bar, x = getOptimX(y_eq, y_ineq)
+    c_bar, x = get_optim_x(y_eq, y_ineq)
     direction = np.zeros(y_ineq.shape)
 
     timeout = False
@@ -198,7 +198,7 @@ def DualCoordinateAscent(
 
             Ai = LP2.Aequalities[i, :]
             # c_bar=LP2.costsvector+y_eq*LP2.Aequalities+y_ineq*LP2.Ainequalities
-            alpha_optim = exactCoordinateLineSearch(Ai, LP2.Bequalities[i], c_bar)
+            alpha_optim = exact_coordinate_line_search(Ai, LP2.Bequalities[i], c_bar)
             prev_y_eq = y_eq[i]
             y_eq[i] += alpha_optim
             diff_y_eq = y_eq[i] - prev_y_eq
@@ -215,7 +215,7 @@ def DualCoordinateAscent(
 
         E = nE
 
-        c_bar, x = getOptimX(y_eq, y_ineq)
+        c_bar, x = get_optim_x(y_eq, y_ineq)
         grad_y_ineq = LP2.Ainequalities * x - LP2.B_upper
         grad_y_ineq[y_ineq <= 0] = np.maximum(grad_y_ineq[y_ineq <= 0], 0)  #
 
@@ -228,10 +228,10 @@ def DualCoordinateAscent(
 
             Ai = LP2.Ainequalities[i, :]
             if False:
-                c_bar, x = getOptimX(y_eq, y_ineq)
+                c_bar, x = get_optim_x(y_eq, y_ineq)
                 grad_y_ineq = LP2.Ainequalities * x - LP2.B_upper
                 grad_y_ineq[y_ineq <= 0] = np.maximum(grad_y_ineq[y_ineq <= 0], 0)  #
-                alpha_optim = exactCoordinateLineSearch(Ai, LP2.B_upper[i], c_bar)
+                alpha_optim = exact_coordinate_line_search(Ai, LP2.B_upper[i], c_bar)
                 y2 = y_ineq.copy()
                 vals = []
                 alphasgrid = np.linspace(-4, 0, 1000)
@@ -243,7 +243,7 @@ def DualCoordinateAscent(
                 plt.plot(alphasgrid[:-1], deriv, ".")
 
             # c_bar=LP2.costsvector+y_eq*LP2.Aequalities+y_ineq*LP2.Ainequalities
-            alpha_optim = exactCoordinateLineSearch(Ai, LP2.B_upper[i], c_bar)
+            alpha_optim = exact_coordinate_line_search(Ai, LP2.B_upper[i], c_bar)
 
             # prev_energy=evaluate(y_eq,y_ineq)
             prev_y_ineq = y_ineq[i]
@@ -260,7 +260,7 @@ def DualCoordinateAscent(
         if nE + eps < E:
             print("not expected")
 
-        c_bar, x = getOptimX(y_eq, y_ineq, tiemethod="center")
+        c_bar, x = get_optim_x(y_eq, y_ineq, tiemethod="center")
         x[c_bar == 0] = 0.5 * (LP2.lowerbounds + LP2.upperbounds)[
             c_bar == 0
         ] + 0.1 * np.sign(LP2.costsvector[c_bar == 0])
@@ -268,7 +268,7 @@ def DualCoordinateAscent(
             order = np.argsort(np.abs(x - 0.5))
             fixed = c_bar != 0
             xr, valid = greedy_round(
-                x, LP2, callbackFunc=None, maxiter=30, order=order, fixed=fixed
+                x, LP2, callback_func=None, maxiter=30, order=order, fixed=fixed
             )
             LP2.costsvector.dot(xr)
             x = xr
@@ -301,12 +301,12 @@ def DualCoordinateAscent(
                     break
 
         E = nE
-        if callbackFunc is not None:
-            callbackFunc(niter, x, 0, 0, elapsed, 0, 0)
+        if callback_func is not None:
+            callback_func(niter, x, 0, 0, elapsed, 0, 0)
         if False:
             diff = y_ineq - y_ineq_prev
             direction = scipy.sparse.csr.csr_matrix(direction * 0.9 + 0.1 * diff)
-            coef_length = exactDualLineSearch(
+            coef_length = exact_dual_line_search(
                 direction,
                 LP2.Ainequalities,
                 LP2.B_upper,

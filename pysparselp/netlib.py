@@ -29,10 +29,10 @@ import gzip
 import os
 import urllib.request
 
-from .MPSparser import MPSParser
+from .MPSParser import mps_parser
 
 
-def getProblem(pbname):
+def get_problem(pbname):
     thisfilepath = os.path.dirname(os.path.abspath(__file__))
 
     filenameLP = os.path.join(thisfilepath, "data", "netlib", pbname.upper() + ".SIF")
@@ -63,7 +63,7 @@ def getProblem(pbname):
     else:
         fSol = None
 
-    LPDict = MPSParser(fLP, fSol)
+    LPDict = mps_parser(fLP, fSol)
     return LPDict
 
 
@@ -73,4 +73,4 @@ if __name__ == "__main__":
     filenameSol = "./data/perPlex/afiro.txt"
     fLP = open(filenameLP, "r")
     fsol = open(filenameSol, "r")
-    LP = MPSParser(fLP, fsol)
+    LP = mps_parser(fLP, fsol)

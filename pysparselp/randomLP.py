@@ -11,7 +11,7 @@ import scipy.sparse
 from . import SparseLP, solving_methods
 
 
-def randSparse(shape, sparsity):
+def rand_sparse(shape, sparsity):
     if isinstance(shape, tuple) or isinstance(shape, list):
         return (
             np.round(np.random.randn(*shape) * 100)
@@ -26,15 +26,15 @@ def randSparse(shape, sparsity):
         )
 
 
-def generateRandomLP(nbvar, n_eq, n_ineq, sparsity):
+def generate_random_lp(nbvar, n_eq, n_ineq, sparsity):
 
     # maybe could have a look at https://www.jstor.org/stable/3689906?seq=1#page_scan_tab_contents
     # https://deepblue.lib.umich.edu/bitstream/handle/2027.42/3549/bam8969.0001.001.pdf
-    feasibleX = randSparse(nbvar, sparsity=1)
+    feasibleX = rand_sparse(nbvar, sparsity=1)
 
     if n_ineq > 0:
         while True:  # make sure the mattrix is not empy=ty
-            A_ineq = scipy.sparse.csr_matrix(randSparse((n_ineq, nbvar), sparsity))
+            A_ineq = scipy.sparse.csr_matrix(rand_sparse((n_ineq, nbvar), sparsity))
             keep = (
                 (A_ineq != 0).dot(np.ones(nbvar))
             ) >= 2  # keep only rows with at least two non zeros values
@@ -42,24 +42,24 @@ def generateRandomLP(nbvar, n_eq, n_ineq, sparsity):
                 break
         bmin = A_ineq.dot(feasibleX)
         b_upper = (
-            np.ceil((bmin + abs(randSparse(n_ineq, sparsity))) * 1000) / 1000
+            np.ceil((bmin + abs(rand_sparse(n_ineq, sparsity))) * 1000) / 1000
         )  # make v feasible
-        b_lower = None  # bmin-abs(randSparse(n_ineq,sparsity))
+        b_lower = None  # bmin-abs(rand_sparse(n_ineq,sparsity))
         A_ineq = A_ineq[keep, :]
         b_upper = b_upper[keep]
 
-    costs = randSparse(nbvar, sparsity=1)
+    costs = rand_sparse(nbvar, sparsity=1)
 
-    t = randSparse(nbvar, sparsity=1)
+    t = rand_sparse(nbvar, sparsity=1)
     lowerbounds = feasibleX + np.minimum(0, t)
     upperbounds = feasibleX + np.maximum(0, t)
 
     LP = SparseLP()
-    LP.addVariablesArray(
+    LP.add_variables_array(
         nbvar, lowerbounds=lowerbounds, upperbounds=upperbounds, costs=costs
     )
     if n_eq > 0:
-        Aeq = scipy.sparse.csr_matrix(randSparse((n_eq, nbvar), sparsity))
+        Aeq = scipy.sparse.csr_matrix(rand_sparse((n_eq, nbvar), sparsity))
         Beq = Aeq.dot(feasibleX)
         keep = (
             (Aeq != 0).dot(np.ones(nbvar))
@@ -67,31 +67,31 @@ def generateRandomLP(nbvar, n_eq, n_ineq, sparsity):
         Aeq = Aeq[keep, :]
         Beq = Beq[keep]
         if Aeq.indices.size > 0:
-            LP.addEqualityConstraintsSparse(Aeq, Beq)
+            LP.add_equality_constraints_sparse(Aeq, Beq)
     if n_ineq > 0 and A_ineq.indices.size > 0:
-        LP.addConstraintsSparse(A_ineq, b_lower, b_upper)
+        LP.add_constraints_sparse(A_ineq, b_lower, b_upper)
 
-    assert LP.checkSolution(feasibleX)
+    assert LP.check_solution(feasibleX)
     return LP, feasibleX
 
 
 if __name__ == "__main__":
     plt.ion()
 
-    LP, v = generateRandomLP(nbvar=30, n_eq=1, n_ineq=30, sparsity=0.2)
+    LP, v = generate_random_lp(nbvar=30, n_eq=1, n_ineq=30, sparsity=0.2)
     LP2 = copy.deepcopy(LP)
-    LP2.convertToOnesideInequalitySystem()
+    LP2.convert_to_one_sided_inequality_system()
     scipySol, elapsed = LP2.solve(
         method="ScipyLinProg", force_integer=False, getTiming=True, nb_iter=100000
     )
     costScipy = scipySol.dot(LP2.costsvector.T)
-    maxv = LP2.maxConstraintViolation(scipySol)
+    maxv = LP2.max_constraint_violation(scipySol)
     if maxv > 1e-8:
         print("not expected")
         raise
 
     groundTruth = scipySol
-    solving_methods2 = list(set(solving_methods) - set(["DualGradientAscent"]))
+    solving_methods2 = list(set(solving_methods) - set(["dual_gradient_ascent"]))
 
     f, axarr = plt.subplots(3, sharex=True)
     axarr[0].set_title("mean absolute distance to solution")

@@ -14,9 +14,9 @@ from sklearn.datasets import make_sparse_spd_matrix
 class SparseInvCov(SparseLP):
     """Class to model the sparse inverse covariance problem."""
 
-    def addAbsPenalization(self, I, coefpenalization):
+    def add_abs_penalization(self, I, coefpenalization):
 
-        aux = self.addVariablesArray(
+        aux = self.add_variables_array(
             I.shape, upperbounds=None, lowerbounds=0, costs=coefpenalization
         )
 
@@ -30,9 +30,9 @@ class SparseInvCov(SparseLP):
         I_ravel = I.ravel()
         cols = np.column_stack((I_ravel, aux_ravel))
         vals = np.tile(np.array([1, -1]), [I.size, 1])
-        self.addLinearConstraintRows(cols, vals, lowerbounds=None, upperbounds=0)
+        self.add_linear_constraint_rows(cols, vals, lowerbounds=None, upperbounds=0)
         vals = np.tile(np.array([-1, -1]), [I.size, 1])
-        self.addLinearConstraintRows(cols, vals, lowerbounds=None, upperbounds=0)
+        self.add_linear_constraint_rows(cols, vals, lowerbounds=None, upperbounds=0)
 
 
 def run(display=True):
@@ -61,19 +61,19 @@ def run(display=True):
     emp_cov = np.dot(X.T, X) / n_samples
 
     LP = SparseInvCov()
-    ids = LP.addVariablesArray(shape=emp_cov.shape, lowerbounds=None, upperbounds=None)
+    ids = LP.add_variables_array(shape=emp_cov.shape, lowerbounds=None, upperbounds=None)
     lamb = 0.15
     from scipy import sparse
 
     C = sparse.kron(sparse.csr_matrix(emp_cov), sparse.eye(n_features))
-    LP.addConstraintsSparse(
+    LP.add_constraints_sparse(
         C,
         np.eye(emp_cov.shape[0]).flatten() - lamb,
         np.eye(emp_cov.shape[0]).flatten() + lamb,
     )
-    LP.addAbsPenalization(ids, 1)
+    LP.add_abs_penalization(ids, 1)
     x = LP.solve(method="Mehrotra", nb_iter=60000, max_time=20)[0]
-    # x=LP.solve(method='ChambollePockPPD')[0]
+    # x=LP.solve(method='chambolle_pock_ppd')[0]
     lp_prec_ = x[ids]
     lp_prec_ = 0.5 * (lp_prec_ + lp_prec_.T)
     plt.figure()

@@ -36,14 +36,14 @@ import scipy.sparse
 
 try:
 
-    from . import propagateConstraints as cythonPropagateConstraints
+    from . import propagate_constraints as cython_propagate_constraints
 
-    propagateConstraints_installed = True
+    propagate_constraints_installed = True
 except BaseException:
     print(
-        "could not import propagateConstraints maybe the compilation did not work , will be slower"
+        "could not import propagate_constraints maybe the compilation did not work , will be slower"
     )
-    propagateConstraints_installed = False
+    propagate_constraints_installed = False
 
 
 def check_constraints(i, x_r, mask, Acsr, Acsc, b_lower, b_upper):
@@ -72,7 +72,7 @@ def check_constraints(i, x_r, mask, Acsr, Acsc, b_lower, b_upper):
 
 
 # @profile
-def propagateConstraints(
+def propagate_constraints(
     list_changed_var,
     x_l,
     x_u,
@@ -86,10 +86,10 @@ def propagateConstraints(
 ):
     # may have similarities with the tightening method in http://www.davi.ws/doc/gondzio94presolve.pdf
 
-    if propagateConstraints_installed and use_cython:
+    if propagate_constraints_installed and use_cython:
 
-        # return cython_tools.propagateConstraints(list_changed_var,x_l,x_u,Acsr,Acsc,b_lower,b_upper,back_ops,nb_iter=nb_iter)
-        return cythonPropagateConstraints.propagateConstraints(
+        # return cython_tools.propagate_constraints(list_changed_var,x_l,x_u,Acsr,Acsc,b_lower,b_upper,back_ops,nb_iter=nb_iter)
+        return cython_propagate_constraints.propagate_constraints(
             list_changed_var,
             x_l,
             x_u,
@@ -184,7 +184,7 @@ def revert(back_ops, x_l, x_u):
 
 
 def greedy_round(
-    x, LP, callbackFunc=None, maxiter=np.inf, order=None, fixed=None, displayFunc=None
+    x, LP, callback_func=None, maxiter=np.inf, order=None, fixed=None, displayFunc=None
 ):
 
     # save_arguments('greedy_round_test')
@@ -194,10 +194,10 @@ def greedy_round(
         d = {"x": x, "LP": LP}
         with open("greedy_test.pkl", "wb") as f:
             pickle.dump(d, f)
-    if callbackFunc is not None:
-        callbackFunc(0, np.round(x), 0, 0, 0, 0, 0)
+    if callback_func is not None:
+        callback_func(0, np.round(x), 0, 0, 0, 0, 0)
     LP2 = copy.copy(LP)
-    LP2.convertToAllInequalities()
+    LP2.convert_to_all_inequalities()
     assert LP2.Aequalities is None
 
     x_u = LP2.upperbounds.copy()
@@ -211,7 +211,7 @@ def greedy_round(
     b_l = LP2.B_lower.copy()
     b_u = LP2.B_upper.copy()
 
-    # callbackFunc(0,np.maximum(x_r.astype(np.float),0),0,0,0,0,0)
+    # callback_func(0,np.maximum(x_r.astype(np.float),0),0,0,0,0,0)
     A_csr = A.tocsr()
     A_csc = A.tocsc()
     if order is None:
@@ -226,9 +226,9 @@ def greedy_round(
     mask = np.zeros(x.size, dtype=np.int32)
     depth = 0
     nb_backtrack = 0
-    # callbackFunc(0,x,0,0,0,0,0)
+    # callback_func(0,x,0,0,0,0,0)
 
-    valid, idcons = propagateConstraints(
+    valid, idcons = propagate_constraints(
         np.arange(A.shape[1]), x_l, x_u, A_csr, A_csc, b_l, b_u, []
     )
     if valid == 0:
@@ -243,7 +243,7 @@ def greedy_round(
         if niter > maxiter:
             break
 
-        # callbackFunc(0,x_l,0,0,0,0,0)
+        # callback_func(0,x_l,0,0,0,0,0)
         # print depth
 
         idvar = order[depth]
@@ -279,7 +279,7 @@ def greedy_round(
             # violated_eq=check_constraints(idvar,x_r,mask,Aeq_csr,Aeq_csc,beq,beq)
             # violated_ineq=check_constraints(idvar,x_r,mask,Aineq_csr,Aineq_csc,b_lower,b_upper)
             # violated=violated_eq | violated_ineq
-            valid, idcons = propagateConstraints(
+            valid, idcons = propagate_constraints(
                 [idvar], x_l, x_u, A_csr, A_csc, b_l, b_u, back_ops[depth]
             )
             x_r[x_l == x_u] = x_l[x_l == x_u]
@@ -287,7 +287,7 @@ def greedy_round(
                 displayFunc(x_r)
             x_l[idvar]
             if valid:
-                # valid,back_ops_init2=propagateConstraints(np.arange(A.shape[1]),x_l, x_u, A_csr, A_csc, b_l, b_u,[])
+                # valid,back_ops_init2=propagate_constraints(np.arange(A.shape[1]),x_l, x_u, A_csr, A_csc, b_l, b_u,[])
                 # assert(len(back_ops_init2)==0)
                 depth = depth + 1
 
@@ -304,23 +304,23 @@ def greedy_round(
             x_l[idvar] = x_r[idvar]
 
             mask[idvar] = 2
-            valid, idcons = propagateConstraints(
+            valid, idcons = propagate_constraints(
                 [idvar], x_l, x_u, A_csr, A_csc, b_l, b_u, back_ops[depth]
             )
             if valid:
-                # valid,back_ops_init2=propagateConstraints(np.arange(A.shape[1]),x_l, x_u, A_csr, A_csc, b_l, b_u,[])
+                # valid,back_ops_init2=propagate_constraints(np.arange(A.shape[1]),x_l, x_u, A_csr, A_csc, b_l, b_u,[])
                 # assert(len(back_ops_init2)==0)
                 depth = depth + 1
 
             else:
                 mask[idvar] = 0
-                # callbackFunc(0,x_l,0,0,0,0,0)
-                # name=LP.getInequalityConstraintNameFromId(idcons)['name']
+                # callback_func(0,x_l,0,0,0,0,0)
+                # name=LP.get_inequality_constraint_name_from_id(idcons)['name']
                 # print 'constaint %d of type %s violated,steping back to depth %d'%(idcons,name,depth)
 
                 x_l2 = x_l.copy() * 0.5
                 x_l2[idvar] = 1
-                # callbackFunc(0,x_l2,0,0,0,0,0)
+                # callback_func(0,x_l2,0,0,0,0,0)
 
                 revert(back_ops[depth], x_l, x_u)
                 depth = depth - 1
@@ -330,8 +330,8 @@ def greedy_round(
                 # raise # need a way to save the bound constraint to restore it
 
                 # raise # need a way to save the bound constraint to restore it
-    # callbackFunc(0,np.maximum(x_r.astype(np.float),0),0,0,0,0,0)
-    valid = propagateConstraints(
+    # callback_func(0,np.maximum(x_r.astype(np.float),0),0,0,0,0,0)
+    valid = propagate_constraints(
         np.arange(A.shape[1]), x_l, x_u, A_csr, A_csc, b_l, b_u, []
     )
     # assert(valid)
@@ -342,7 +342,7 @@ def greedy_round(
     return x_r, valid
 
 
-def greedy_fix(x, LP, nbmaxiter=1000, callbackFunc=None, useXorMoves=False):
+def greedy_fix(x, LP, nbmaxiter=1000, callback_func=None, useXorMoves=False):
     # decrease the constraints violation score using coordinate descent
 
     xr = np.round(x)
@@ -354,8 +354,8 @@ def greedy_fix(x, LP, nbmaxiter=1000, callbackFunc=None, useXorMoves=False):
     # xors=np.nonzero(LP.Bequalities==1)[0]
     # assert(np.all(LP.Aequalities[xors,:].data==1))
 
-    LP2.convertToAllInequalities()
-    LP2.convertToOnesideInequalitySystem()
+    LP2.convert_to_all_inequalities()
+    LP2.convert_to_one_sided_inequality_system()
 
     assert np.all(xr <= LP2.upperbounds)
     assert np.all(xr >= LP2.lowerbounds)
@@ -365,7 +365,7 @@ def greedy_fix(x, LP, nbmaxiter=1000, callbackFunc=None, useXorMoves=False):
     AinequalitiesCSC = LP2.Ainequalities.tocsc()
     constraints_costs = np.ones(AinequalitiesCSC.shape[0])
     # constraints_costs[:]=0.2
-    xors = LP2.findInequalityConstraintsFromName("xors")
+    xors = LP2.find_inequality_constraints_from_name("xors")
     for item in xors:
         constraints_costs[item["start"] : item["end"] + 1] = 1000
     # for item in xors:
@@ -463,8 +463,8 @@ def greedy_fix(x, LP, nbmaxiter=1000, callbackFunc=None, useXorMoves=False):
         #
         if min(score_decrease) >= 0:
             print("could not find more moves")
-            if callbackFunc is not None:
-                callbackFunc(0, xr, 0, 0, 0, 0, 0)
+            if callback_func is not None:
+                callback_func(0, xr, 0, 0, 0, 0, 0)
 
             r_ineq = LP2.Ainequalities * xr - LP2.B_upper
             r_ineq_threholded = np.maximum(r_ineq, 0)
@@ -501,8 +501,8 @@ def greedy_fix(x, LP, nbmaxiter=1000, callbackFunc=None, useXorMoves=False):
         # xr[ibest]=1-xr[ibest]
         dx = Dx[:, ibest]
         xr[dx.indices] += dx.data
-        if callbackFunc is not None:
-            callbackFunc(0, xr, 0, 0, 0, 0, 0)
+        if callback_func is not None:
+            callback_func(0, xr, 0, 0, 0, 0, 0)
 
         # update switching score of variables that may have changed
         # tocheck=np.nonzero(dr_ineq.T*R!=0)[1]

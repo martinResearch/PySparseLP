@@ -33,7 +33,7 @@ import scipy.ndimage
 import scipy.sparse
 
 
-def exactDualLineSearch(direction, A, b, c_bar, upperbounds, lowerbounds):
+def exact_dual_line_search(direction, A, b, c_bar, upperbounds, lowerbounds):
 
     assert isinstance(direction, scipy.sparse.csr.csr_matrix)
     dA = direction * A
@@ -65,11 +65,11 @@ def exactDualLineSearch(direction, A, b, c_bar, upperbounds, lowerbounds):
     return alpha_optim
 
 
-def DualGradientAscent(
+def dual_gradient_ascent(
     x,
     LP,
     nbmaxiter=1000,
-    callbackFunc=None,
+    callback_func=None,
     y_eq=None,
     y_ineq=None,
     max_time=None,
@@ -81,11 +81,11 @@ def DualGradientAscent(
     # convert to slack form (augmented form)
     LP2 = copy.deepcopy(LP)
     LP = None
-    # LP2.convertToSlackForm()
+    # LP2.convert_to_slack_form()
     assert (LP2.B_lower is None) or np.max(LP2.B_lower) == -np.inf
     # y_ineq=None
     # LP2.convertTo
-    # LP2.convertToOnesideInequalitySystem()
+    # LP2.convert_to_one_sided_inequality_system()
     # LP2.upperbounds=np.minimum(10000,LP2.upperbounds)
     # LP2.lowerbounds=np.maximum(-10000,LP2.lowerbounds)
     # y0=None
@@ -103,7 +103,7 @@ def DualGradientAscent(
         y_ineq = y_ineq.copy()
     # assert (LP2.B_lower is None)
 
-    def getOptimX(y_eq, y_ineq):
+    def get_optim_x(y_eq, y_ineq):
         c_bar = LP2.costsvector.copy()
         if LP2.Aequalities is not None:
             c_bar += y_eq * LP2.Aequalities
@@ -119,7 +119,7 @@ def DualGradientAscent(
         return c_bar, x
 
     def evaluate(y_eq, y_ineq):
-        c_bar, x = getOptimX(y_eq, y_ineq)
+        c_bar, x = get_optim_x(y_eq, y_ineq)
 
         # E=-y_eq.dot(LP2.Bequalities)-y_ineq.dot(LP2.B_upper)+np.sum(x*c_bar)
         # LP2.costsvector.dot(x)+y_ineq.dot(LP2.Ainequalities*x-LP2.B_upper)
@@ -142,10 +142,10 @@ def DualGradientAscent(
     prevE = evaluate(y_eq, y_ineq)
     if prevE == -np.inf:
         print("initial dual point not feasible, you could bound all variables")
-        c_bar, x = getOptimX(y_eq, y_ineq)
+        c_bar, x = get_optim_x(y_eq, y_ineq)
         return x, y_eq, y_ineq
     for niter in range(nbmaxiter):
-        c_bar, x = getOptimX(y_eq, y_ineq)
+        c_bar, x = get_optim_x(y_eq, y_ineq)
         if LP2.Ainequalities is not None:
             y_ineq_prev = y_ineq.copy()
             max_violation = np.max(LP2.Ainequalities * x - LP2.B_upper)
@@ -165,7 +165,7 @@ def DualGradientAscent(
             if np.sum(grad_y_ineq < 0) > 0:
 
                 grad_y_ineq_sparse = scipy.sparse.csr.csr_matrix(grad_y_ineq)
-                coef_length_ineq = exactDualLineSearch(
+                coef_length_ineq = exact_dual_line_search(
                     grad_y_ineq_sparse,
                     LP2.Ainequalities,
                     LP2.B_upper,
@@ -208,7 +208,7 @@ def DualGradientAscent(
             grad_y_eq = LP2.Aequalities * x - LP2.Bequalities
             if np.any(grad_y_eq):
                 grad_y_eq_sparse = scipy.sparse.csr.csr_matrix(grad_y_eq)
-                coef_length_eq = exactDualLineSearch(
+                coef_length_eq = exact_dual_line_search(
                     grad_y_eq_sparse,
                     LP2.Aequalities,
                     LP2.Bequalities,
@@ -233,8 +233,8 @@ def DualGradientAscent(
         newE = evaluate(y_eq, y_ineq)
         prevE = newE
         elapsed = time.clock() - start
-        if callbackFunc is not None and niter % 100 == 0:
-            callbackFunc(niter, x, 0, 0, elapsed, 0, 0)
+        if callback_func is not None and niter % 100 == 0:
+            callback_func(niter, x, 0, 0, elapsed, 0, 0)
 
         if (max_time is not None) and elapsed > max_time:
             break

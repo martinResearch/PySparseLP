@@ -68,36 +68,36 @@ SparseLP is written in python and relies on scipy sparse matrices and numpy matr
 
 Creating variables
 
- * *addVariablesArray(self,shape,lowerbounds,upperbounds,costs=0,name=None,isinteger=False)*
+ * *add_variables_array(self,shape,lowerbounds,upperbounds,costs=0,name=None,isinteger=False)*
 
 Various method to add constraints:
 
- * *addLinearConstraintRow*. Add a single row at the bottom of the constraints matrix. cols and vals should be vector of same size (flatten internaly if arrays)
- * *addLinearConstraintRows(self,cols,vals,lowerbounds=None,upperbounds=0)*. Add a set of rows that all have the same number of non zero values at the bottom of the constraints matrix. cols and vals should be 2D arrays of same size with each row cols[i,:] with vals[i,:] defines a different a sparse constraint to add.
+ * *add_linear_constraint_row*. Add a single row at the bottom of the constraints matrix. cols and vals should be vector of same size (flatten internaly if arrays)
+ * *add_linear_constraint_rows(self,cols,vals,lowerbounds=None,upperbounds=0)*. Add a set of rows that all have the same number of non zero values at the bottom of the constraints matrix. cols and vals should be 2D arrays of same size with each row cols[i,:] with vals[i,:] defines a different a sparse constraint to add.
 
- * *addLinearConstraintsWithBroadcasting*
- * *addInequalities*. Take a list of tuples (indices,coefs) that are tiled if needed to get the right size. More flexible than addSoftLinearConstraintRows as coefs can heterogenous across tuples (scalar or vector)
- * *addConstraintsSparse*. Just append the sparse matrix under the existing constraints matrix and add bound and costs in 
+ * *add_linear_constraints_with_broadcasting*
+ * *addInequalities*. Take a list of tuples (indices,coefs) that are tiled if needed to get the right size. More flexible than add_soft_linear_constraint_rows as coefs can heterogenous across tuples (scalar or vector)
+ * *add_constraints_sparse*. Just append the sparse matrix under the existing constraints matrix and add bound and costs in 
   bound vectors.
- * *addSoftConstraints*. same as addLinearConstraintRows but constraints are soft constraints. This is done by adding slack variables that are penalized.  
+ * *addSoftConstraints*. same as add_linear_constraint_rows but constraints are soft constraints. This is done by adding slack variables that are penalized.  
  
 other main methods 
 
- * *setCostsVariables*. Overwrite the cost associated with the 
- * *getVariablesIndices(self,name)*. Returns the set of indices corresponding to the variables that have have been added with the given *name* when using *addVariablesArray*.
- * *solve(method,getTiming,nb\_iter,max\_time,groundTruth,groundTruthIndices,plotSolution)*. Solve the linear program and return the vector of all the variables values.
- * *saveMPS*
+ * *set_costs_variables*. Overwrite the cost associated with the 
+ * *get_variables_indices(self,name)*. Returns the set of indices corresponding to the variables that have have been added with the given *name* when using *add_variables_array*.
+ * *solve(method,getTiming,nb\_iter,max\_time,groundTruth,groundTruthIndices,plot_solution)*. Solve the linear program and return the vector of all the variables values.
+ * *save_mps*
 
 We can check the feasibility of a solution using
 
-* maxConstraintViolation
-* checkSolution
+* max_constraint_violation
+* check_solution
 
-Often the sparse constraints matrix can naturally be decomposed vertically into blocks. The ADMM Block method aims to exploiting that decomposition. Blocks are defined using the methods *startConstraintName* and *endConstraintName*. This allow to inform the ADMM block method where to split the constraints matrix.
+Often the sparse constraints matrix can naturally be decomposed vertically into blocks. The ADMM Block method aims to exploiting that decomposition. Blocks are defined using the methods *start_constraint_name* and *end_constraint_name*. This allow to inform the ADMM block method where to split the constraints matrix.
  
 ## Debuging
 
-Building a LP problem is often error prone. If we can generate a valid solution before constructing the LP we can check constraints are not violated as we add them to the LP using checkSolution. This make it easier to pin down which constraint is causing problem. We could add a debug flag so that this check is automatic done as we add constraints.
+Building a LP problem is often error prone. If we can generate a valid solution before constructing the LP we can check constraints are not violated as we add them to the LP using check_solution. This make it easier to pin down which constraint is causing problem. We could add a debug flag so that this check is automatic done as we add constraints.
 
 
 ## Other modeling tools
@@ -238,7 +238,7 @@ generate random problems with the matlab code available [here](https://github.co
 
 * add automatic constraint checking if we provide a feasible solution from the begining. It will help debugging constraints.
 
-* document the active-set *hack* for the chambole pock method (in ChambollePockPPDAS.py).
+* document the active-set *hack* for the chambole pock method (in chambolle_pock_ppdas.py).
 
 * finish coding the method by Conda (CondatPrimalDual.py)
 

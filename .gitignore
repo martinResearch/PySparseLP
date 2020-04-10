@@ -14,8 +14,7 @@ build/**/*.lib
 build/**/*.exp
 build/**/*.pyd
 build/**/*.obj
-pysparselp/propagateConstraints.cpp
-pysparselp/propagateConstraints.html
+
 pysparselp/gaussSiedel.cpp
 pysparselp/gaussSiedel.html
 pysparselp/*.pyc

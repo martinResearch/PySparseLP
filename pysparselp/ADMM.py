@@ -35,16 +35,16 @@ from .gaussSiedel import GaussSeidel
 from .gaussSiedel import boundedGaussSeidelClass
 from .tools import (
     chrono,
-    convertToPySparseFormat,
-    convertToStandardFormWithBounds,
-    preconditionConstraints,
+    convert_to_py_sparse_format,
+    convert_to_standard_form_with_bounds,
+    precondition_constraints,
 )
 
 # import  scikits.sparse.cholmod
 # @profile
 
 
-def LP_admm(
+def lp_admm(
     c,
     Aeq,
     beq,
@@ -57,7 +57,7 @@ def LP_admm(
     gamma_eq=2,
     gamma_ineq=3,
     nb_iter=100,
-    callbackFunc=None,
+    callback_func=None,
     max_time=None,
     use_preconditioning=True,
     nb_iter_plot=10,
@@ -74,21 +74,21 @@ def LP_admm(
     if x0 is None:
         x0 = np.zeros(c.size)
     if Aeq is not None:
-        Aeq, beq = preconditionConstraints(Aeq, beq, alpha=2)
+        Aeq, beq = precondition_constraints(Aeq, beq, alpha=2)
     if (
         Aineq is not None
     ):  # it seem important to do this preconditioning before converting to standard form
-        Aineq, b_lower, b_upper = preconditionConstraints(
+        Aineq, b_lower, b_upper = precondition_constraints(
             Aineq, b_lower, b_upper, alpha=2
         )
-    c, Aeq, beq, lb, ub, x0 = convertToStandardFormWithBounds(
+    c, Aeq, beq, lb, ub, x0 = convert_to_standard_form_with_bounds(
         c, Aeq, beq, Aineq, b_lower, b_upper, lb, ub, x0
     )
     x = x0
 
     # trying some preconditioning
     if use_preconditioning:
-        Aeq, beq = preconditionConstraints(Aeq, beq, alpha=2)
+        Aeq, beq = precondition_constraints(Aeq, beq, alpha=2)
 
     AtA = Aeq.T * Aeq
     # AAt=Aeq*Aeq.T
@@ -234,8 +234,8 @@ def LP_admm(
                 + " max violated equality:"
                 + str(max_violated_equality)
             )
-            if callbackFunc is not None:
-                callbackFunc(
+            if callback_func is not None:
+                callback_func(
                     i,
                     x[0:n],
                     energy1,
@@ -267,7 +267,7 @@ def LP_admm(
     return x[0:n]
 
 
-def LP_admm2(
+def lp_admm2(
     c,
     Aeq,
     beq,
@@ -279,7 +279,7 @@ def LP_admm2(
     x0=None,
     gamma_ineq=0.7,
     nb_iter=100,
-    callbackFunc=None,
+    callback_func=None,
     max_time=None,
     use_preconditioning=False,
     nb_iter_plot=10,
@@ -287,7 +287,7 @@ def LP_admm2(
     # simple ADMM method with an approximate resolution of a quadratic subproblem using conjugate gradient
     # inspired by Boyd's paper on ADMM
     # Distributed Optimization and Statistical Learning via the Alternating Direction Method of Multipliers
-    # the difference with LP_admm is that the linear equality constraints Aeq*x=beq are enforced during the resolution
+    # the difference with admm_solver is that the linear equality constraints Aeq*x=beq are enforced during the resolution
     # of the subproblem instead of beeing enforced through multipliers
     useLU = True
     useAMG = False
@@ -305,15 +305,15 @@ def LP_admm2(
 
     if use_preconditioning:
         if Aeq is not None:
-            Aeq, beq = preconditionConstraints(Aeq, beq, alpha=2)
+            Aeq, beq = precondition_constraints(Aeq, beq, alpha=2)
         if (
             Aineq is not None
         ):  # it seem important to do this preconditionning before converting to standard form
-            Aineq, b_lower, b_upper = preconditionConstraints(
+            Aineq, b_lower, b_upper = precondition_constraints(
                 Aineq, b_lower, b_upper, alpha=2
             )
 
-    c, Aeq, beq, lb, ub, x0 = convertToStandardFormWithBounds(
+    c, Aeq, beq, lb, ub, x0 = convert_to_standard_form_with_bounds(
         c, Aeq, beq, Aineq, b_lower, b_upper, lb, ub, x0
     )
     x = x0
@@ -324,7 +324,7 @@ def LP_admm2(
     ch = chrono()
     # trying some preconditioning
     if use_preconditioning:
-        Aeq, beq = preconditionConstraints(Aeq, beq, alpha=2)
+        Aeq, beq = precondition_constraints(Aeq, beq, alpha=2)
 
     M = scipy.sparse.vstack(
         (
@@ -359,7 +359,7 @@ def LP_admm2(
         import scikits.umfpack  # pipinstall scikit-umfpack
         print("using UMFPACK_STRATEGY_SYMMETRIC through PySparse")
         ch.tic()
-        M2 = convertToPySparseFormat(M)
+        M2 = convert_to_py_sparse_format(M)
         print("conversion :" + str(ch.toc()))
         ch.tic()
         LU_umfpack = scikits.umfpack.factorize(
@@ -451,8 +451,8 @@ def LP_admm2(
                 + " max violated equality:"
                 + str(max_violated_equality)
             )
-            if callbackFunc is not None:
-                callbackFunc(
+            if callback_func is not None:
+                callback_func(
                     i,
                     x[0:n],
                     energy1,

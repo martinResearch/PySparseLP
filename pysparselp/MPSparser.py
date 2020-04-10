@@ -7,7 +7,7 @@ import numpy as np
 from scipy import sparse
 
 
-def MPSParser(f, fsol=None):
+def mps_parser(f, fsol=None):
     """
     Parse Linear programs in the MPS format.
     This file format is described here
@@ -277,4 +277,4 @@ if __name__ == "__main__":
     filenameSol = "./data/perPlex/afiro.txt.gz"
     fLP = open(filenameLP, "r")
     fsol = gzip.open(filenameSol, "r")
-    LP = MPSParser(fLP, fsol)
+    LP = mps_parser(fLP, fsol)

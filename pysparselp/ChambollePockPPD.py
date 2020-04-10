@@ -30,10 +30,10 @@ import numpy as np
 import scipy.ndimage
 import scipy.sparse
 
-from .tools import convertToStandardFormWithBounds
+from .tools import convert_to_standard_form_with_bounds
 
 
-def ChambollePockPPD(
+def chambolle_pock_ppd(
     c,
     Aeq,
     beq,
@@ -46,7 +46,7 @@ def ChambollePockPPD(
     alpha=1,
     theta=1,
     nb_iter=100,
-    callbackFunc=None,
+    callback_func=None,
     max_time=None,
     save_problem=False,
     force_integer=False,
@@ -114,7 +114,7 @@ def ChambollePockPPD(
     n = c.size
     useStandardForm = False
     if useStandardForm and (Aineq is not None):
-        c, Aeq, beq, lb, ub, x0 = convertToStandardFormWithBounds(
+        c, Aeq, beq, lb, ub, x0 = convert_to_standard_form_with_bounds(
             c, Aeq, beq, Aineq, bineq, lb, ub, x0
         )
         Aineq = None
@@ -315,9 +315,9 @@ def ChambollePockPPD(
             # 'y_eq has '+str(100 * np.mean(y_eq==0))+' % of zeros '+\
             #    'y_ineq has '+str(100 * np.mean(y_ineq==0))+' % of zeros '+\
 
-            if callbackFunc is not None:
+            if callback_func is not None:
 
-                callbackFunc(
+                callback_func(
                     i,
                     x,
                     energy1,

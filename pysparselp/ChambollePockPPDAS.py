@@ -32,18 +32,18 @@ import numpy as np
 import scipy.ndimage
 import scipy.sparse
 
-from .tools import convertToStandardFormWithBounds
+from .tools import convert_to_standard_form_with_bounds
 
 # @profile
 
 
-def ChambollePockPPDAS(
+def chambolle_pock_ppdas(
     LP,
     x0=None,
     alpha=1,
     theta=1,
     nb_iter=100,
-    callbackFunc=None,
+    callback_func=None,
     max_time=None,
     nb_iter_plot=300,
     save_problem=False,
@@ -61,10 +61,10 @@ def ChambollePockPPDAS(
     # b_lower<= Aineq*x<= b_upper               assert(scipy.sparse.issparse(Aineq))
 
     # lb<=x<=ub
-    # callbackFunc=None
+    # callback_func=None
 
     LP2 = copy.deepcopy(LP)
-    LP2.convertToOnesideInequalitySystem()
+    LP2.convert_to_one_sided_inequality_system()
 
     LP2.upperbounds = np.minimum(10000, LP2.upperbounds)
     LP2.lowerbounds = np.maximum(-10000, LP2.lowerbounds)
@@ -115,7 +115,7 @@ def ChambollePockPPDAS(
 
     useStandardForm = False
     if useStandardForm:
-        c, Aeq, beq, lb, ub, x0 = convertToStandardFormWithBounds(
+        c, Aeq, beq, lb, ub, x0 = convert_to_standard_form_with_bounds(
             c, Aeq, beq, Aineq, bineq, lb, ub, x0
         )
         Aineq = None
@@ -187,7 +187,7 @@ def ChambollePockPPDAS(
     # del diagT
 
     # iterations
-    # AeqT=AeqT.tocsc()callbackFunc
+    # AeqT=AeqT.tocsc()callback_func
     # AineqT=AineqT.tocsc()
     x3 = x
 
@@ -467,7 +467,7 @@ def ChambollePockPPDAS(
                 max_violated_inequality = np.max(r_ineq)
 
             xrounded = np.round(x)
-            # xrounded=greedy_round(x,c,Aeq,beq,Aineq,np.full(bineq.shape,-np.inf),bineq,lb.copy(),ub.copy(),callbackFunc=callbackFunc)
+            # xrounded=greedy_round(x,c,Aeq,beq,Aineq,np.full(bineq.shape,-np.inf),bineq,lb.copy(),ub.copy(),callback_func=callback_func)
 
             energy_rounded = c.dot(xrounded)
             if Aeq is not None:
@@ -515,9 +515,9 @@ def ChambollePockPPDAS(
             # 'y_eq has '+str(100 * np.mean(y_eq==0))+' % of zeros '+\
             #    'y_ineq has '+str(100 * np.mean(y_ineq==0))+' % of zeros '+\
 
-            if callbackFunc is not None:
+            if callback_func is not None:
 
-                callbackFunc(
+                callback_func(
                     i,
                     x,
                     energy1,

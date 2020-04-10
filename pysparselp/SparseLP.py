@@ -32,22 +32,22 @@ import numpy as np
 import scipy.ndimage
 import scipy.sparse
 
-from .ADMM import LP_admm, LP_admm2
-from .ADMMBlocks import LP_admmBlockDecomposition
-from .ChambollePockPPD import ChambollePockPPD
-from .ChambollePockPPDAS import ChambollePockPPDAS
-from .DualCoordinateAscent import DualCoordinateAscent
-from .DualGradientAscent import DualGradientAscent
-from .MehrotraPDIP import mpcSol
+from .ADMM import lp_admm, lp_admm2
+from .ADMMBlocks import lp_admm_block_decomposition
+from .ChambollePockPPD import chambolle_pock_ppd
+from .ChambollePockPPDAS import chambolle_pock_ppdas
+from .DualCoordinateAscent import dual_coordinate_ascent
+from .DualGradientAscent import dual_gradient_ascent
+from .MehrotraPDIP import mpc_sol
 
 
 solving_methods = [
     "Mehrotra",
     "ScipyLinProg",
-    "DualCoordinateAscent",
-    "DualGradientAscent",
-    "ChambollePockPPD",
-    "ChambollePockPPDAS",
+    "dual_coordinate_ascent",
+    "dual_gradient_ascent",
+    "chambolle_pock_ppd",
+    "chambolle_pock_ppdas",
     "ADMM",
     "ADMM2",
     "ADMMBlocks",
@@ -137,8 +137,8 @@ class SparseLP:
         self.inequalityConstraintNames = []
         self.solution = None
 
-    def maxConstraintViolation(self, solution):
-        types, lb, ub = self.getVariablesBounds()
+    def max_constraint_violation(self, solution):
+        types, lb, ub = self.get_variables_bounds()
         maxv = 0
         maxv = max(maxv, np.max(lb - solution))
         maxv = max(maxv, np.max(solution - ub))
@@ -153,8 +153,8 @@ class SparseLP:
                 maxv = max(maxv, np.max(self.B_lower - self.Ainequalities * solution))
         return maxv
 
-    def checkSolution(self, solution, tol=1e-6):
-        types, lb, ub = self.getVariablesBounds()
+    def check_solution(self, solution, tol=1e-6):
+        types, lb, ub = self.get_variables_bounds()
         valid = True
         if lb is not None:
             valid = valid & (np.max(lb - solution) < tol)
@@ -175,49 +175,49 @@ class SparseLP:
                 )
         return valid
 
-    def startConstraintName(self, name):
+    def start_constraint_name(self, name):
         if not (name is None or name == ""):
             self.lastNameStart = name
-            self.lastNameEqualityStart = self.nbEqualityConstraints()
-            self.lastNameInequalityStart = self.nbInequalityConstraints()
+            self.lastNameEqualityStart = self.nb_equality_constraints()
+            self.lastNameInequalityStart = self.nb_inequality_constraints()
 
-    def nbEqualityConstraints(self):
+    def nb_equality_constraints(self):
         return self.Aequalities.shape[0]
 
-    def nbInequalityConstraints(self):
+    def nb_inequality_constraints(self):
         return self.Ainequalities.shape[0]
 
-    def endConstraintName(self, name):
+    def end_constraint_name(self, name):
         if not (name is None or name == ""):
             assert self.lastNameStart == name
-            if self.nbEqualityConstraints() > self.lastNameEqualityStart:
+            if self.nb_equality_constraints() > self.lastNameEqualityStart:
                 self.equalityConstraintNames.append(
                     {
                         "name": name,
                         "start": self.lastNameEqualityStart,
-                        "end": self.nbEqualityConstraints() - 1,
+                        "end": self.nb_equality_constraints() - 1,
                     }
                 )
-            if self.nbInequalityConstraints() > self.lastNameInequalityStart:
+            if self.nb_inequality_constraints() > self.lastNameInequalityStart:
                 self.inequalityConstraintNames.append(
                     {
                         "name": name,
                         "start": self.lastNameInequalityStart,
-                        "end": self.nbInequalityConstraints() - 1,
+                        "end": self.nb_inequality_constraints() - 1,
                     }
                 )
 
-    def getInequalityConstraintNameFromId(self, idv):
+    def get_inequality_constraint_name_from_id(self, idv):
         for d in self.inequalityConstraintNames:
             if idv >= d["start"] and id <= d["end"]:
                 return d
 
-    def getEqualityConstraintNameFromId(self, idv):
+    def get_equality_constraint_name_from_id(self, idv):
         for d in self.equalityConstraintNames:
             if idv >= d["start"] and id <= d["end"]:
                 return d
 
-    def findInequalityConstraintsFromName(self, name):
+    def find_inequality_constraints_from_name(self, name):
         constraints = []
         for d in self.inequalityConstraintNames:
             if d["name"] == name:
@@ -227,7 +227,7 @@ class SparseLP:
     def save(self, filename, force_integer=False):
         self.convertToMosek().save(filename, force_integer=force_integer)
 
-    def saveMPS(self, filename):
+    def save_mps(self, filename):
         assert self.B_lower is None
 
         f = open(filename, "w")
@@ -309,10 +309,10 @@ class SparseLP:
         f.write("ENDATA\n")
         f.close()
 
-    def save_Ian_E_H_Yen(self, folder):
+    def save_ian_e_h_yen(self, folder):
         if self.B_lower is not None:
             print(
-                "self.B_lower is not None, you should convert your problem with convertToOnesideInequalitySystem first"
+                "self.B_lower is not None, you should convert your problem with convert_to_one_sided_inequality_system first"
             )
             raise
         if not np.all(self.lowerbounds == 0):
@@ -355,14 +355,14 @@ class SparseLP:
             f.write("mI	%d\n" % Aineq.shape[0])
             f.write("mE	%d\n" % Aeq.shape[0])
 
-    def getVariablesBounds(self):
+    def get_variables_bounds(self):
         types = None
         bl = self.lowerbounds
         bu = self.upperbounds
 
         return types, bl, bu
 
-    def addVariablesArray(
+    def add_variables_array(
         self, shape, lowerbounds, upperbounds, costs=0, name=None, isinteger=False
     ):
         if isinstance(shape, type(0)):
@@ -381,7 +381,7 @@ class SparseLP:
             costs.fill(v)
 
         assert np.all(costs.shape == shape)
-        lowerbounds, upperbounds = self.convertBoundsToVectors(
+        lowerbounds, upperbounds = self.convert_bounds_to_vectors(
             shape, lowerbounds, upperbounds
         )
         assert np.all(lowerbounds.shape == shape)
@@ -396,10 +396,10 @@ class SparseLP:
 
         if name:
             self.variables_dict[name] = indices
-        self.setBoundsOnVariables(indices, lowerbounds, upperbounds)
+        self.set_bounds_on_variables(indices, lowerbounds, upperbounds)
         return indices
 
-    def convertBoundsToVectors(self, shape, lowerbounds, upperbounds):
+    def convert_bounds_to_vectors(self, shape, lowerbounds, upperbounds):
 
         if (
             isinstance(lowerbounds , type(0))
@@ -433,7 +433,7 @@ class SparseLP:
 
         return lowerbounds, upperbounds
 
-    def setBoundsOnVariables(self, indices, lowerbounds, upperbounds):
+    def set_bounds_on_variables(self, indices, lowerbounds, upperbounds):
         # could use task.putboundslice if we were sure that the indices is an increasing sequence n with increments of 1 i.e,n+1,n+2,....n+k
         if isinstance(lowerbounds, type(0)) or isinstance(lowerbounds, type(0.0)):
             self.lowerbounds[indices.ravel()] = lowerbounds
@@ -444,15 +444,15 @@ class SparseLP:
         else:
             self.upperbounds[indices.ravel()] = upperbounds.ravel()
 
-    def getVariablesIndices(self, name):
-        """Return the set of indices corresponding to the variables that have have been added with the given name when using addVariablesArray"""
+    def get_variables_indices(self, name):
+        """Return the set of indices corresponding to the variables that have have been added with the given name when using add_variables_array"""
         return self.variables_dict[name]
 
-    def setCostsVariables(self, indices, costs):
+    def set_costs_variables(self, indices, costs):
         assert np.all(costs.shape == indices.shape)
         self.costsvector[indices.ravel()] = costs.ravel()
 
-    def addLinearConstraintRow(self, ids, coefs, lowerbound=None, upperbound=None):
+    def add_linear_constraint_row(self, ids, coefs, lowerbound=None, upperbound=None):
         assert len(ids) == len(coefs)
 
         if upperbound == lowerbound:
@@ -478,12 +478,12 @@ class SparseLP:
                 else:
                     self.B_upper = np.append(self.B_upper, upperbound)
 
-    def addEqualityConstraintsSparse(self, A, b):
+    def add_equality_constraints_sparse(self, A, b):
 
         csr_matrix_append_rows(self.Aequalities, A.tocsr())
         self.Bequalities = np.append(self.Bequalities, b)
 
-    def addConstraintsSparse(self, A, lowerbounds=None, upperbounds=None):
+    def add_constraints_sparse(self, A, lowerbounds=None, upperbounds=None):
         # add the constraint lowerbounds<=Ax<=upperbounds to the list of constraints
         # try to use A as a sparse matrix
         # take advantage of the snipy sparse marices to ease things
@@ -491,21 +491,21 @@ class SparseLP:
         if (
             isinstance(lowerbounds, type(0)) or isinstance(lowerbounds, type(0.0))
         ) and lowerbounds == upperbounds:
-            lowerbounds, upperbounds = self.convertBoundsToVectors(
+            lowerbounds, upperbounds = self.convert_bounds_to_vectors(
                 (A.shape[0],), lowerbounds, upperbounds
             )
             csr_matrix_append_rows(self.Aequalities, A.tocsr())
             self.Bequalities = np.append(self.Bequalities, lowerbounds)
 
         else:
-            lowerbounds, upperbounds = self.convertBoundsToVectors(
+            lowerbounds, upperbounds = self.convert_bounds_to_vectors(
                 (A.shape[0],), lowerbounds, upperbounds
             )
             csr_matrix_append_rows(self.Ainequalities, A.tocsr())
             self.B_lower = np.append(self.B_lower, lowerbounds)
             self.B_upper = np.append(self.B_upper, upperbounds)
 
-    def addLinearConstraintRows(self, cols, vals, lowerbounds=None, upperbounds=None):
+    def add_linear_constraint_rows(self, cols, vals, lowerbounds=None, upperbounds=None):
         if not (np.all(np.diff(np.sort(cols, axis=1), axis=1) > 0)):
             print("you have twice the same variable in the constraint")
             raise
@@ -524,18 +524,18 @@ class SparseLP:
         colsFlat = colsFlat[keep.ravel()]
         iptr = np.hstack(([0], np.cumsum(np.sum(keep, axis=1))))
         A = scipy.sparse.csr_matrix((valsFlat, colsFlat, iptr))
-        self.addConstraintsSparse(A, lowerbounds=lowerbounds, upperbounds=upperbounds)
+        self.add_constraints_sparse(A, lowerbounds=lowerbounds, upperbounds=upperbounds)
 
-    def addSoftLinearConstraintRows(
+    def add_soft_linear_constraint_rows(
         self, cols, vals, lowerbounds=None, upperbounds=None, coef_penalization=0
     ):
         if np.all(coef_penalization == np.inf):
-            self.addLinearConstraintRows(
+            self.add_linear_constraint_rows(
                 cols, vals, lowerbounds=lowerbounds, upperbounds=upperbounds
             )
 
         else:
-            aux = self.addVariablesArray(
+            aux = self.add_variables_array(
                 (cols.shape[0],),
                 upperbounds=None,
                 lowerbounds=0,
@@ -545,22 +545,22 @@ class SparseLP:
             cols2 = np.column_stack((cols, aux))
             if upperbounds is not None:
                 vals2 = np.column_stack((vals, -np.ones((vals.shape[0], 1))))
-                self.addLinearConstraintRows(
+                self.add_linear_constraint_rows(
                     cols2, vals2, lowerbounds=None, upperbounds=upperbounds
                 )
             if lowerbounds is not None:
                 vals2 = np.column_stack((vals, np.ones((vals.shape[0], 1))))
-                self.addLinearConstraintRows(
+                self.add_linear_constraint_rows(
                     cols2, vals2, lowerbounds, upperbounds=None
                 )
             return aux
 
-    def addLinearConstraintsWithBroadcasting(
+    def add_linear_constraints_with_broadcasting(
         self, cols, vals, lowerbounds=None, upperbounds=None
     ):
         cols2 = cols.reshape(-1, cols.shape[-1])
         vals2 = np.tile(np.array(vals), (cols2.shape[0], 1))
-        self.addLinearConstraintRows(
+        self.add_linear_constraint_rows(
             cols2, vals2, lowerbounds=lowerbounds, upperbounds=upperbounds
         )
 
@@ -575,13 +575,13 @@ class SparseLP:
             vals.append((np.ones(t[0].shape) * t[1]).flatten())
         if isinstance(upperbounds, np.ndarray):
             upperbounds = upperbounds.flatten()
-        self.addLinearConstraintRows(
+        self.add_linear_constraint_rows(
             np.column_stack(cols), np.column_stack(vals), lowerbounds, upperbounds
         )
         if (self.solution is not None) and check:
-            assert self.checkSolution(self.solution)
+            assert self.check_solution(self.solution)
 
-    def removeFixedVariables(self):
+    def remove_fixed_variables(self):
         # should you more complete presolve procedure in case we use interior point method
         # http://www.davi.ws/doc/gondzio94presolve.pdf
         free = self.upperbounds > self.lowerbounds
@@ -625,13 +625,13 @@ class SparseLP:
         # Bequalities= LP.Bequalities
         return Mchange, shift
 
-    def convertToSlackForm(self):
+    def convert_to_slack_form(self):
         """Convert to the form min_y c.t Ay=b y>=0 by adding slack variables and shift on x
         the solution of the original problem is obtained using x = Mchange*y+ shift with
         y the solution of the new problem
         have a look at https://ocw.mit.edu/courses/sloan-school-of-management/15-053-optimization-methods-in-management-science-spring-2013/tutorials/MIT15_053S13_tut06.pdf
         """
-        self.convertToOnesideInequalitySystem()
+        self.convert_to_one_sided_inequality_system()
 
         # inverse variables that are only bounded above using a change of variable x=M*y
         reverse = np.isinf(self.lowerbounds) & (~np.isinf(self.upperbounds))
@@ -766,23 +766,23 @@ class SparseLP:
 
         return Mchange, shift
 
-    def convertToAllEqualities(self):
+    def convert_to_all_equalities(self):
         """Convert to the form min c.t Ax=b lb<=x<=ub by adding slack variables
         the solution of th original problem is obtained using the first elements in x.
         """
         if self.Ainequalities is not None:
             m = self.Ainequalities.shape[0]
             n = self.Ainequalities.shape[1]
-            self.addVariablesArray(m, self.B_lower, self.B_upper)
+            self.add_variables_array(m, self.B_lower, self.B_upper)
             self.Ainequalities._shape = (self.Ainequalities.shape[0], n)
-            self.addConstraintsSparse(
+            self.add_constraints_sparse(
                 scipy.sparse.hstack((self.Ainequalities, -scipy.sparse.eye(m))), 0, 0
             )
             self.B_lower = None
             self.B_upper = None
             self.Ainequalities = None
 
-    def convertToOnesideInequalitySystem(self):
+    def convert_to_one_sided_inequality_system(self):
         """Convert to the form min c.t Aineq x<=b_ineq Ax=b lb<=x<=ub by adding augmenting the size of Aineq."""
         if (self.Ainequalities is not None) and (self.B_lower is not None):
             idskeep_upper = np.nonzero(self.B_upper != np.inf)[0]
@@ -791,14 +791,14 @@ class SparseLP:
             mapping_lower = np.hstack(([0], np.cumsum(self.B_lower != np.inf)))
             if len(idskeep_lower) > 0 and len(idskeep_upper) > 0:
 
-                newInequalityConstraintNames = []
+                new_inequality_constraint_names = []
                 for d in self.inequalityConstraintNames:
                     d = {
                         "name": d["name"],
                         "start": mapping_upper[d["start"]],
                         "end": mapping_upper[d["end"]],
                     }
-                    newInequalityConstraintNames.append(d)
+                    new_inequality_constraint_names.append(d)
                 for d in self.inequalityConstraintNames:
 
                     d = {
@@ -806,9 +806,9 @@ class SparseLP:
                         "start": idskeep_upper.size + mapping_lower[d["start"]],
                         "end": idskeep_upper.size + mapping_lower[d["end"]],
                     }
-                    newInequalityConstraintNames.append(d)
+                    new_inequality_constraint_names.append(d)
 
-                self.inequalityConstraintNames = newInequalityConstraintNames
+                self.inequalityConstraintNames = new_inequality_constraint_names
                 self.Ainequalities = scipy.sparse.vstack(
                     (
                         self.Ainequalities[idskeep_upper, :],
@@ -828,13 +828,13 @@ class SparseLP:
             )
             self.B_lower = None
 
-    def convertToAllInequalities(self):
+    def convert_to_all_inequalities(self):
         """Convert to the form min c.t b_lower<=Aineq x<=b_upper lb<=x<=ub by adding augmenting the size of Aineq."""
         if self.Aequalities is not None:
 
-            newInequalityConstraintNames = []
+            new_inequality_constraint_names = []
             for d in self.equalityConstraintNames:
-                newInequalityConstraintNames.append(d)
+                new_inequality_constraint_names.append(d)
             for d in self.inequalityConstraintNames:
 
                 d = {
@@ -842,8 +842,8 @@ class SparseLP:
                     "start": self.Aequalities.shape[0] + d["start"],
                     "end": self.Aequalities.shape[0] + d["end"],
                 }
-                newInequalityConstraintNames.append(d)
-            self.inequalityConstraintNames = newInequalityConstraintNames
+                new_inequality_constraint_names.append(d)
+            self.inequalityConstraintNames = new_inequality_constraint_names
             self.equalityConstraintNames = []
 
             self.Ainequalities = scipy.sparse.vstack(
@@ -858,7 +858,7 @@ class SparseLP:
             self.Aequalities = None
             self.Bequalities = None
 
-    def convertToCVXPY(self):
+    def convert_to_cvxpy(self):
 
         if not (self.Ainequalities is None) and self.Ainequalities.shape[0] > 0:
             check_csr_matrix(self.Ainequalities)
@@ -925,9 +925,9 @@ class SparseLP:
         x0=None,
         nb_iter=10000,
         max_time=None,
-        callbackFunc=None,
+        callback_func=None,
         nb_iter_plot=10,
-        plotSolution=None,
+        plot_solution=None,
         groundTruth=None,
         groundTruthIndices=None,
     ):
@@ -958,7 +958,7 @@ class SparseLP:
         self.max_violated_constraint = []
         self.itrn_curve = []
 
-        def scipySimplexCallBack(solution, **kwargs):
+        def scipy_simplex_call_back(solution, **kwargs):
             if groundTruth is not None:
                 self.distanceToGroundTruth.append(
                     np.mean(np.abs(groundTruth - solution[groundTruthIndices]))
@@ -971,10 +971,10 @@ class SparseLP:
             duration = time.clock() - start
             self.opttime_curve.append(duration)
             self.pobj_curve.append(self.costsvector.dot(solution["x"].T))
-            maxv = self.maxConstraintViolation(solution["x"])
+            maxv = self.max_constraint_violation(solution["x"])
             self.max_violated_constraint.append(maxv)
 
-        def simplexCallBack(solution, **kwargs):
+        def simplex_call_back(solution, **kwargs):
             if groundTruth is not None:
                 self.distanceToGroundTruth.append(
                     np.mean(np.abs(groundTruth - solution[groundTruthIndices]))
@@ -987,10 +987,10 @@ class SparseLP:
             duration = time.clock() - start
             self.opttime_curve.append(duration)
             self.pobj_curve.append(self.costsvector.dot(solution.T))
-            maxv = self.maxConstraintViolation(solution)
+            maxv = self.max_constraint_violation(solution)
             self.max_violated_constraint.append(maxv)
 
-        def callbackFunc(
+        def callback_func(
             niter,
             solution,
             energy1,
@@ -1014,12 +1014,12 @@ class SparseLP:
             self.dopttime_curve.append(duration)
             self.dobj_curve.append(energy2)
             self.pobj_curve.append(energy1)
-            maxv = self.maxConstraintViolation(solution)
+            maxv = self.max_constraint_violation(solution)
             self.max_violated_constraint.append(maxv)
             self.max_violated_equality.append(max_violated_equality)
             self.max_violated_inequality.append(max_violated_inequality)
-            if plotSolution is not None:
-                plotSolution(niter, solution, is_active_variable=is_active_variable)
+            if plot_solution is not None:
+                plot_solution(niter, solution, is_active_variable=is_active_variable)
 
         if method not in solving_methods:
             print("method %s not valid" % method)
@@ -1030,7 +1030,7 @@ class SparseLP:
         if method == "ScipyLinProg":
             if not (self.B_lower is None):
                 print(
-                    "you need to convert your lp to a one side inequality system using convertToOnesideInequalitySystem"
+                    "you need to convert your lp to a one side inequality system using convert_to_one_sided_inequality_system"
                 )
                 raise
             if Aeq is None:
@@ -1047,7 +1047,7 @@ class SparseLP:
                 b_eq=b_eq,
                 bounds=np.column_stack((self.lowerbounds, self.upperbounds)),
                 method="simplex",
-                callback=scipySimplexCallBack,
+                callback=scipy_simplex_call_back,
             )
             # if not sol['success']:
             # raise BaseException(sol['message'])
@@ -1056,30 +1056,30 @@ class SparseLP:
         elif method == "Mehrotra":
 
             LPslack = copy.deepcopy(self)
-            Mchange1, shift1 = LPslack.removeFixedVariables()  # removed fixed variables
-            Mchange2, shift2 = LPslack.convertToSlackForm()
+            Mchange1, shift1 = LPslack.remove_fixed_variables()  # removed fixed variables
+            Mchange2, shift2 = LPslack.convert_to_slack_form()
 
-            def MehrotraCallBack(solution, niter, **kwargs):
+            def mehrotra_call_back(solution, niter, **kwargs):
                 x = Mchange2 * solution - shift2
                 x = Mchange1 * x - shift1
                 self.itrn_curve.append(niter)
-                simplexCallBack(x)
+                simplex_call_back(x)
 
-            f, x, y, s, N = mpcSol(
+            f, x, y, s, N = mpc_sol(
                 LPslack.Aequalities,
                 LPslack.Bequalities,
                 LPslack.costsvector,
-                callBack=MehrotraCallBack,
+                callBack=mehrotra_call_back,
             )
-            LPslack.checkSolution(x)
+            LPslack.check_solution(x)
             x = Mchange2 * x - shift2
             x = Mchange1 * x - shift1
-            self.checkSolution(x)
-            self.maxConstraintViolation(x)
+            self.check_solution(x)
+            self.max_constraint_violation(x)
 
         elif method == "CVXOPT":
 
-            prob, x = self.convertToCVXPY()
+            prob, x = self.convert_to_cvxpy()
             # The optimal objective is returned by prob.solve().
             result = prob.solve(verbose=True, solver=cvxpy.CVXOPT)
             x = np.array(x.value).flatten()
@@ -1087,7 +1087,7 @@ class SparseLP:
             # from cvxopt import matrix, solvers
             # the format axcpt
             # LPslack=copy.deepcopy(self)
-            # Mchange,shift=LPslack.convertToSlackForm()
+            # Mchange,shift=LPslack.convert_to_slack_form()
             # sol=solvers.lp(c, G, h, A , b)  # uses cvxopt conic solver
             # need to rewrite the problem in the form
             # minimize    c'*x
@@ -1096,7 +1096,7 @@ class SparseLP:
             # raise
 
         elif method == "SCS":
-            prob, x = self.convertToCVXPY()
+            prob, x = self.convert_to_cvxpy()
             # The optimal objective is returned by prob.solve().
             result = prob.solve(
                 verbose=True, solver=cvxpy.SCS, max_iters=10000, eps=1e-5
@@ -1104,13 +1104,13 @@ class SparseLP:
             x = np.array(x.value).flatten()
 
         elif method == "ECOS":
-            prob, x = self.convertToCVXPY()
+            prob, x = self.convert_to_cvxpy()
             # The optimal objective is returned by prob.solve().
             result = prob.solve(verbose=True, solver=cvxpy.ECOS)
             x = np.array(result).flatten()
 
         elif method == "ADMM":
-            x = LP_admm(
+            x = lp_admm(
                 self.costsvector,
                 Aeq,
                 Beq,
@@ -1121,13 +1121,13 @@ class SparseLP:
                 self.upperbounds,
                 nb_iter=nb_iter,
                 x0=x0,
-                callbackFunc=callbackFunc,
+                callback_func=callback_func,
                 max_time=max_time,
                 nb_iter_plot=nb_iter_plot,
             )
 
         elif method == "ADMMBlocks":
-            x = LP_admmBlockDecomposition(
+            x = lp_admm_block_decomposition(
                 self.costsvector,
                 Aeq,
                 Beq,
@@ -1139,11 +1139,11 @@ class SparseLP:
                 nb_iter=nb_iter,
                 nb_iter_plot=nb_iter_plot,
                 x0=x0,
-                callbackFunc=callbackFunc,
+                callback_func=callback_func,
                 max_time=max_time,
             )
         elif method == "ADMM2":
-            x = LP_admm2(
+            x = lp_admm2(
                 self.costsvector,
                 Aeq,
                 Beq,
@@ -1154,19 +1154,19 @@ class SparseLP:
                 self.upperbounds,
                 nb_iter=nb_iter,
                 x0=x0,
-                callbackFunc=callbackFunc,
+                callback_func=callback_func,
                 max_time=max_time,
                 nb_iter_plot=nb_iter_plot,
             )
 
-        elif method == "ChambollePockPPD":
+        elif method == "chambolle_pock_ppd":
             LPreduced = copy.deepcopy(self)
             (
                 Mchange1,
                 shift1,
-            ) = LPreduced.removeFixedVariables()  # removed fixed variables
+            ) = LPreduced.remove_fixed_variables()  # removed fixed variables
 
-            def thisBack(
+            def this_back(
                 niter,
                 solution,
                 energy1,
@@ -1176,7 +1176,7 @@ class SparseLP:
                 max_violated_inequality,
             ):
                 solution = Mchange1 * solution - shift1
-                callbackFunc(
+                callback_func(
                     niter,
                     solution,
                     energy1,
@@ -1186,7 +1186,7 @@ class SparseLP:
                     max_violated_inequality,
                 )
 
-            x, best_integer_solution = ChambollePockPPD(
+            x, best_integer_solution = chambolle_pock_ppd(
                 LPreduced.costsvector,
                 LPreduced.Aequalities,
                 LPreduced.Bequalities,
@@ -1199,20 +1199,20 @@ class SparseLP:
                 alpha=1,
                 theta=1,
                 nb_iter=nb_iter,
-                callbackFunc=thisBack,
+                callback_func=this_back,
                 max_time=max_time,
                 save_problem=False,
                 nb_iter_plot=nb_iter_plot,
             )
             x = Mchange1 * x - shift1
-        elif method == "ChambollePockPPDAS":
+        elif method == "chambolle_pock_ppdas":
             LPreduced = copy.deepcopy(self)
             (
                 Mchange1,
                 shift1,
-            ) = LPreduced.removeFixedVariables()  # removed fixed variables
+            ) = LPreduced.remove_fixed_variables()  # removed fixed variables
 
-            def thisBack(
+            def this_back(
                 niter,
                 solution,
                 energy1,
@@ -1223,7 +1223,7 @@ class SparseLP:
                 is_active_variable,
             ):
                 solution = Mchange1 * solution - shift1
-                callbackFunc(
+                callback_func(
                     niter,
                     solution,
                     energy1,
@@ -1233,7 +1233,7 @@ class SparseLP:
                     max_violated_inequality,
                 )
 
-            x, best_integer_x = ChambollePockPPDAS(
+            x, best_integer_x = chambolle_pock_ppdas(
                 LPreduced,
                 x0=x0,
                 alpha=1,
@@ -1241,30 +1241,30 @@ class SparseLP:
                 nb_iter=nb_iter,
                 nb_iter_plot=nb_iter_plot,
                 frequency_update_active_set=20,
-                callbackFunc=thisBack,
+                callback_func=this_back,
                 max_time=max_time,
             )
             x = Mchange1 * x - shift1
 
-        elif method == "DualGradientAscent":
-            x, y_eq, y_ineq = DualGradientAscent(
+        elif method == "dual_gradient_ascent":
+            x, y_eq, y_ineq = dual_gradient_ascent(
                 x=x0,
                 LP=self,
                 nbmaxiter=nb_iter,
-                callbackFunc=callbackFunc,
+                callback_func=callback_func,
                 y_eq=None,
                 y_ineq=None,
                 max_time=max_time,
                 nb_iter_plot=nb_iter_plot,
             )
-        elif method == "DualCoordinateAscent":
+        elif method == "dual_coordinate_ascent":
             LPreduced = copy.deepcopy(self)
             (
                 Mchange1,
                 shift1,
-            ) = LPreduced.removeFixedVariables()  # removed fixed variables
+            ) = LPreduced.remove_fixed_variables()  # removed fixed variables
 
-            def thisBack(
+            def this_back(
                 niter,
                 solution,
                 energy1,
@@ -1274,7 +1274,7 @@ class SparseLP:
                 max_violated_inequality,
             ):
                 solution = Mchange1 * solution - shift1
-                callbackFunc(
+                callback_func(
                     niter,
                     solution,
                     energy1,
@@ -1284,11 +1284,11 @@ class SparseLP:
                     max_violated_inequality,
                 )
 
-            x, y_eq, y_ineq = DualCoordinateAscent(
+            x, y_eq, y_ineq = dual_coordinate_ascent(
                 x=None,
                 LP=LPreduced,
                 nbmaxiter=nb_iter,
-                callbackFunc=thisBack,
+                callback_func=this_back,
                 y_eq=None,
                 y_ineq=None,
                 max_time=max_time,

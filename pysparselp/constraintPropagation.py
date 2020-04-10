@@ -373,7 +373,7 @@ def greedy_fix(x, lp, nb_max_iter=1000, callback_func=None, use_xor_moves=False)
     r_ineq = lp2.a_inequalities * xr - lp2.b_upper
     r_ineq_thresholded = np.maximum(r_ineq, 0)
     score_ineq = np.sum(r_ineq_thresholded * constraints_costs)
- 
+
     score_decrease = np.zeros(x.size)
 
     a_ineq = lp2.a_inequalities.copy()
@@ -473,7 +473,7 @@ def greedy_fix(x, lp, nb_max_iter=1000, callback_func=None, use_xor_moves=False)
             return xr
 
         i_best = np.argmin(score_decrease)
-       
+
         i = i_best
 
         dr_ineq = a_inequalities_csc * d_x[:, i]
@@ -501,7 +501,8 @@ def greedy_fix(x, lp, nb_max_iter=1000, callback_func=None, use_xor_moves=False)
         # tocheck=np.nonzero(dr_ineq.T*R!=0)[1]
         move_to_change = (dx.T * d_x).indices
         d_x[:, move_to_change] = scipy.sparse.csc.csc_matrix(
-            (1 - 2 * xr[move_to_change], (move_to_change, np.arange(move_to_change.size))),
+            (1 - 2 * xr[move_to_change],
+             (move_to_change, np.arange(move_to_change.size))),
             (xr.size, move_to_change.size),
         )
         to_check = np.nonzero(dr_ineq.T * a_ineq * d_x != 0)[1]

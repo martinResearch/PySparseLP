@@ -31,6 +31,7 @@ def initial_point(a, b, c, use_umfpack=False):
 
     # solution for min norm(x) s.t. Ax = b
     x = a.T * spsolve(a * a.T, b, use_umfpack=use_umfpack)
+    print(c.T.dot(x))
     # x = A.T*sparse.linalg.cg(A*A.T, b,tol=1e-7)[0]
 
     # delta_x and delta_s
@@ -42,6 +43,8 @@ def initial_point(a, b, c, use_umfpack=False):
     delta_x_c = delta_x + pdct / (np.sum(s) + n * delta_s)
     delta_s_c = delta_s + pdct / (np.sum(x) + n * delta_x)
 
+    print(
+        f"delta_x={delta_x}\ndelta_s={delta_s}\ndelta_x_c={delta_x_c}\ndelta_s_c={delta_s_c}\n")
     # output
     x0 = x + delta_x_c * e
     s0 = s + delta_s_c * e

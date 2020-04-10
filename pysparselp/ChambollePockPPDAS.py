@@ -434,7 +434,7 @@ def chambolle_pock_ppdas(
                 break
             energy1 = c.dot(x)
 
-            # x4 is obtained my minimizing with respect to the primal variable while keeping the langrangian coefficients fixed, 
+            # x4 is obtained my minimizing with respect to the primal variable while keeping the langrangian coefficients fixed,
             # which give a lower bound on the optimal solution
             # energy2 is the lower bound
             # energy1  is the value of the lagrangian at the current (hopefull saddle) point

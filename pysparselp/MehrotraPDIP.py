@@ -21,7 +21,7 @@ def initial_point(a, b, c, use_umfpack=False):
     e = np.ones((n,))
 
     # solution for min norm(s) s.t. A'*y + s = c
-    # y =sparse.linalg.cg(A*A.T, A*c,tol=1e-7)[0]
+    #y =sparse.linalg.cg(a*a.T, a*c,tol=1e-7)[0]
     y = spsolve(a * a.T, a * c, use_umfpack=use_umfpack)
 
     # y2 =sparse.linalg.cgs(A*A.T, A*c)[0]
@@ -31,8 +31,8 @@ def initial_point(a, b, c, use_umfpack=False):
 
     # solution for min norm(x) s.t. Ax = b
     x = a.T * spsolve(a * a.T, b, use_umfpack=use_umfpack)
-    print(c.T.dot(x))
-    # x = A.T*sparse.linalg.cg(A*A.T, b,tol=1e-7)[0]
+    #print(c.T.dot(x))
+    #x = a.T*sparse.linalg.cg(a*a.T, b,tol=1e-7)[0]
 
     # delta_x and delta_s
     delta_x = max(-1.5 * np.min(x), 0)
@@ -52,7 +52,7 @@ def initial_point(a, b, c, use_umfpack=False):
     return x0, y0, s0
 
 
-def newton_direction(r_b, r_c, r_x_s, a, m, n, x, s, lu, error_check=0):
+def newton_direction(r_b, r_c, r_x_s, a, m, n, x, s, lu, error_check=0,use_lu = True):
 
     rhs = np.hstack((-r_b, -r_c + r_x_s / x))
     d_2 = -np.minimum(1e16, s / x)
@@ -66,7 +66,7 @@ def newton_direction(r_b, r_c, r_x_s, a, m, n, x, s, lu, error_check=0):
     # ldl' factorization
     # if L and D are not provided, we calc new factorization; otherwise,
     # reuse them
-    use_lu = True
+    
     if use_lu:
         if lu is None:
             lu = sparse.linalg.splu(b.tocsc())

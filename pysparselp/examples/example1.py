@@ -135,7 +135,7 @@ def run(display=True):
     # sol1,elapsed=LP2.solve(method='ScipyLinProg',force_integer=False,get_timing=True,nb_iter=100,max_time=10,ground_truth=ground_truth,ground_truth_indices=indices,plot_solution=None)
 
     solving_methods2 = [
-        m for m in solving_methods if (m not in ["scipy_linprog"])
+        m for m in solving_methods if (m not in ["scipy_simplex","scipy_interior_point"])
     ]  # remove scipy_linprog because it is too slow
 
     distance_to_ground_truth_curves = {}

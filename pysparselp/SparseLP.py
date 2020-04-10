@@ -30,7 +30,9 @@ import time
 import numpy as np
 
 import scipy.ndimage
+import scipy.optimize
 import scipy.sparse
+
 
 from .ADMM import lp_admm, lp_admm2
 from .ADMMBlocks import lp_admm_block_decomposition
@@ -43,7 +45,8 @@ from .MehrotraPDIP import mpc_sol
 
 solving_methods = [
     "mehrotra",
-    "scipy_linprog",
+    "scipy_simplex",
+    "scipy_interior_point",
     "dual_coordinate_ascent",
     "dual_gradient_ascent",
     "chambolle_pock_ppd",
@@ -958,7 +961,7 @@ class SparseLP:
         self.max_violated_constraint = []
         self.itrn_curve = []
 
-        def scipy_simplex_call_back(solution, **kwargs):
+        def scipy_call_back(solution, **kwargs):
             if ground_truth is not None:
                 self.distance_to_ground_truth.append(
                     np.mean(np.abs(ground_truth - solution[ground_truth_indices]))
@@ -1027,8 +1030,9 @@ class SparseLP:
             for vmethod in solving_methods:
                 print(vmethod)
             raise
-        if method == "scipy_linprog":
-            if not (self.b_lower is None):
+        if method in ["scipy_simplex","scipy_interior_point"]:
+            
+            if not (self.b_lower is None) and not(np.all(np.isinf(self.b_lower) &( self.b_lower<0))):
                 print(
                     "you need to convert your lp to a one side inequality system using convert_to_one_sided_inequality_system"
                 )
@@ -1039,15 +1043,16 @@ class SparseLP:
             else:
                 a_eq = a_eq.toarray()
                 b_eq = b_eq
+            method_map={"scipy_simplex":"simplex","scipy_interior_point":"interior-point"}
             sol = scipy.optimize.linprog(
                 self.costsvector,
                 A_ub=a_ineq.toarray(),
                 b_ub=self.b_upper,
-                a_eq=a_eq,
+                A_eq=a_eq,
                 b_eq=b_eq,
                 bounds=np.column_stack((self.lower_bounds, self.upper_bounds)),
-                method="simplex",
-                callback=scipy_simplex_call_back,
+                method=method_map[method],
+                callback=scipy_call_back,
             )
             # if not sol['success']:
             # raise BaseException(sol['message'])

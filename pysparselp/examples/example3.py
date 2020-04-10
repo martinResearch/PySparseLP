@@ -110,7 +110,8 @@ def run(display=True):
     percent_valid = {}
 
     solving_methods.remove("mehrotra")  # too slow
-    solving_methods.remove("scipy_linprog")
+    solving_methods.remove("scipy_simplex")
+    solving_methods.remove("scipy_interior_point")
     solving_methods.remove("dual_gradient_ascent")  # need to debug
     solving_methods.remove("dual_coordinate_ascent")  # need to debug
 

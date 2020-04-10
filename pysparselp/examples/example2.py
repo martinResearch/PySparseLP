@@ -72,7 +72,9 @@ def run(display=True):
         np.eye(emp_cov.shape[0]).flatten() + lamb,
     )
     lp.add_abs_penalization(ids, 1)
+    lp.convert_to_one_sided_inequality_system()
     x = lp.solve(method="mehrotra", nb_iter=6000, max_time=np.inf)[0]
+    print(lp.pobj_curve)
     # x=LP.solve(method='chambolle_pock_ppd')[0]
     lp_prec_ = x[ids]
     lp_prec_ = 0.5 * (lp_prec_ + lp_prec_.T)
@@ -85,7 +87,7 @@ def run(display=True):
     ##############################################################################
     # Plot the results
     if display:
-        plt.ion()
+        
         plt.figure(figsize=(10, 6))
         plt.subplots_adjust(left=0.02, right=0.98)
 

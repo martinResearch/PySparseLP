@@ -108,7 +108,7 @@ def mpc_sol(
     b,
     c,
     max_iter=100,
-    eps=1e-08,
+    eps=1e-12,
     theta=0.9995,
     verbose=2,
     error_check=False,

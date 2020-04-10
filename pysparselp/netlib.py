@@ -53,7 +53,7 @@ def get_problem(pbname):
             filename_sol + ".gz",
         )
         fgz = gzip.open(filename_sol + ".gz")
-        f = open(filename_sol, "w")
+        f = open(filename_sol, "wb")
         for l in fgz.readlines():
             f.write(l)
         f.close()

@@ -58,7 +58,7 @@ try:
     solving_methods.append("ECOS")
     solving_methods.append("SCS")
 except Exception:
-    print("could not import cvxpy, theuse_preconditioningl not be available")
+    print("could not import cvxpy, the ECOS and SCS solvers will not be available")
 
 
 def csr_matrix_append_row(a, n, cols, vals):

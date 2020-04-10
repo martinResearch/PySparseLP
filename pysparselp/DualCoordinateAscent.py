@@ -116,13 +116,17 @@ def dual_coordinate_ascent(
 
     def evaluate(y_eq, y_ineq):
         c_bar, x = get_optim_x(y_eq, y_ineq)
-        energy = -y_eq.dot(lp2.b_equalities) - y_ineq.dot(lp2.b_upper) + np.sum(x * c_bar)
+        energy = (
+            -y_eq.dot(lp2.b_equalities) - y_ineq.dot(lp2.b_upper) + np.sum(x * c_bar)
+        )
         # LP2.costsvector.dot(x)+y_ineq.dot(LP2.a_inequalities*x-LP2.b_upper)
         energy = (
             -y_eq.dot(lp2.b_equalities)
             - y_ineq.dot(lp2.b_upper)
             + np.sum(
-                np.minimum(c_bar * lp2.upper_bounds, c_bar * lp2.lower_bounds)[c_bar != 0]
+                np.minimum(c_bar * lp2.upper_bounds, c_bar * lp2.lower_bounds)[
+                    c_bar != 0
+                ]
             )
         )
         return energy
@@ -198,7 +202,9 @@ def dual_coordinate_ascent(
 
             a_ineq_col_i = lp2.a_equalities[i, :]
             # c_bar=LP2.costsvector+y_eq*LP2.a_equalities+y_ineq*LP2.a_inequalities
-            alpha_optim = exact_coordinate_line_search(a_ineq_col_i, lp2.b_equalities[i], c_bar)
+            alpha_optim = exact_coordinate_line_search(
+                a_ineq_col_i, lp2.b_equalities[i], c_bar
+            )
             prev_y_eq = y_eq[i]
             y_eq[i] += alpha_optim
             diff_y_eq = y_eq[i] - prev_y_eq
@@ -231,7 +237,9 @@ def dual_coordinate_ascent(
                 c_bar, x = get_optim_x(y_eq, y_ineq)
                 grad_y_ineq = lp2.a_inequalities * x - lp2.b_upper
                 grad_y_ineq[y_ineq <= 0] = np.maximum(grad_y_ineq[y_ineq <= 0], 0)  #
-                alpha_optim = exact_coordinate_line_search(a_ineq_col_i, lp2.b_upper[i], c_bar)
+                alpha_optim = exact_coordinate_line_search(
+                    a_ineq_col_i, lp2.b_upper[i], c_bar
+                )
                 y2 = y_ineq.copy()
                 vals = []
                 alphas_grid = np.linspace(-4, 0, 1000)
@@ -243,7 +251,9 @@ def dual_coordinate_ascent(
                 plt.plot(alphas_grid[:-1], deriv, ".")
 
             # c_bar=LP2.costsvector+y_eq*LP2.a_equalities+y_ineq*LP2.a_inequalities
-            alpha_optim = exact_coordinate_line_search(a_ineq_col_i, lp2.b_upper[i], c_bar)
+            alpha_optim = exact_coordinate_line_search(
+                a_ineq_col_i, lp2.b_upper[i], c_bar
+            )
 
             # prev_energy=evaluate(y_eq,y_ineq)
             prev_y_ineq = y_ineq[i]
@@ -286,11 +296,20 @@ def dual_coordinate_ascent(
             ) + np.sum(np.abs(lp2.a_equalities * x - lp2.b_equalities))
             print(
                 "iter %d time %3.1f dual energy %f, primal %f max violation %f sum_violation %f"
-                % (niter, elapsed, new_energy, energy_upper_bound, max_violation, sum_violation)
+                % (
+                    niter,
+                    elapsed,
+                    new_energy,
+                    energy_upper_bound,
+                    max_violation,
+                    sum_violation,
+                )
             )
             if max_violation == 0:
 
-                print("found feasible primal solution with energy %f" % energy_upper_bound)
+                print(
+                    "found feasible primal solution with energy %f" % energy_upper_bound
+                )
                 if energy_upper_bound == new_energy:
                     print("found optimal solution , stop")
                     break
@@ -327,9 +346,9 @@ def dual_coordinate_ascent(
         np.max(lp2.a_inequalities * x - lp2.b_upper),
         np.max(np.sum(np.abs(lp2.a_equalities * x - lp2.b_equalities))),
     )
-    sum_violation = np.sum(np.maximum(lp2.a_inequalities * x - lp2.b_upper, 0)) + np.sum(
-        np.abs(lp2.a_equalities * x - lp2.b_equalities)
-    )
+    sum_violation = np.sum(
+        np.maximum(lp2.a_inequalities * x - lp2.b_upper, 0)
+    ) + np.sum(np.abs(lp2.a_equalities * x - lp2.b_equalities))
     print(
         "iter %d time %3.1f dual energy %f, primal %f max violation %f sum_violation %f"
         % (niter, elapsed, new_energy, energy_upper_bound, max_violation, sum_violation)

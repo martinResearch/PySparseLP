@@ -44,12 +44,14 @@ def get_problem(problem_name):
 
     if not os.path.isfile(filename_lp):
         urllib.request.urlretrieve(
-            "ftp://ftp.numerical.rl.ac.uk/pub/cuter/netlib/%s.SIF" % problem_name.upper(),
+            "ftp://ftp.numerical.rl.ac.uk/pub/cuter/netlib/%s.SIF"
+            % problem_name.upper(),
             filename_lp,
         )
     if not os.path.isfile(filename_sol):
         urllib.request.urlretrieve(
-            "http://www.zib.de/koch/perplex/data/netlib/txt/%s.txt.gz" % problem_name.lower(),
+            "http://www.zib.de/koch/perplex/data/netlib/txt/%s.txt.gz"
+            % problem_name.lower(),
             filename_sol + ".gz",
         )
         fgz = gzip.open(filename_sol + ".gz")

@@ -151,9 +151,13 @@ class SparseLP:
             )
         if self.a_inequalities.shape[0] > 0:
             if self.b_upper is not None:
-                max_v = max(max_v, np.max(self.a_inequalities * solution - self.b_upper))
+                max_v = max(
+                    max_v, np.max(self.a_inequalities * solution - self.b_upper)
+                )
             if self.b_lower is not None:
-                max_v = max(max_v, np.max(self.b_lower - self.a_inequalities * solution))
+                max_v = max(
+                    max_v, np.max(self.b_lower - self.a_inequalities * solution)
+                )
         return max_v
 
     def check_solution(self, solution, tol=1e-6):
@@ -263,7 +267,9 @@ class SparseLP:
                 f.write("    X%-9dE%-9d%f\n" % (i, a_eq.ruse_preconditioning))
                 k_eq += 1
             while k_ineq < n_ineq_entries and a_ineq.col[k_ineq] == i:
-                f.write("    X%-9dI%-9d%f\n" % (i, a_ineq.row[k_ineq], a_ineq.data[k_ineq]))
+                f.write(
+                    "    X%-9dI%-9d%f\n" % (i, a_ineq.row[k_ineq], a_ineq.data[k_ineq])
+                )
                 k_ineq += 1
 
         f.write("RHS\n")
@@ -298,13 +304,17 @@ class SparseLP:
         continuous_indices = np.nonzero(~self.is_integer)[0]
         np.savetxt(
             f,
-            np.column_stack((continuous_indices, self.upper_bounds[continuous_indices])),
+            np.column_stack(
+                (continuous_indices, self.upper_bounds[continuous_indices])
+            ),
             fmt=" UP bound     X%-9d%f",
             newline="\n",
         )
         np.savetxt(
             f,
-            np.column_stack((continuous_indices, self.lower_bounds[continuous_indices])),
+            np.column_stack(
+                (continuous_indices, self.lower_bounds[continuous_indices])
+            ),
             fmt=" LO bound     X%-9d%f",
             newline="\n",
         )
@@ -378,7 +388,7 @@ class SparseLP:
         self.a_inequalities._shape = (self.a_inequalities.shape[0], self.nb_variables)
         self.a_equalities._shape = (self.a_equalities.shape[0], self.nb_variables)
 
-        if isinstance(costs, type(0)) or isinstance(costs , type(0.0)):
+        if isinstance(costs, type(0)) or isinstance(costs, type(0.0)):
             v = costs
             costs = np.empty(shape, dtype=np.float)
             costs.fill(v)
@@ -405,7 +415,7 @@ class SparseLP:
     def convert_bounds_to_vectors(self, shape, lower_bounds, upper_bounds):
 
         if (
-            isinstance(lower_bounds , type(0))
+            isinstance(lower_bounds, type(0))
             or isinstance(lower_bounds, type(0.0))
             or isinstance(lower_bounds, np.float64)
         ):
@@ -508,7 +518,9 @@ class SparseLP:
             self.b_lower = np.append(self.b_lower, lower_bounds)
             self.b_upper = np.append(self.b_upper, upper_bounds)
 
-    def add_linear_constraint_rows(self, cols, vals, lower_bounds=None, upper_bounds=None):
+    def add_linear_constraint_rows(
+        self, cols, vals, lower_bounds=None, upper_bounds=None
+    ):
         if not (np.all(np.diff(np.sort(cols, axis=1), axis=1) > 0)):
             print("you have twice the same variable in the constraint")
             raise
@@ -527,7 +539,9 @@ class SparseLP:
         cols_flat = cols_flat[keep.ravel()]
         iptr = np.hstack(([0], np.cumsum(np.sum(keep, axis=1))))
         a = scipy.sparse.csr_matrix((vals_flat, cols_flat, iptr))
-        self.add_constraints_sparse(a, lower_bounds=lower_bounds, upper_bounds=upper_bounds)
+        self.add_constraints_sparse(
+            a, lower_bounds=lower_bounds, upper_bounds=upper_bounds
+        )
 
     def add_soft_linear_constraint_rows(
         self, cols, vals, lower_bounds=None, upper_bounds=None, coef_penalization=0
@@ -699,9 +713,9 @@ class SparseLP:
         if nb_free > 0:
             # raise 'this part of the code has not been tested yet'
             nb_not_free = nb_variables - nb_free
-            j_mat = (np.cumsum(~free) - 1) * (~free) + (np.cumsum(free) + nb_not_free - 1) * (
-                free
-            )
+            j_mat = (np.cumsum(~free) - 1) * (~free) + (
+                np.cumsum(free) + nb_not_free - 1
+            ) * (free)
             perm = scipy.sparse.coo_matrix(
                 (np.ones(self.nb_variables), (np.arange(self.nb_variables), j_mat))
             )
@@ -742,7 +756,9 @@ class SparseLP:
         nbslack = a_inequalities.shape[0]
 
         nb_variables = nb_variables + nbslack
-        a_inequalities = scipy.sparse.hstack((a_inequalities, scipy.sparse.eye(nbslack)))
+        a_inequalities = scipy.sparse.hstack(
+            (a_inequalities, scipy.sparse.eye(nbslack))
+        )
         a_equalities._shape = (a_equalities.shape[0], nb_variables)
         m_change = m_change.tocsr()
         m_change._shape = (m_change.shape[0], nb_variables)
@@ -1030,9 +1046,11 @@ class SparseLP:
             for vmethod in solving_methods:
                 print(vmethod)
             raise
-        if method in ["scipy_simplex","scipy_interior_point"]:
-            
-            if not (self.b_lower is None) and not(np.all(np.isinf(self.b_lower) &( self.b_lower<0))):
+        if method in ["scipy_simplex", "scipy_interior_point"]:
+
+            if not (self.b_lower is None) and not (
+                np.all(np.isinf(self.b_lower) & (self.b_lower < 0))
+            ):
                 print(
                     "you need to convert your lp to a one side inequality system using convert_to_one_sided_inequality_system"
                 )
@@ -1043,7 +1061,10 @@ class SparseLP:
             else:
                 a_eq = a_eq.toarray()
                 b_eq = b_eq
-            method_map={"scipy_simplex":"simplex","scipy_interior_point":"interior-point"}
+            method_map = {
+                "scipy_simplex": "simplex",
+                "scipy_interior_point": "interior-point",
+            }
             sol = scipy.optimize.linprog(
                 self.costsvector,
                 A_ub=a_ineq.toarray(),
@@ -1061,7 +1082,9 @@ class SparseLP:
         elif method == "mehrotra":
 
             lp_slack = copy.deepcopy(self)
-            m_change1, shift1 = lp_slack.remove_fixed_variables()  # removed fixed variables
+            m_change1, shift1 = (
+                lp_slack.remove_fixed_variables()
+            )  # removed fixed variables
             m_change2, shift2 = lp_slack.convert_to_slack_form()
 
             def mehrotra_call_back(solution, niter, **kwargs):

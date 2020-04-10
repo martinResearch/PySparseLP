@@ -21,7 +21,7 @@ def initial_point(a, b, c, use_umfpack=False):
     e = np.ones((n,))
 
     # solution for min norm(s) s.t. A'*y + s = c
-    #y =sparse.linalg.cg(a*a.T, a*c,tol=1e-7)[0]
+    # y =sparse.linalg.cg(a*a.T, a*c,tol=1e-7)[0]
     y = spsolve(a * a.T, a * c, use_umfpack=use_umfpack)
 
     # y2 =sparse.linalg.cgs(A*A.T, A*c)[0]
@@ -31,8 +31,8 @@ def initial_point(a, b, c, use_umfpack=False):
 
     # solution for min norm(x) s.t. Ax = b
     x = a.T * spsolve(a * a.T, b, use_umfpack=use_umfpack)
-    #print(c.T.dot(x))
-    #x = a.T*sparse.linalg.cg(a*a.T, b,tol=1e-7)[0]
+    # print(c.T.dot(x))
+    # x = a.T*sparse.linalg.cg(a*a.T, b,tol=1e-7)[0]
 
     # delta_x and delta_s
     delta_x = max(-1.5 * np.min(x), 0)
@@ -44,7 +44,8 @@ def initial_point(a, b, c, use_umfpack=False):
     delta_s_c = delta_s + pdct / (np.sum(x) + n * delta_x)
 
     print(
-        f"delta_x={delta_x}\ndelta_s={delta_s}\ndelta_x_c={delta_x_c}\ndelta_s_c={delta_s_c}\n")
+        f"delta_x={delta_x}\ndelta_s={delta_s}\ndelta_x_c={delta_x_c}\ndelta_s_c={delta_s_c}\n"
+    )
     # output
     x0 = x + delta_x_c * e
     s0 = s + delta_s_c * e
@@ -52,7 +53,7 @@ def initial_point(a, b, c, use_umfpack=False):
     return x0, y0, s0
 
 
-def newton_direction(r_b, r_c, r_x_s, a, m, n, x, s, lu, error_check=0,use_lu = True):
+def newton_direction(r_b, r_c, r_x_s, a, m, n, x, s, lu, error_check=0, use_lu=True):
 
     rhs = np.hstack((-r_b, -r_c + r_x_s / x))
     d_2 = -np.minimum(1e16, s / x)
@@ -66,7 +67,7 @@ def newton_direction(r_b, r_c, r_x_s, a, m, n, x, s, lu, error_check=0,use_lu = 
     # ldl' factorization
     # if L and D are not provided, we calc new factorization; otherwise,
     # reuse them
-    
+
     if use_lu:
         if lu is None:
             lu = sparse.linalg.splu(b.tocsc())
@@ -89,11 +90,11 @@ def newton_direction(r_b, r_c, r_x_s, a, m, n, x, s, lu, error_check=0,use_lu = 
                 norm(a.T * dy + ds + r_c)
                 + norm(a * dx + r_b)
                 + norm(s * dx + x * ds + r_x_s)
-            ),
+            )
         )
-        print("\t + err_d = %6.2e" % (norm(a.T * dy + ds + r_c)),)
-        print("\t + err_p = %6.2e" % (norm(a * dx + r_b)),)
-        print("\t + err_gap = %6.2e\n" % (norm(s * dx + x * ds + r_x_s)),)
+        print("\t + err_d = %6.2e" % (norm(a.T * dy + ds + r_c)))
+        print("\t + err_p = %6.2e" % (norm(a * dx + r_b)))
+        print("\t + err_gap = %6.2e\n" % (norm(s * dx + x * ds + r_x_s)))
 
     return dx, dy, ds, lu
 
@@ -130,8 +131,8 @@ def mpc_sol(
 
     if verbose > 1:
         print(
-            "\n%3s %6s %9s %11s %9s %9s %9s\n" % (
-                "ITER", "COST", "MU", "RESIDUAL", "ALPHAX", "ALPHAS", "MAXVIOL")
+            "\n%3s %6s %9s %11s %9s %9s %9s\n"
+            % ("ITER", "COST", "MU", "RESIDUAL", "ALPHAX", "ALPHAS", "MAXVIOL")
         )
 
     # Choose initial point
@@ -155,8 +156,10 @@ def mpc_sol(
 
         if verbose > 1:
             maxviol = max(np.max(np.abs(r_b)), np.max(-x))
-            print("%3d %9.2e %9.2e %9.2e %9.4g %9.4g %9.2e" %
-                  (niter, f, mu, residual, alpha_x, alpha_s, maxviol))
+            print(
+                "%3d %9.2e %9.2e %9.2e %9.4g %9.4g %9.2e"
+                % (niter, f, mu, residual, alpha_x, alpha_s, maxviol)
+            )
 
         if callback is not None:
             callback(x, niter)

@@ -501,8 +501,10 @@ def greedy_fix(x, lp, nb_max_iter=1000, callback_func=None, use_xor_moves=False)
         # tocheck=np.nonzero(dr_ineq.T*R!=0)[1]
         move_to_change = (dx.T * d_x).indices
         d_x[:, move_to_change] = scipy.sparse.csc.csc_matrix(
-            (1 - 2 * xr[move_to_change],
-             (move_to_change, np.arange(move_to_change.size))),
+            (
+                1 - 2 * xr[move_to_change],
+                (move_to_change, np.arange(move_to_change.size)),
+            ),
             (xr.size, move_to_change.size),
         )
         to_check = np.nonzero(dr_ineq.T * a_ineq * d_x != 0)[1]

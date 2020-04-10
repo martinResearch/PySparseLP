@@ -62,6 +62,7 @@ class CheckDecrease:
 def convert_to_py_sparse_format(a):
     # check symmetric
     import spmatrix
+
     assert (a - a.T).nnz == 0
     l_mat = spmatrix.ll_mat_sym(a.shape[0], a.nnz)
     a_coo = scipy.sparse.triu(a).tocoo()
@@ -79,11 +80,14 @@ class CholeskyOrLu:
             self.solve = self.LU.solve
         elif method == "scikitsCholesky":
             import scikits.sparse
+
             self.LU = scikits.sparse.cholmod.cholesky(m.tocsc())
             self.solve = self.LU.solve_A
 
 
-def convert_to_standard_form_with_bounds(c, a_eq, beq, a_ineq, b_lower, b_upper, lb, ub, x0):
+def convert_to_standard_form_with_bounds(
+    c, a_eq, beq, a_ineq, b_lower, b_upper, lb, ub, x0
+):
 
     if a_ineq is not None:
         ni = a_ineq.shape[0]
@@ -189,8 +193,7 @@ class SolutionStat:
         self.prev_elapsed = self.elapsed
         elapsed = time.clock() - self.start
         nb_iter_since_last_call = i - self.self.iprev
-        mean_iter_period = (
-            elapsed - self.prev_elapsed) / nb_iter_since_last_call
+        mean_iter_period = (elapsed - self.prev_elapsed) / nb_iter_since_last_call
 
         energy1 = self.c.dot(x)
         max_violated_equality = 0
@@ -206,7 +209,8 @@ class SolutionStat:
         energy_rounded = self.c.dot(x_rounded)
         nb_violated_equality_rounded = np.sum(np.abs(self.a_eq * x_rounded - self.beq))
         nb_violated_inequality_rounded = np.sum(
-            np.maximum(self.a_ineq * x_rounded - self.b_ineq, 0))
+            np.maximum(self.a_ineq * x_rounded - self.b_ineq, 0)
+        )
 
         if nb_violated_equality_rounded == 0 and nb_violated_inequality_rounded == 0:
             print(
@@ -255,7 +259,12 @@ def save_arguments(filename):
     module = caller.f_globals["__name__"]
     import pickle
 
-    d = {"module": module, "function_name": func_name, "args": args, "posargs": pos_args}
+    d = {
+        "module": module,
+        "function_name": func_name,
+        "args": args,
+        "posargs": pos_args,
+    }
     with open(filename, "wb") as f:
         pickle.dump(d, f)
 

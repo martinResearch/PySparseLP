@@ -1,4 +1,3 @@
-
 """Test based on the example1 (pott image model)."""
 
 import json

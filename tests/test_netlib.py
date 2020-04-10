@@ -82,7 +82,9 @@ def solve_netlib(problem_name, display=False, max_time_seconds=30):
         )
         distance_to_ground_truth[method] = lp.distance_to_ground_truth
         if display:
-            ax_arr[0].semilogy(lp.opttime_curve, lp.distance_to_ground_truth, label=method)
+            ax_arr[0].semilogy(
+                lp.opttime_curve, lp.distance_to_ground_truth, label=method
+            )
             ax_arr[1].semilogy(lp.opttime_curve, lp.max_violated_constraint)
             ax_arr[2].semilogy(lp.opttime_curve, lp.pobj_curve - cost_gt)
             ax_arr[0].legend()
@@ -96,7 +98,12 @@ def trim_length(a, b):
     return a[:min_len], b[:min_len]
 
 
-def test_netlib(pb_names=None, max_time_seconds: int = 10, update_results: bool = False, display: bool = False):
+def test_netlib(
+    pb_names=None,
+    max_time_seconds: int = 10,
+    update_results: bool = False,
+    display: bool = False,
+):
     if pb_names is None:
         pb_names = ["SC105"]
 

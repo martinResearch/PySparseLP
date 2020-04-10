@@ -36,7 +36,7 @@ from .tools import (
     Chrono,
     convert_to_standard_form_with_bounds,
     precondition_constraints,
-    precondition_lp_right
+    precondition_lp_right,
 )
 
 # import  scikits.sparse.cholmod
@@ -118,6 +118,7 @@ def lp_admm_block_decomposition(
 
     if False:
         import scikits.sparse
+
         id_rows = np.hstack(
             [np.arange(a_eq.blocks[g][0], a_eq.blocks[g][1] + 1) for g in merge_groups]
         )
@@ -148,7 +149,10 @@ def lp_admm_block_decomposition(
                     )
                 ),
                 scipy.sparse.hstack(
-                    (sub_a2, scipy.sparse.csc_matrix((sub_a2.shape[0], sub_a2.shape[0])))
+                    (
+                        sub_a2,
+                        scipy.sparse.csc_matrix((sub_a2.shape[0], sub_a2.shape[0])),
+                    )
                 ),
             )
         ).tocsr()
@@ -193,7 +197,10 @@ def lp_admm_block_decomposition(
                     )
                 ),
                 scipy.sparse.hstack(
-                    (sub_a2, scipy.sparse.csc_matrix((sub_a2.shape[0], sub_a2.shape[0])))
+                    (
+                        sub_a2,
+                        scipy.sparse.csc_matrix((sub_a2.shape[0], sub_a2.shape[0])),
+                    )
                 ),
             )
         ).tocsr()
@@ -239,7 +246,9 @@ def lp_admm_block_decomposition(
         en = c.dot(xp)
         for id_block in range(nb_blocks):
             diff = x[id_block] - xp[list_block_ids[id_block]]
-            en += 0.5 * gamma_ineq * np.sum((diff) ** 2) + lambda_ineq[id_block].dot(diff)
+            en += 0.5 * gamma_ineq * np.sum((diff) ** 2) + lambda_ineq[id_block].dot(
+                diff
+            )
         return en
 
     i = 0

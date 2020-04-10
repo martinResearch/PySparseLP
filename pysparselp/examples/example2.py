@@ -61,7 +61,9 @@ def run(display=True):
     emp_cov = np.dot(x.T, x) / n_samples
 
     lp = SparseInvCov()
-    ids = lp.add_variables_array(shape=emp_cov.shape, lower_bounds=None, upper_bounds=None)
+    ids = lp.add_variables_array(
+        shape=emp_cov.shape, lower_bounds=None, upper_bounds=None
+    )
     lamb = 0.15
     from scipy import sparse
 
@@ -87,7 +89,7 @@ def run(display=True):
     ##############################################################################
     # Plot the results
     if display:
-        
+
         plt.figure(figsize=(10, 6))
         plt.subplots_adjust(left=0.02, right=0.98)
 

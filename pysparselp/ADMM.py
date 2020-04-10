@@ -106,6 +106,7 @@ def lp_admm(
         # luM = scipy.sparse.linalg.spilu(M,drop_tol=0.01)
     elif use_cholesky:
         import scikits.sparse
+
         ch = Chrono()
         ch.tic()
         chol = scikits.sparse.cholmod.cholesky(m.tocsc())
@@ -117,6 +118,7 @@ def lp_admm(
 
     elif use_amg:
         import pyamg
+
         m_amg = pyamg.ruge_stuben_solver(m)
 
     def energy(x, xp, lambda_eq, lambda_ineq):
@@ -341,6 +343,7 @@ def lp_admm2(
         nb_cg_iter = 1
     elif use_cholesky:
         import scikits.sparse
+
         ch.tic()
         # not that it will work only if M is positive definite which nto garantied the way it is constructed
         # unfortunately i'm not able to catch the error to fall back on LU decomposition if
@@ -357,13 +360,15 @@ def lp_admm2(
         nb_cg_iter = 1
     elif use_cholesky2:
         import scikits.umfpack  # pipinstall scikit-umfpack
+
         print("using UMFPACK_STRATEGY_SYMMETRIC through PySparse")
         ch.tic()
         m2 = convert_to_py_sparse_format(m)
         print("conversion :" + str(ch.toc()))
         ch.tic()
         lu_umfpack = scikits.umfpack.factorize(
-            m2, strategy="UMFPACK_STRATEGY_SYMMETRIC")
+            m2, strategy="UMFPACK_STRATEGY_SYMMETRIC"
+        )
         print("nnz per line :" + str(lu_umfpack.nnz / float(m2.shape[0])))
         print("factorization :" + str(ch.toc()))
         nb_cg_iter = 1
@@ -373,6 +378,7 @@ def lp_admm2(
         # Mamg=pyamg.rootnode_solver(M.tocsc())
         # Mamg=pyamg.
         import pyamg  # pip install pyamg
+
         m_amg = pyamg.ruge_stuben_solver(
             m.tocsc(), strength=None
         )  # sometimes seems to yield infinite values

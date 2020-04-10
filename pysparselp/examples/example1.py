@@ -14,12 +14,12 @@ class ImageLP(SparseLP):
 
     def add_penalized_differences(self, ids1, ids2, coef_penalization):
         assert ids1.size == ids2.size
-        maxDiff = np.maximum(
+        max_diff = np.maximum(
             self.upper_bounds[ids1] - self.lower_bounds[ids2],
             self.upper_bounds[ids2] - self.lower_bounds[ids1],
         )
         aux = self.add_variables_array(
-            ids1.shape, upper_bounds=maxDiff, lower_bounds=0, costs=coef_penalization
+            ids1.shape, upper_bounds=max_diff, lower_bounds=0, costs=coef_penalization
         )
         if np.isscalar(coef_penalization):
             assert coef_penalization > 0
@@ -37,10 +37,14 @@ class ImageLP(SparseLP):
         self.add_linear_constraint_rows(cols, vals, lower_bounds=None, upper_bounds=0)
 
     def add_pott_horizontal(self, indices, coef_penalization):
-        self.add_penalized_differences(indices[:, 1:], indices[:, :-1], coef_penalization)
+        self.add_penalized_differences(
+            indices[:, 1:], indices[:, :-1], coef_penalization
+        )
 
     def add_pott_vertical(self, indices, coef_penalization):
-        self.add_penalized_differences(indices[1:, :], indices[:-1, :], coef_penalization)
+        self.add_penalized_differences(
+            indices[1:, :], indices[:-1, :], coef_penalization
+        )
 
     def add_pott_model(self, indices, coef_penalization):
         self.add_pott_horizontal(indices, coef_penalization)
@@ -135,7 +139,9 @@ def run(display=True):
     # sol1,elapsed=LP2.solve(method='ScipyLinProg',force_integer=False,get_timing=True,nb_iter=100,max_time=10,ground_truth=ground_truth,ground_truth_indices=indices,plot_solution=None)
 
     solving_methods2 = [
-        m for m in solving_methods if (m not in ["scipy_simplex","scipy_interior_point"])
+        m
+        for m in solving_methods
+        if (m not in ["scipy_simplex", "scipy_interior_point"])
     ]  # remove scipy_linprog because it is too slow
 
     distance_to_ground_truth_curves = {}
@@ -157,7 +163,9 @@ def run(display=True):
             nb_iter_plot=500,
         )
         if display:
-            ax_curves1.semilogy(lp.itrn_curve, lp.distance_to_ground_truth, label=method)
+            ax_curves1.semilogy(
+                lp.itrn_curve, lp.distance_to_ground_truth, label=method
+            )
             ax_curves2.semilogy(
                 lp.opttime_curve, lp.distance_to_ground_truth, label=method
             )

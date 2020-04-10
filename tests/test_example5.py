@@ -1,4 +1,3 @@
-
 """Test based on the example5."""
 
 import os

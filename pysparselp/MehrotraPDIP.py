@@ -9,19 +9,20 @@ import numpy as np
 from numpy.linalg import norm
 
 from scipy import sparse
-from scipy.sparse.linalg import spsolve
+from scipy.sparse.linalg import spsolve 
+
 
 from .xorshift import XorShift
 
 
-def initial_point(a, b, c):
+def initial_point(a, b, c, use_umfpack=False):
 
     n = a.shape[1]
     e = np.ones((n,))
 
     # solution for min norm(s) s.t. A'*y + s = c
     # y =sparse.linalg.cg(A*A.T, A*c,tol=1e-7)[0]
-    y = spsolve(a * a.T, a * c)
+    y = spsolve(a * a.T, a * c, use_umfpack=use_umfpack)
 
     # y2 =sparse.linalg.cgs(A*A.T, A*c)[0]
     # y2 =sparse.linalg.gmres(A*A.T, A*c,)[0]
@@ -29,7 +30,7 @@ def initial_point(a, b, c):
     s = c - a.T * y
 
     # solution for min norm(x) s.t. Ax = b
-    x = a.T * sparse.linalg.spsolve(a * a.T, b)
+    x = a.T * spsolve(a * a.T, b, use_umfpack=use_umfpack)
     # x = A.T*sparse.linalg.cg(A*A.T, b,tol=1e-7)[0]
 
     # delta_x and delta_s
@@ -148,7 +149,8 @@ def mpc_sol(
         residual = norm(np.hstack((r_b, r_c, r_x_s)) / bc)
 
         if verbose > 1:
-            print("%3d %9.2e %9.2e %9.4g %9.4g" % (niter, mu, residual, alpha_x, alpha_s))
+            print("%3d %9.2e %9.2e %9.4g %9.4g" %
+                  (niter, mu, residual, alpha_x, alpha_s))
 
         if callback is not None:
             callback(x, niter)

@@ -127,7 +127,7 @@ def mpc_sol(
 
     if verbose > 1:
         print(
-            "\n%3s %6s %11s %9s %9s\n" % ("ITER", "MU", "RESIDUAL", "ALPHAX", "ALPHAS")
+            "\n%3s %6s %6s %11s %9s %9s %9s\n" % ("ITER", "COST", "MU", "RESIDUAL", "ALPHAX", "ALPHAS", "MAXVIOL")
         )
 
     # Choose initial point
@@ -144,13 +144,14 @@ def mpc_sol(
         r_c = a.T * y + s - c
         r_x_s = x * s
         mu = np.mean(r_x_s)
+        f = c.T.dot(x)
 
         # Check relative decrease in residual, for purposes of convergence test
         residual = norm(np.hstack((r_b, r_c, r_x_s)) / bc)
 
         if verbose > 1:
-            print("%3d %9.2e %9.2e %9.4g %9.4g" %
-                  (niter, mu, residual, alpha_x, alpha_s))
+            print("%3d %9.2e %9.2e %9.2e %9.4g %9.4g %9.2e" %
+                  (niter, f, mu, residual, alpha_x, alpha_s, np.max(r_b)))
 
         if callback is not None:
             callback(x, niter)
@@ -202,6 +203,7 @@ def mpc_sol(
         print("\nDONE! [m,n] = [%d, %d], N = %d\n" % (m, n, niter))
 
     f = c.T.dot(x)
+    
     return f, x, y, s, niter_done
 
 

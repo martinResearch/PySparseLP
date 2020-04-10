@@ -42,15 +42,15 @@ from .MehrotraPDIP import mpc_sol
 
 
 solving_methods = [
-    "Mehrotra",
-    "ScipyLinProg",
+    "mehrotra",
+    "scipy_linprog",
     "dual_coordinate_ascent",
     "dual_gradient_ascent",
     "chambolle_pock_ppd",
     "chambolle_pock_ppdas",
-    "ADMM",
-    "ADMM2",
-    "ADMMBlocks",
+    "admm",
+    "admm2",
+    "admm_blocks",
 ]
 try:
     import cvxpy
@@ -1027,7 +1027,7 @@ class SparseLP:
             for vmethod in solving_methods:
                 print(vmethod)
             raise
-        if method == "ScipyLinProg":
+        if method == "scipy_linprog":
             if not (self.B_lower is None):
                 print(
                     "you need to convert your lp to a one side inequality system using convert_to_one_sided_inequality_system"
@@ -1053,7 +1053,7 @@ class SparseLP:
             # raise BaseException(sol['message'])
             x = sol["x"]
 
-        elif method == "Mehrotra":
+        elif method == "mehrotra":
 
             LPslack = copy.deepcopy(self)
             Mchange1, shift1 = LPslack.remove_fixed_variables()  # removed fixed variables
@@ -1109,7 +1109,7 @@ class SparseLP:
             result = prob.solve(verbose=True, solver=cvxpy.ECOS)
             x = np.array(result).flatten()
 
-        elif method == "ADMM":
+        elif method == "admm":
             x = lp_admm(
                 self.costsvector,
                 Aeq,
@@ -1126,7 +1126,7 @@ class SparseLP:
                 nb_iter_plot=nb_iter_plot,
             )
 
-        elif method == "ADMMBlocks":
+        elif method == "admm_blocks":
             x = lp_admm_block_decomposition(
                 self.costsvector,
                 Aeq,
@@ -1142,7 +1142,7 @@ class SparseLP:
                 callback_func=callback_func,
                 max_time=max_time,
             )
-        elif method == "ADMM2":
+        elif method == "admm2":
             x = lp_admm2(
                 self.costsvector,
                 Aeq,

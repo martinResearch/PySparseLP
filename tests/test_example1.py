@@ -26,7 +26,7 @@ def test_example1(update_results=False):
     curves_json_file = os.path.join(__folder__, "example1_curves.json")
     if update_results:
         with open(curves_json_file, "w") as f:
-            json.dump(distanceToGroundTruthCurves, f)
+            json.dump(distanceToGroundTruthCurves, f, indent=4)
 
     with open(curves_json_file, "r") as f:
         distanceToGroundTruthCurves_expected = json.load(f)
@@ -40,4 +40,4 @@ def test_example1(update_results=False):
 
 
 if __name__ == "__main__":
-    test_example1()
+    test_example1(update_results=False)

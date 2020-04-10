@@ -109,8 +109,8 @@ def run(display=True):
     l1svm.set_data(x, classes)
     percent_valid = {}
 
-    solving_methods.remove("Mehrotra")  # too slow
-    solving_methods.remove("ScipyLinProg")
+    solving_methods.remove("mehrotra")  # too slow
+    solving_methods.remove("scipy_linprog")
     solving_methods.remove("dual_gradient_ascent")  # need to debug
     solving_methods.remove("dual_coordinate_ascent")  # need to debug
 

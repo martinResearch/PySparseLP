@@ -82,7 +82,7 @@ if __name__ == "__main__":
     LP2 = copy.deepcopy(LP)
     LP2.convert_to_one_sided_inequality_system()
     scipySol, elapsed = LP2.solve(
-        method="ScipyLinProg", force_integer=False, getTiming=True, nb_iter=100000
+        method="scipy_linprog", force_integer=False, getTiming=True, nb_iter=100000
     )
     costScipy = scipySol.dot(LP2.costsvector.T)
     maxv = LP2.max_constraint_violation(scipySol)

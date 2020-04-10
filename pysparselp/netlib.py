@@ -29,7 +29,7 @@ import gzip
 import os
 import urllib.request
 
-from .MPSParser import mps_parser
+from .MPSparser import mps_parser
 
 
 def get_problem(pbname):

@@ -49,9 +49,9 @@ def solve_netlib(pbname, display=False, max_time_seconds=30):
     costGT = LP.costsvector.dot(groundTruth.T)
     print("gt  cost :%f" % costGT)
 
-    # scipySol,elapsed=LP2.solve(method='ScipyLinProg',getTiming=True,nb_iter=100000)
+    # scipySol,elapsed=LP2.solve(method='scipy_linprog',getTiming=True,nb_iter=100000)
 
-    # method='ScipyLinProg'
+    # method='scipy_linprog'
     # if not scipySol is np.nan:
     # sol1=scipySol
     # maxv=LP.max_constraint_violation(sol1)
@@ -63,8 +63,8 @@ def solve_netlib(pbname, display=False, max_time_seconds=30):
 
     # testing our methods
 
-    solving_methods2 = [m for m in solving_methods if (m not in ["ScipyLinProg"])]
-    # solving_methods2=['Mehrotra']
+    solving_methods2 = [m for m in solving_methods if (m not in ["scipy_linprog"])]
+    # solving_methods2=['mehrotra']
     distanceToGroundTruth = {}
     for method in solving_methods2:
         print(
@@ -108,7 +108,7 @@ def test_netlib(pb_names=None, max_time_seconds: int = 10, update_results: bool 
         curves_json_file = os.path.join(__folder__, f"netlib_curves_{pb_name}.json")
         if update_results:
             with open(curves_json_file, "w") as f:
-                json.dump(distanceToGroundTruthCurves, f)
+                json.dump(distanceToGroundTruthCurves, f, indent=4)
 
         with open(curves_json_file, "r") as f:
             distanceToGroundTruthCurves_expected = json.load(f)
@@ -127,7 +127,7 @@ if __name__ == "__main__":
     # test_netlib('SC50B')
     # test_netlib('SC50A')
     # test_netlib('KB2')
-    test_netlib(["SC105"], display=False)
+    test_netlib(["SC105"], display=False, update_results=False)
     # test_netlib('ADLITTLE')# seems like the solution is not unique
     # test_netlib('SCAGR7')
     # test_netlib('PEROLD')# seems like there is a loading this problem

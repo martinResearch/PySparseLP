@@ -9,7 +9,7 @@ import numpy as np
 from numpy.linalg import norm
 
 from scipy import sparse
-from scipy.sparse.linalg import spsolve 
+from scipy.sparse.linalg import spsolve
 
 
 from .xorshift import XorShift

@@ -32,8 +32,8 @@ import scipy.ndimage
 from scipy import sparse
 
 from .tools import (
-    check_decrease,
-    chrono,
+    CheckDecrease,
+    Chrono,
     convert_to_standard_form_with_bounds,
     precondition_constraints,
     precondition_lp_right
@@ -44,9 +44,9 @@ from .tools import (
 
 def lp_admm_block_decomposition(
     c,
-    Aeq,
+    a_eq,
     beq,
-    Aineq,
+    a_ineq,
     b_lower,
     b_upper,
     lb,
@@ -57,26 +57,26 @@ def lp_admm_block_decomposition(
     callback_func=None,
     max_time=None,
     use_preconditionning=True,
-    useLU=True,
+    use_lu=True,
     nb_iter_plot=10,
 ):
     # simple ADMM method with an approximate resolution of a quadratic subproblem using conjugate gradient
     # inspiredy by Boyd's paper on ADMM
     # Distributed Optimization and Statistical Learning via the Alternating Direction Method of Multipliers
-    # the difference with admm_solver is that the linear quality constrainrs Aeq*beq are enforced during the resolution
+    # the difference with admm_solver is that the linear quality constrainrs a_eq*beq are enforced during the resolution
     # of the subproblem instead of beeing enforced through multipliers
     n = c.size
     start = time.clock()
     elapsed = start
     if x0 is None:
         x0 = np.zeros(c.size)
-    # if Aeq!=None:
-    # Aeq,beq=precondition_constraints(Aeq,beq,alpha=2)
-    # if Aineq!=None:# it seem important to do this preconditionning before converting to standard form
-    # Aineq,b_lower,b_upper=precondition_constraints(Aineq,b_lower,b_upper,alpha=2)
+    # if a_eq!=None:
+    # a_eq,beq=precondition_constraints(a_eq,beq,alpha=2)
+    # if a_ineq!=None:# it seem important to do this preconditionning before converting to standard form
+    # a_ineq,b_lower,b_upper=precondition_constraints(a_ineq,b_lower,b_upper,alpha=2)
 
-    c, Aeq, beq, lb, ub, x0 = convert_to_standard_form_with_bounds(
-        c, Aeq, beq, Aineq, b_lower, b_upper, lb, ub, x0
+    c, a_eq, beq, lb, ub, x0 = convert_to_standard_form_with_bounds(
+        c, a_eq, beq, a_ineq, b_lower, b_upper, lb, ub, x0
     )
     x = x0
 
@@ -88,32 +88,32 @@ def lp_admm_block_decomposition(
     # left preconditioning seems not to change anything if not used in combination with use_preconditionning_cols  as each subproblem is solved exactly.
     use_preconditionning_rows = False
     if use_preconditionning_rows:
-        Aeq, beq = precondition_constraints(Aeq, beq, alpha=2)
+        a_eq, beq = precondition_constraints(a_eq, beq, alpha=2)
 
     # global right preconditioning
     use_preconditionning_cols = False
     if use_preconditionning_cols:
-        R, c, Aeq, beq, lb, ub, x0 = precondition_lp_right(
-            c, Aeq, beq, lb, ub, x0, alpha=3
+        r, c, a_eq, beq, lb, ub, x0 = precondition_lp_right(
+            c, a_eq, beq, lb, ub, x0, alpha=3
         )
     else:
-        R = sparse.eye(Aeq.shape[1])
+        r = sparse.eye(a_eq.shape[1])
 
-    luMs = []
+    lu_m_s = []
     nb_used = np.zeros(x.shape)
     list_block_ids = []
-    # Aeq.blocks=[(0,Aeq.blocks[5][1]),(Aeq.blocks[6][0],Aeq.blocks[11][1])]
-    # Aeq.blocks=[(0,Aeq.blocks[-1][1])]
+    # a_eq.blocks=[(0,a_eq.blocks[5][1]),(a_eq.blocks[6][0],a_eq.blocks[11][1])]
+    # a_eq.blocks=[(0,a_eq.blocks[-1][1])]
 
     beqs = []
-    usesparseLU = True
+    usesparse_lu = True
     xv = []
-    # for idblock in range(nb_blocks):
-    ch = chrono()
+    # for id_block in range(nb_blocks):
+    ch = Chrono()
 
-    mergegroupes = []
-    mergegroupes = [[k] for k in range(len(Aeq.blocks))]
-    # mergegroupes.append(np.arange(len(Aeq.blocks)))#single block
+    merge_groups = []
+    merge_groups = [[k] for k in range(len(a_eq.blocks))]
+    # mergegroupes.append(np.arange(len(a_eq.blocks)))#single block
 
     # mergegroupes.append([0,1,2,3, 4, 5])
     # mergegroupes.append([6,7,8,9,10,11])
@@ -129,12 +129,12 @@ def lp_admm_block_decomposition(
     # mergegroupes.append([12,13])
     # mergegroupes.append([14,15])
     # mergegroupes.append([12,13,14,15])
-    nb_blocks = len(mergegroupes)
+    nb_blocks = len(merge_groups)
 
     if False:
         import scikits.sparse
-        idRows = np.hstack(
-            [np.arange(Aeq.blocks[g][0], Aeq.blocks[g][1] + 1) for g in mergegroupes]
+        id_rows = np.hstack(
+            [np.arange(a_eq.blocks[g][0], a_eq.blocks[g][1] + 1) for g in merge_groups]
         )
 
         # we want to cluster the constraints such that the submatrix for each cluster has a sparse cholesky decomposition
@@ -147,79 +147,79 @@ def lp_admm_block_decomposition(
         # marge is good if the interection of the variables used by the two block is large (remove copies) (fast to test)
         # and if the operation does not increase the cholesky density or graph tree width too much
 
-        subA = Aeq[idRows, :]
-        t = np.array(np.abs(subA).sum(axis=0)).ravel()
+        sub_a = a_eq[id_rows, :]
+        t = np.array(np.abs(sub_a).sum(axis=0)).ravel()
         ids = np.nonzero(t)[0]
         list_block_ids.append(ids)
 
-        subA2 = subA[:, ids]
+        sub_a2 = sub_a[:, ids]
         # precompute the LU factorizartion of the matrix that needs to be inverted for the block
-        M = scipy.sparse.vstack(
+        m = scipy.sparse.vstack(
             (
                 scipy.sparse.hstack(
                     (
-                        gamma_ineq * scipy.sparse.eye(subA2.shape[1], subA2.shape[1]),
-                        subA2.T,
+                        gamma_ineq * scipy.sparse.eye(sub_a2.shape[1], sub_a2.shape[1]),
+                        sub_a2.T,
                     )
                 ),
                 scipy.sparse.hstack(
-                    (subA2, scipy.sparse.csc_matrix((subA2.shape[0], subA2.shape[0])))
+                    (sub_a2, scipy.sparse.csc_matrix((sub_a2.shape[0], sub_a2.shape[0])))
                 ),
             )
         ).tocsr()
-        LU = scikits.sparse.cholmod.cholesky(M.tocsc(), mode="simplicial")
+        lu = scikits.sparse.cholmod.cholesky(m.tocsc(), mode="simplicial")
         print(
             "the sparsity ratio between Chol(M) and the  matrix M  is +"
-            + str(LU.L().nnz / float(M.nnz))
+            + str(lu.L().nnz / float(m.nnz))
         )
 
         print(
-            "connected components M" + str(scipy.sparse.csgraph.connected_components(M))
+            "connected components M" + str(scipy.sparse.csgraph.connected_components(m))
         )
 
         # scipy.sparse.csgraph.connected_components(subA.T*subA)
-        FactorConnections = subA * subA.T
+        factor_connections = sub_a * sub_a.T
         print(
             "connected components F"
-            + str(scipy.sparse.csgraph.connected_components(FactorConnections))
+            + str(scipy.sparse.csgraph.connected_components(factor_connections))
         )
-        spanning_tree = scipy.sparse.csgraph.minimum_spanning_tree(FactorConnections)
+        spanning_tree = scipy.sparse.csgraph.minimum_spanning_tree(factor_connections)
         print(spanning_tree)
 
-    for idblock, mergegroupe in enumerate(mergegroupes):
+    for id_block, merge_group in enumerate(merge_groups):
         # find the indices of the variables used by the block
-        idRows = np.hstack(
-            [np.arange(Aeq.blocks[g][0], Aeq.blocks[g][1] + 1) for g in mergegroupe]
+        id_rows = np.hstack(
+            [np.arange(a_eq.blocks[g][0], a_eq.blocks[g][1] + 1) for g in merge_group]
         )
-        subA = Aeq[idRows, :]
-        t = np.array(np.abs(subA).sum(axis=0)).ravel()
+        sub_a = a_eq[id_rows, :]
+        t = np.array(np.abs(sub_a).sum(axis=0)).ravel()
         ids = np.nonzero(t)[0]
         list_block_ids.append(ids)
         # increment th number of time each variable is copied
         nb_used[ids] += 1
-        subA2 = subA[:, ids]
+        sub_a2 = sub_a[:, ids]
         # precompute the LU factorizartion of the matrix that needs to be inverted for the block
-        M = scipy.sparse.vstack(
+        m = scipy.sparse.vstack(
             (
                 scipy.sparse.hstack(
                     (
-                        gamma_ineq * scipy.sparse.eye(subA2.shape[1], subA2.shape[1]),
-                        subA2.T,
+                        gamma_ineq * scipy.sparse.eye(sub_a2.shape[1], sub_a2.shape[1]),
+                        sub_a2.T,
                     )
                 ),
                 scipy.sparse.hstack(
-                    (subA2, scipy.sparse.csc_matrix((subA2.shape[0], subA2.shape[0])))
+                    (sub_a2, scipy.sparse.csc_matrix((sub_a2.shape[0], sub_a2.shape[0])))
                 ),
             )
         ).tocsr()
-        if usesparseLU:
+        if usesparse_lu:
 
             ch.tic()
-            LU = scipy.sparse.linalg.splu(M.tocsc())
+            lu = scipy.sparse.linalg.splu(m.tocsc())
             print(ch.toc())
         else:
             ch.tic()
-            LU = scikits.sparse.cholmod.cholesky(M.tocsc(), mode="simplicial")
+            lu = scikits.sparse.cholmod.cholesky(m.tocsc(), mode="simplicial")
             # may fail when M is not positive definite , which sometimes occurs
             factorization_duration = ch.toc()
             # A=     scikits.sparse.cholmod.analyze(M.tocsc(),mode='simplicial')
@@ -232,9 +232,9 @@ def lp_admm_block_decomposition(
 
             print(
                 "the sparsity ratio between Chol(M) and the  matrix M for block"
-                + str(idblock)
+                + str(id_block)
                 + " is +"
-                + str(LU.L().nnz / float(M.nnz))
+                + str(lu.L().nnz / float(m.nnz))
                 + " took "
                 + str(factorization_duration)
                 + "seconds to factorize"
@@ -245,58 +245,58 @@ def lp_admm_block_decomposition(
             # LU = umfpack.factorize(M2, strategy="UMFPACK_STRATEGY_SYMMETRIC")
             # print "nnz per line :"+str(LU.nnz/float(M2.shape[0]) )
 
-        xv.append(np.empty(M.shape[1], dtype=float))
-        luMs.append(LU)
-        beqs.append(beq[idRows])
+        xv.append(np.empty(m.shape[1], dtype=float))
+        lu_m_s.append(lu)
+        beqs.append(beq[id_rows])
         pass
 
-    def L(x, xp, lambda_ineq):
-        E = c.dot(xp)
-        for idblock in range(nb_blocks):
-            diff = x[idblock] - xp[list_block_ids[idblock]]
-            E += 0.5 * gamma_ineq * np.sum((diff) ** 2) + lambda_ineq[idblock].dot(diff)
-        return E
+    def energy(x, xp, lambda_ineq):
+        en = c.dot(xp)
+        for id_block in range(nb_blocks):
+            diff = x[id_block] - xp[list_block_ids[id_block]]
+            en += 0.5 * gamma_ineq * np.sum((diff) ** 2) + lambda_ineq[id_block].dot(diff)
+        return en
 
     i = 0
 
     x = [x0[list_block_ids[i]] for i in range(nb_blocks)]
     lambda_ineq = [np.zeros(list_block_ids[i].shape) for i in range(nb_blocks)]
 
-    check_decrease(tol=1e-10)
+    CheckDecrease(tol=1e-10)
 
-    # relaxation paramter should be in [0,2] , 1.95 seems to be often a good choice
+    # relaxation parameter should be in [0,2] , 1.95 seems to be often a good choice
     alpha = 1.95
 
     while i <= nb_iter:
         # solve the penalized problems with respect to each copy x
         # print 'iter'+str(i)+' '+str(L(x, xp,lambda_ineq))
         # check.set_value(L(x, xp,lambda_ineq))
-        for idblock in range(nb_blocks):
+        for id_block in range(nb_blocks):
             y = np.hstack(
                 (
-                    gamma_ineq * xp[list_block_ids[idblock]] - lambda_ineq[idblock],
-                    beqs[idblock],
+                    gamma_ineq * xp[list_block_ids[id_block]] - lambda_ineq[id_block],
+                    beqs[id_block],
                 )
             )
-            if usesparseLU:
-                xv[idblock] = luMs[idblock].solve(y)
+            if usesparse_lu:
+                xv[id_block] = lu_m_s[id_block].solve(y)
             else:
-                xv[idblock] = luMs[idblock].solve_A(y)
+                xv[id_block] = lu_m_s[id_block].solve_A(y)
 
-                # luMs[idblock].solve(y,xv[idblock])
-            x[idblock] = (
-                alpha * xv[idblock][: x[idblock].shape[0]]
-                + (1 - alpha) * xp[list_block_ids[idblock]]
+                # luMs[id_block].solve(y,xv[id_block])
+            x[id_block] = (
+                alpha * xv[id_block][: x[id_block].shape[0]]
+                + (1 - alpha) * xp[list_block_ids[id_block]]
             )
 
             # check.add_value(L(x, xp,lambda_ineq))
         # print 'iter'+str(i)+' '+str(L(x, xp,lambda_ineq))
         # solve the penalized problem with respect to xp
-        # c-sum_idblock  gamma_ineq*(x_[idblock]-xp[list_block_ids[idblock]])-lambda_ineq[idblock]=0
+        # c-sum_idblock  gamma_ineq*(x_[id_block]-xp[list_block_ids[id_block]])-lambda_ineq[id_block]=0
         xp[nb_used > 0] = 0
-        for idblock in range(nb_blocks):
-            xp[list_block_ids[idblock]] += (
-                x[idblock] + lambda_ineq[idblock] / gamma_ineq
+        for id_block in range(nb_blocks):
+            xp[list_block_ids[id_block]] += (
+                x[id_block] + lambda_ineq[id_block] / gamma_ineq
             )  # change formula here
 
         xp = xp - c / gamma_ineq
@@ -305,13 +305,13 @@ def lp_admm_block_decomposition(
         xp = np.minimum(xp, ub)
         # check.add(L(x, xp,lambda_ineq))
 
-        for idblock in range(nb_blocks):
-            d = gamma_ineq * (x[idblock] - xp[list_block_ids[idblock]])
-            # angle=np.sum(dpred[idblock]*d)/(np.sqrt(np.sum(dpred[idblock]**2))*+np.sqrt(np.sum(d**2)))
+        for id_block in range(nb_blocks):
+            d = gamma_ineq * (x[id_block] - xp[list_block_ids[id_block]])
+            # angle=np.sum(dpred[id_block]*d)/(np.sqrt(np.sum(dpred[id_block]**2))*+np.sqrt(np.sum(d**2)))
             # print angle
-            # dpred[idblock]=d.copy()
-            lambda_ineq[idblock] = lambda_ineq[idblock] + d
-            # lambda_ineq[idblock]=lambda_ineq[idblock]+(1+max(0,angle))*d # trying some naive heuristic speedup but not working :(
+            # dpred[id_block]=d.copy()
+            lambda_ineq[id_block] = lambda_ineq[id_block] + d
+            # lambda_ineq[id_block]=lambda_ineq[id_block]+(1+max(0,angle))*d # trying some naive heuristic speedup but not working :(
 
         if i % nb_iter_plot == 0:
 
@@ -319,7 +319,7 @@ def lp_admm_block_decomposition(
             if elapsed > max_time:
                 break
 
-            energy1 = L(x, xp, lambda_ineq)
+            energy1 = energy(x, xp, lambda_ineq)
             energy2 = energy1
 
             max_violated_equality = 0
@@ -342,7 +342,7 @@ def lp_admm_block_decomposition(
             if callback_func is not None:
                 callback_func(
                     i,
-                    (R * xp)[0:n],
+                    (r * xp)[0:n],
                     energy1,
                     energy2,
                     elapsed,
@@ -351,4 +351,4 @@ def lp_admm_block_decomposition(
                 )
         i += 1
 
-    return (R * xp)[0:n]
+    return (r * xp)[0:n]

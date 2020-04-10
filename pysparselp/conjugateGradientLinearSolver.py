@@ -27,22 +27,22 @@
 import numpy as np
 
 
-def conjgrad(A, b, x0, maxiter=100, tol=1e-10):
-    """Solve Ax=b using the conjugate gradient method.
+def conjgrad(a, b, x0, maxiter=100, tol=1e-10):
+    """Solve ax=b using the conjugate gradient method.
 
     converted from the matlab code from wikipedia.
     wikipedia http://en.wikipedia.org/wiki/Conjugate_gradient_method
     """
     x = x0.copy()
-    r = b - A * x
+    r = b - a * x
     p = r
     rsold = r.dot(r)
 
     for _niter in range(maxiter):
-        Ap = A * p
-        alpha = rsold / (p.dot(Ap))
+        a_p = a * p
+        alpha = rsold / (p.dot(a_p))
         x = x + alpha * p
-        r = r - alpha * Ap
+        r = r - alpha * a_p
         rsnew = r.dot(r)
         if np.sqrt(rsnew) < tol:
             break

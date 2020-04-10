@@ -11,25 +11,25 @@ from numpy.linalg import norm
 from scipy import sparse
 from scipy.sparse.linalg import spsolve
 
-from .xorshift import xorshift
+from .xorshift import XorShift
 
 
-def initial_point(A, b, c):
+def initial_point(a, b, c):
 
-    n = A.shape[1]
+    n = a.shape[1]
     e = np.ones((n,))
 
     # solution for min norm(s) s.t. A'*y + s = c
     # y =sparse.linalg.cg(A*A.T, A*c,tol=1e-7)[0]
-    y = spsolve(A * A.T, A * c)
+    y = spsolve(a * a.T, a * c)
 
     # y2 =sparse.linalg.cgs(A*A.T, A*c)[0]
     # y2 =sparse.linalg.gmres(A*A.T, A*c,)[0]
 
-    s = c - A.T * y
+    s = c - a.T * y
 
     # solution for min norm(x) s.t. Ax = b
-    x = A.T * sparse.linalg.spsolve(A * A.T, b)
+    x = a.T * sparse.linalg.spsolve(a * a.T, b)
     # x = A.T*sparse.linalg.cg(A*A.T, b,tol=1e-7)[0]
 
     # delta_x and delta_s
@@ -48,81 +48,81 @@ def initial_point(A, b, c):
     return x0, y0, s0
 
 
-def newton_direction(Rb, Rc, Rxs, A, m, n, x, s, lu, errorCheck=0):
+def newton_direction(r_b, r_c, r_x_s, a, m, n, x, s, lu, error_check=0):
 
-    rhs = np.hstack((-Rb, -Rc + Rxs / x))
-    D_2 = -np.minimum(1e16, s / x)
-    B = sparse.vstack(
+    rhs = np.hstack((-r_b, -r_c + r_x_s / x))
+    d_2 = -np.minimum(1e16, s / x)
+    b = sparse.vstack(
         (
-            sparse.hstack((sparse.coo_matrix((m, m)), A)),
-            sparse.hstack((A.T, sparse.diags([D_2], [0]))),
+            sparse.hstack((sparse.coo_matrix((m, m)), a)),
+            sparse.hstack((a.T, sparse.diags([d_2], [0]))),
         )
     )
 
     # ldl' factorization
     # if L and D are not provided, we calc new factorization; otherwise,
     # reuse them
-    useLu = True
-    if useLu:
+    use_lu = True
+    if use_lu:
         if lu is None:
-            lu = sparse.linalg.splu(B.tocsc())
+            lu = sparse.linalg.splu(b.tocsc())
             # wikipedia says it uses Mehrotra cholesky but the matrix i'm getting is not definite positive
             # scikits.sparse.cholmod.cholesky fails without a warning
 
         sol = lu.solve(rhs)
     else:
-        sol = sparse.linalg.cg(B, rhs, tol=1e-5)[0]
+        sol = sparse.linalg.cg(b, rhs, tol=1e-5)[0]
         # assert(np.max(np.abs(B*sol-rhs))<1e-5)
 
     dy = sol[:m]
     dx = sol[m : m + n]
-    ds = -(Rxs + s * dx) / x
+    ds = -(r_x_s + s * dx) / x
 
-    if errorCheck == 1:
+    if error_check == 1:
         print(
             "error = %6.2e"
             % (
-                norm(A.T * dy + ds + Rc)
-                + norm(A * dx + Rb)
-                + norm(s * dx + x * ds + Rxs)
+                norm(a.T * dy + ds + r_c)
+                + norm(a * dx + r_b)
+                + norm(s * dx + x * ds + r_x_s)
             ),
         )
-        print("\t + err_d = %6.2e" % (norm(A.T * dy + ds + Rc)),)
-        print("\t + err_p = %6.2e" % (norm(A * dx + Rb)),)
-        print("\t + err_gap = %6.2e\n" % (norm(s * dx + x * ds + Rxs)),)
+        print("\t + err_d = %6.2e" % (norm(a.T * dy + ds + r_c)),)
+        print("\t + err_p = %6.2e" % (norm(a * dx + r_b)),)
+        print("\t + err_gap = %6.2e\n" % (norm(s * dx + x * ds + r_x_s)),)
 
     return dx, dy, ds, lu
 
 
-def step_size(x, s, Dx, Ds, eta=0.9995):
-    alphax = -1 / min(min(Dx / x), -1)
-    alphax = min(1, eta * alphax)
-    alphas = -1 / min(min(Ds / s), -1)
-    alphas = min(1, eta * alphas)
-    return alphax, alphas
+def step_size(x, s, d_x, d_s, eta=0.9995):
+    alpha_x = -1 / min(min(d_x / x), -1)
+    alpha_x = min(1, eta * alpha_x)
+    alpha_s = -1 / min(min(d_s / s), -1)
+    alpha_s = min(1, eta * alpha_s)
+    return alpha_x, alpha_s
 
 
 def mpc_sol(
-    A,
+    a,
     b,
     c,
-    maxN=100,
+    max_iter=100,
     eps=1e-08,
     theta=0.9995,
     verbose=2,
-    errorCheck=False,
-    callBack=None,
+    error_check=False,
+    callback=None,
 ):
 
-    A = sparse.coo_matrix(A)
+    a = sparse.coo_matrix(a)
     c = np.squeeze(np.array(c))
     b = np.squeeze(np.array(b))
 
     # Initialization
 
-    m, n = A.shape
-    alphax = 0
-    alphas = 0
+    m, n = a.shape
+    alpha_x = 0
+    alpha_s = 0
 
     if verbose > 1:
         print(
@@ -130,28 +130,28 @@ def mpc_sol(
         )
 
     # Choose initial point
-    x, y, s = initial_point(A, b, c)
+    x, y, s = initial_point(a, b, c)
 
     bc = 1 + max([norm(b), norm(c)])
 
     # Start the loop
-    N = 0
+    niter_done = 0
 
-    for niter in range(maxN):
+    for niter in range(max_iter):
         # Compute residuals and update mu
-        Rb = A * x - b
-        Rc = A.T * y + s - c
-        Rxs = x * s
-        mu = np.mean(Rxs)
+        r_b = a * x - b
+        r_c = a.T * y + s - c
+        r_x_s = x * s
+        mu = np.mean(r_x_s)
 
         # Check relative decrease in residual, for purposes of convergence test
-        residual = norm(np.hstack((Rb, Rc, Rxs)) / bc)
+        residual = norm(np.hstack((r_b, r_c, r_x_s)) / bc)
 
         if verbose > 1:
-            print("%3d %9.2e %9.2e %9.4g %9.4g" % (niter, mu, residual, alphax, alphas))
+            print("%3d %9.2e %9.2e %9.4g %9.4g" % (niter, mu, residual, alpha_x, alpha_s))
 
-        if callBack is not None:
-            callBack(x, niter)
+        if callback is not None:
+            callback(x, niter)
 
         if residual < eps:
             break
@@ -160,7 +160,7 @@ def mpc_sol(
 
         # Get affine-scaling direction
         dx_aff, dy_aff, ds_aff, lu = newton_direction(
-            Rb, Rc, Rxs, A, m, n, x, s, None, errorCheck
+            r_b, r_c, r_x_s, a, m, n, x, s, None, error_check
         )
 
         # Get affine-scaling step length
@@ -173,11 +173,11 @@ def mpc_sol(
         # ----- Corrector step -----
 
         # Set up right hand sides
-        Rxs = Rxs + dx_aff * ds_aff - sigma * mu * np.ones((n))
+        r_x_s = r_x_s + dx_aff * ds_aff - sigma * mu * np.ones((n))
 
         # Get corrector's direction
         dx_cc, dy_cc, ds_cc, lu = newton_direction(
-            Rb, Rc, Rxs, A, m, n, x, s, lu, errorCheck
+            r_b, r_c, r_x_s, a, m, n, x, s, lu, error_check
         )
 
         # Compute search direction and step
@@ -185,22 +185,22 @@ def mpc_sol(
         dy = dy_aff + dy_cc
         ds = ds_aff + ds_cc
 
-        alphax, alphas = step_size(x, s, dx, ds, theta)
+        alpha_x, alpha_s = step_size(x, s, dx, ds, theta)
 
         # Update iterates
-        x = x + alphax * dx
-        y = y + alphas * dy
-        s = s + alphas * ds
+        x = x + alpha_x * dx
+        y = y + alpha_s * dy
+        s = s + alpha_s * ds
 
-        if niter == maxN and verbose > 1:
-            print("maxN reached!\n")
-        N = niter
+        if niter == max_iter and verbose > 1:
+            print("max_iter reached!\n")
+        niter_done = niter
 
     if verbose > 0:
         print("\nDONE! [m,n] = [%d, %d], N = %d\n" % (m, n, niter))
 
     f = c.T.dot(x)
-    return f, x, y, s, N
+    return f, x, y, s, niter_done
 
 
 if __name__ == "__main__":
@@ -208,9 +208,9 @@ if __name__ == "__main__":
     m = 100
     n = 120
 
-    r = xorshift()
-    A = np.matrix(r.randn(m, n))
-    b = A * r.rand(n, 1)
-    c = A.T * r.rand(m, 1)
+    r = XorShift()
+    a = np.matrix(r.randn(m, n))
+    b = a * r.rand(n, 1)
+    c = a.T * r.rand(m, 1)
     c = c + r.rand(n, 1)
-    f, x, y, s, N = mpc_sol(A, b, c)
+    f, x, y, s, N = mpc_sol(a, b, c)

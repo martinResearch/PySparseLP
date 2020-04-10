@@ -38,7 +38,7 @@ from .tools import convert_to_standard_form_with_bounds
 
 
 def chambolle_pock_ppdas(
-    LP,
+    lp,
     x0=None,
     alpha=1,
     theta=1,
@@ -57,31 +57,31 @@ def chambolle_pock_ppdas(
     # (we could transform genric LPs into the equality form , but i am note sure the convergence would be the same)
     # minimizes c.T*x
     # such that
-    # Aeq*x=beq
-    # b_lower<= Aineq*x<= b_upper               assert(scipy.sparse.issparse(Aineq))
+    # a_eq*x=beq
+    # b_lower<= a_ineq*x<= b_upper               assert(scipy.sparse.issparse(a_ineq))
 
     # lb<=x<=ub
     # callback_func=None
 
-    LP2 = copy.deepcopy(LP)
-    LP2.convert_to_one_sided_inequality_system()
+    lp2 = copy.deepcopy(lp)
+    lp2.convert_to_one_sided_inequality_system()
 
-    LP2.upperbounds = np.minimum(10000, LP2.upperbounds)
-    LP2.lowerbounds = np.maximum(-10000, LP2.lowerbounds)
+    lp2.upper_bounds = np.minimum(10000, lp2.upper_bounds)
+    lp2.lower_bounds = np.maximum(-10000, lp2.lower_bounds)
 
-    c = LP2.costsvector
-    Aeq = LP2.Aequalities
-    if Aeq.shape[0] == 0:
-        Aeq = None
+    c = lp2.costsvector
+    a_eq = lp2.a_equalities
+    if a_eq.shape[0] == 0:
+        a_eq = None
         y_eq = None
-    beq = LP2.Bequalities
-    Aineq = LP2.Ainequalities
-    b_lower = LP2.B_lower
-    b_upper = LP2.B_upper
-    bineq = b_upper
-    lb = LP2.lowerbounds
-    ub = LP2.upperbounds
-    # c,Aeq,beq,Aineq,b_lower,b_upper,lb,ub
+    beq = lp2.b_equalities
+    a_ineq = lp2.a_inequalities
+    b_lower = lp2.b_lower
+    b_upper = lp2.b_upper
+    b_ineq = b_upper
+    lb = lp2.lower_bounds
+    ub = lp2.upper_bounds
+    # c,a_eq,beq,a_ineq,b_lower,b_upper,lb,ub
     assert b_lower is None
     assert lb.size == c.size
     assert ub.size == c.size
@@ -100,10 +100,10 @@ def chambolle_pock_ppdas(
         with open("LP_problem2.pkl", "wb") as f:
             d = {
                 "c": c,
-                "Aeq": Aeq,
+                "a_eq": a_eq,
                 "beq": beq,
-                "Aineq": Aineq,
-                "bineq": bineq,
+                "a_ineq": a_ineq,
+                "b_ineq": b_ineq,
                 "lb": lb,
                 "ub": ub,
             }
@@ -113,78 +113,78 @@ def chambolle_pock_ppdas(
 
     n = c.size
 
-    useStandardForm = False
-    if useStandardForm:
-        c, Aeq, beq, lb, ub, x0 = convert_to_standard_form_with_bounds(
-            c, Aeq, beq, Aineq, bineq, lb, ub, x0
+    use_standard_form = False
+    if use_standard_form:
+        c, a_eq, beq, lb, ub, x0 = convert_to_standard_form_with_bounds(
+            c, a_eq, beq, a_ineq, b_ineq, lb, ub, x0
         )
-        Aineq = None
+        a_ineq = None
 
-    useColumnPreconditioning = True
-    if useColumnPreconditioning:
+    use_column_preconditioning = True
+    if use_column_preconditioning:
         # constructing the preconditioning diagonal matrices
         tmp = 0
-        if Aeq is not None:
-            print("Aeq shape=" + str(Aeq.shape))
+        if a_eq is not None:
+            print("a_eq shape=" + str(a_eq.shape))
 
-            assert scipy.sparse.issparse(Aeq)
-            assert Aeq.shape[1] == c.size
-            assert Aeq.shape[0] == beq.size
-            AeqCopy = Aeq.copy()
-            AeqCopy.data = np.abs(AeqCopy.data) ** (2 - alpha)
-            SumAeq = np.ones((1, AeqCopy.shape[0])) * AeqCopy
-            tmp = tmp + SumAeq
-            # AeqT=Aeq.T
-        if Aineq is not None:
-            print("Aineq shape=" + str(Aineq.shape))
-            assert scipy.sparse.issparse(Aineq)
-            assert Aineq.shape[1] == c.size
-            assert Aineq.shape[0] == b_upper.size
-            AineqCopy = Aineq.copy()
-            AineqCopy.data = np.abs(AineqCopy.data) ** (2 - alpha)
-            SumAineq = np.ones((1, AineqCopy.shape[0])) * AineqCopy
-            tmp = tmp + SumAineq
-            # AineqT=Aineq.T
-        if Aeq is None and Aineq is None:
+            assert scipy.sparse.issparse(a_eq)
+            assert a_eq.shape[1] == c.size
+            assert a_eq.shape[0] == beq.size
+            a_eq_copy = a_eq.copy()
+            a_eq_copy.data = np.abs(a_eq_copy.data) ** (2 - alpha)
+            sum_a_eq = np.ones((1, a_eq_copy.shape[0])) * a_eq_copy
+            tmp = tmp + sum_a_eq
+            # AeqT=a_eq.T
+        if a_ineq is not None:
+            print("a_ineq shape=" + str(a_ineq.shape))
+            assert scipy.sparse.issparse(a_ineq)
+            assert a_ineq.shape[1] == c.size
+            assert a_ineq.shape[0] == b_upper.size
+            a_ineq_copy = a_ineq.copy()
+            a_ineq_copy.data = np.abs(a_ineq_copy.data) ** (2 - alpha)
+            sum_a_ineq = np.ones((1, a_ineq_copy.shape[0])) * a_ineq_copy
+            tmp = tmp + sum_a_ineq
+            # AineqT=a_ineq.T
+        if a_eq is None and a_ineq is None:
             x = np.zeros_like(lb)
             x[c > 0] = lb[c > 0]
             x[c < 0] = ub[c < 0]
             return x
         tmp[tmp == 0] = 1
-        diagT = 1 / tmp[0, :]
-        # T = scipy.sparse.diags(diagT[None, :], [0]).tocsr()
+        diag_t = 1 / tmp[0, :]
+        # T = scipy.sparse.diags(diag_t[None, :], [0]).tocsr()
     else:
         scipy.sparse.eye(len(x))
-        diagT = np.ones(x.shape)
+        diag_t = np.ones(x.shape)
 
-    if Aeq is not None:
-        AeqCopy = Aeq.copy()
-        AeqCopy.data = np.abs(AeqCopy.data) ** (alpha)
-        SumAeq = AeqCopy * np.ones((AeqCopy.shape[1]))
-        tmp = SumAeq
+    if a_eq is not None:
+        a_eq_copy = a_eq.copy()
+        a_eq_copy.data = np.abs(a_eq_copy.data) ** (alpha)
+        sum_a_eq = a_eq_copy * np.ones((a_eq_copy.shape[1]))
+        tmp = sum_a_eq
         tmp[tmp == 0] = 1
-        diagSigma_eq = 1 / tmp
-        # Sigma_eq = scipy.sparse.diags([diagSigma_eq], [0]).tocsr()
-        y_eq = np.zeros(Aeq.shape[0])
-        del AeqCopy
-        del SumAeq
-    if Aineq is not None:
-        AineqCopy = Aineq.copy()
-        AineqCopy.data = np.abs(AineqCopy.data) ** (alpha)
-        SumAineq = AineqCopy * np.ones((AineqCopy.shape[1]))
-        tmp = SumAineq
+        diag_sigma_eq = 1 / tmp
+        # sigma_eq = scipy.sparse.diags([diag_sigma_eq], [0]).tocsr()
+        y_eq = np.zeros(a_eq.shape[0])
+        del a_eq_copy
+        del sum_a_eq
+    if a_ineq is not None:
+        a_ineq_copy = a_ineq.copy()
+        a_ineq_copy.data = np.abs(a_ineq_copy.data) ** (alpha)
+        sum_a_ineq = a_ineq_copy * np.ones((a_ineq_copy.shape[1]))
+        tmp = sum_a_ineq
         tmp[tmp == 0] = 1
-        diagSigma_ineq = 1 / tmp
-        # Sigma_ineq = scipy.sparse.diags([diagSigma_ineq], [0]).tocsr()
-        y_ineq = np.zeros(Aineq.shape[0])
-        del AineqCopy
-        del SumAineq
+        diag_sigma_ineq = 1 / tmp
+        # sigma_ineq = scipy.sparse.diags([diag_sigma_ineq], [0]).tocsr()
+        y_ineq = np.zeros(a_ineq.shape[0])
+        del a_ineq_copy
+        del sum_a_ineq
 
     # some cleaning
     del tmp
 
     # del diagSigma
-    # del diagT
+    # del diag_t
 
     # iterations
     # AeqT=AeqT.tocsc()callback_func
@@ -196,39 +196,39 @@ def chambolle_pock_ppdas(
 
     list_active_variables = np.arange(x.size)
     is_active_variable = np.ones(x.shape, dtype=np.bool)
-    if Aineq is not None:
-        is_active_inequality_constraint = np.ones(Aineq.shape[0], dtype=np.bool)
-        list_active_inequality_constraints = np.arange(Aineq.shape[0])
-    if Aeq is not None:
-        is_active_equality_constraint = np.ones(Aeq.shape[0], dtype=np.bool)
-        list_active_equality_constraints = np.arange(Aeq.shape[0])
-        AeqCSC = Aeq.tocsc()
-        AeqCSR = Aeq.tocsr()
-        r_eq = (Aeq * x) - beq
+    if a_ineq is not None:
+        is_active_inequality_constraint = np.ones(a_ineq.shape[0], dtype=np.bool)
+        list_active_inequality_constraints = np.arange(a_ineq.shape[0])
+    if a_eq is not None:
+        is_active_equality_constraint = np.ones(a_eq.shape[0], dtype=np.bool)
+        list_active_equality_constraints = np.arange(a_eq.shape[0])
+        a_eq_csc = a_eq.tocsc()
+        a_eq_csr = a_eq.tocsr()
+        r_eq = (a_eq * x) - beq
         r_eq_active = r_eq[list_active_equality_constraints]
-        subAeqCSR = AeqCSR[list_active_equality_constraints, :]
-        subAeqCSC2 = subAeqCSR.tocsc()[:, list_active_variables]
+        sub_a_eq_csr = a_eq_csr[list_active_equality_constraints, :]
+        sub_a_eq_csc2 = sub_a_eq_csr.tocsc()[:, list_active_variables]
 
-        subAeqCSR2 = subAeqCSC2.tocsr()
+        sub_a_eq_csr2 = sub_a_eq_csc2.tocsr()
     d = c.copy()
-    if Aineq is not None:
-        AineqCSC = Aineq.tocsc()
-        AineqCSR = Aineq.tocsr()
-        r_ineq = (Aineq * x) - bineq
-        # subAeqCSC=AeqCSC[list_active_equality_constraints,:]
-        # subAineqCSC=AineqCSC[list_active_inequality_constraints,:]
+    if a_ineq is not None:
+        a_ineq_csc = a_ineq.tocsc()
+        a_ineq_csr = a_ineq.tocsr()
+        r_ineq = (a_ineq * x) - b_ineq
+        # subAeqCSC=a_eq_csc[list_active_equality_constraints,:]
+        # suba_ineq_csc=a_ineq_csc[list_active_inequality_constraints,:]
         r_ineq_active = r_ineq[list_active_inequality_constraints]
-        subAineqCSR = AineqCSR[list_active_inequality_constraints, :]
-        subAineqCSC2 = subAineqCSR.tocsc()[:, list_active_variables]
-        subAineqCSR2 = subAineqCSC2.tocsr()
-        diagSigma_ineq_active = diagSigma_ineq[list_active_inequality_constraints]
+        sub_a_ineq_csr = a_ineq_csr[list_active_inequality_constraints, :]
+        sub_a_ineq_csc2 = sub_a_ineq_csr.tocsc()[:, list_active_variables]
+        sub_a_ineq_csr2 = sub_a_ineq_csc2.tocsr()
+        diag_sigma_ineq_active = diag_sigma_ineq[list_active_inequality_constraints]
         active_y_ineq = y_ineq[list_active_inequality_constraints]
 
     x_active = x[list_active_variables]
     lb_active = lb[list_active_variables]
     ub_active = ub[list_active_variables]
 
-    diagT_active = diagT[list_active_variables]
+    diag_t_active = diag_t[list_active_variables]
     d_active = d[list_active_variables]
 
     x3 = x
@@ -241,52 +241,52 @@ def chambolle_pock_ppdas(
 
         # Update he primal variables
 
-        if Aeq is not None:
+        if a_eq is not None:
             if use_vec_sparsity:
                 yeq_sparse = scipy.sparse.coo_matrix(y_eq).T
                 d = (
-                    d + (yeq_sparse * Aeq).toarray().ravel()
+                    d + (yeq_sparse * a_eq).toarray().ravel()
                 )  # faster when few constraint are activated
             else:
                 if i == 0:
-                    # d=d+y_eq*Aeq
-                    d_active = d_active + y_eq * subAeqCSR2
+                    # d=d+y_eq*a_eq
+                    d_active = d_active + y_eq * sub_a_eq_csr2
                 else:
-                    # sparse_diff_y_eq=scipy.sparse.csr_matrix((diff_active_y_eq, list_active_equality_constraints, [0,list_active_equality_constraints.size]), shape=(1,Aeq.shape[0]))
-                    # d=d+diff_active_y_eq*Aeq[list_active_equality_constraints,:]
+                    # sparse_diff_y_eq=scipy.sparse.csr_matrix((diff_active_y_eq, list_active_equality_constraints, [0,list_active_equality_constraints.size]), shape=(1,a_eq.shape[0]))
+                    # d=d+diff_active_y_eq*a_eq[list_active_equality_constraints,:]
 
-                    # increment=sparse_diff_y_eq*AeqCSR
+                    # increment=sparse_diff_y_eq*a_eq_csr
                     # d=d+increment.toarray().ravel()
                     # d[increment.indices]=d[increment.indices]+increment.data#  does numpoy exploit the fact that second term is sparse ?
-                    # d=d+diff_active_y_eq*subAeqCSR
+                    # d=d+diff_active_y_eq*sub_a_eq_csr
                     d_active = (
-                        d_active + diff_active_y_eq * subAeqCSR2
+                        d_active + diff_active_y_eq * sub_a_eq_csr2
                     )  # will be usefull when few active variables
-                # d+=y_eq*Aeq# strangley this does not work, give wrong results
+                # d+=y_eq*a_eq# strangley this does not work, give wrong results
 
-        if Aineq is not None:
+        if a_ineq is not None:
             if use_vec_sparsity:
-                yineq_sparse = scipy.sparse.coo_matrix(y_ineq).T
+                y_ineq_sparse = scipy.sparse.coo_matrix(y_ineq).T
                 d = (
-                    d + (yineq_sparse * Aineq).toarray().ravel()
+                    d + (y_ineq_sparse * a_ineq).toarray().ravel()
                 )  # faster when few constraint are activated
             else:
                 if i == 0:
-                    # d=d+y_ineq*Aineq
-                    d_active = d_active + y_ineq * subAineqCSR2
+                    # d=d+y_ineq*a_ineq
+                    d_active = d_active + y_ineq * sub_a_ineq_csr2
                 else:
 
-                    # d=d+diff_active_y_ineq*Aineq[list_active_inequality_constraints,:]# does numpoy exploit the fact that second term is sparse ?
-                    # sparse_diff_y_ineq=scipy.sparse.csr_matrix((diff_active_y_ineq, list_active_inequality_constraints, [0,list_active_inequality_constraints.size]), shape=(1,Aineq.shape[0]))
-                    # increment=sparse_diff_y_ineq*AineqCSR
+                    # d=d+diff_active_y_ineq*a_ineq[list_active_inequality_constraints,:]# does numpoy exploit the fact that second term is sparse ?
+                    # sparse_diff_y_ineq=scipy.sparse.csr_matrix((diff_active_y_ineq, list_active_inequality_constraints, [0,list_active_inequality_constraints.size]), shape=(1,a_ineq.shape[0]))
+                    # increment=sparse_diff_y_ineq*a_ineq_csr
                     # d=d+increment.toarray().ravel()
                     # d[increment.indices]=d[increment.indices]+increment.data
-                    # d=d+diff_active_y_ineq*subAineqCSR
-                    d_active = d_active + diff_active_y_ineq * subAineqCSR2
-                # d+=y_ineq*Aineq
+                    # d=d+diff_active_y_ineq*sub_a_ineq_csr
+                    d_active = d_active + diff_active_y_ineq * sub_a_ineq_csr2
+                # d+=y_ineq*a_ineq
 
         # update list active variables
-        # ideally find largest values in primal steps diagT*d, should ne do that at each step, or have a
+        # ideally find largest values in primal steps diag_t*d, should ne do that at each step, or have a
         # structure that allows to maintaint a list of larges values
         if True and i > 0 and i % frequency_update_active_set == 0:
             x[list_active_variables] = x_active
@@ -294,36 +294,36 @@ def chambolle_pock_ppdas(
             y_ineq[list_active_inequality_constraints] = active_y_ineq
             # update d for the variables that where inactive
 
-            d = c + y_ineq * AineqCSR
-            if Aeq is not None:
-                d += y_eq * AeqCSR
+            d = c + y_ineq * a_ineq_csr
+            if a_eq is not None:
+                d += y_eq * a_eq_csr
 
-            # tmp=np.minimum(x-lb,np.maximum(diagT*d,0))+np.minimum(ub-x,np.maximum(-diagT*d,0))
+            # tmp=np.minimum(x-lb,np.maximum(diag_t*d,0))+np.minimum(ub-x,np.maximum(-diag_t*d,0))
 
             if True:
-                tmp = np.abs(diagT * d)
+                tmp = np.abs(diag_t * d)
                 is_active_variable = tmp > 1e-6
-                is_active_variable[(diagT * d > 1e-3) & (x - lb == 0)] = False
-                is_active_variable[(diagT * d < -1e-3) & (ub - x == 0)] = False
+                is_active_variable[(diag_t * d > 1e-3) & (x - lb == 0)] = False
+                is_active_variable[(diag_t * d < -1e-3) & (ub - x == 0)] = False
                 (list_active_variables,) = np.nonzero(
                     is_active_variable
                 )  # garde les 10 % le plus larges
             d_active = d[list_active_variables]
 
             # update list active constraints
-            # ideally find largest values in duals steps diagSigma_ineq*r_ineq
-            if Aeq is not None:
-                r_eq = (AeqCSC * x3) - beq
-            r_ineq = (AineqCSC * x3) - bineq
-            # tmp=np.abs(diagSigma_ineq*r_ineq)*((y_ineq>0) | (diagSigma_ineq*r_ineq>0 ))
+            # ideally find largest values in duals steps diag_sigma_ineq*r_ineq
+            if a_eq is not None:
+                r_eq = (a_eq_csc * x3) - beq
+            r_ineq = (a_ineq_csc * x3) - b_ineq
+            # tmp=np.abs(diag_sigma_ineq*r_ineq)*((y_ineq>0) | (diag_sigma_ineq*r_ineq>0 ))
             # list_active_inequality_constraints,=np.nonzero(tmp>np.percentile(tmp, 10))
             is_active_inequality_constraint = (r_ineq > -0.2) | (y_ineq > 0)
             (list_active_inequality_constraints,) = np.nonzero(
                 is_active_inequality_constraint
             )
 
-            if Aeq is not None:
-                tmp = np.abs(diagSigma_eq * r_eq)
+            if a_eq is not None:
+                tmp = np.abs(diag_sigma_eq * r_eq)
                 is_active_equality_constraint = tmp > 1e-6
                 (list_active_equality_constraints,) = np.nonzero(
                     is_active_equality_constraint
@@ -336,21 +336,21 @@ def chambolle_pock_ppdas(
                 nb_active_equality_constraints = 0
                 percent_active_equality_constraint = 0
 
-            # subAeqCSC=AeqCSC[list_active_equality_constraints,:]
-            # subAeqCSC=AeqCSR[list_active_equality_constraints,:].tocsc()
-            if Aeq is not None:
+            # subAeqCSC=a_eq_csc[list_active_equality_constraints,:]
+            # subAeqCSC=a_eq_csr[list_active_equality_constraints,:].tocsc()
+            if a_eq is not None:
                 r_eq_active = r_eq[list_active_equality_constraints]
-            # subAineqCSC=AineqCSC[list_active_inequality_constraints,:]
-            # subAineqCSC=AineqCSR[list_active_inequality_constraints,:].tocsc()
-            if Aeq is not None:
-                subAeqCSR = AeqCSR[list_active_equality_constraints, :]
-                subAeqCSC2 = subAeqCSR.tocsc()[:, list_active_variables]
-                subAeqCSR2 = subAeqCSC2.tocsr()
-            subAineqCSR = AineqCSR[list_active_inequality_constraints, :]
+            # suba_ineq_csc=a_ineq_csc[list_active_inequality_constraints,:]
+            # suba_ineq_csc=a_ineq_csr[list_active_inequality_constraints,:].tocsc()
+            if a_eq is not None:
+                sub_a_eq_csr = a_eq_csr[list_active_equality_constraints, :]
+                sub_a_eq_csc2 = sub_a_eq_csr.tocsc()[:, list_active_variables]
+                sub_a_eq_csr2 = sub_a_eq_csc2.tocsr()
+            sub_a_ineq_csr = a_ineq_csr[list_active_inequality_constraints, :]
 
-            subAineqCSC2 = subAineqCSR.tocsc()[:, list_active_variables]
+            sub_a_ineq_csc2 = sub_a_ineq_csr.tocsc()[:, list_active_variables]
 
-            subAineqCSR2 = subAineqCSC2.tocsr()
+            sub_a_ineq_csr2 = sub_a_ineq_csc2.tocsr()
             r_ineq_active = r_ineq[list_active_inequality_constraints]
             if i % nb_iter_plot == 0:
                 print(
@@ -374,12 +374,12 @@ def chambolle_pock_ppdas(
             x3_active = x3[list_active_variables]
             lb_active = lb[list_active_variables]
             ub_active = ub[list_active_variables]
-            diagT_active = diagT[list_active_variables]
-            diagSigma_ineq_active = diagSigma_ineq[list_active_inequality_constraints]
+            diag_t_active = diag_t[list_active_variables]
+            diag_sigma_ineq_active = diag_sigma_ineq[list_active_inequality_constraints]
             active_y_ineq = y_ineq[list_active_inequality_constraints]
         # x2=x-T*d
 
-        new_active_x = x_active - diagT_active * d_active
+        new_active_x = x_active - diag_t_active * d_active
         # np.maximum(x2,lb,x2)
         # np.minimum(x2,ub,x2)
 
@@ -395,43 +395,43 @@ def chambolle_pock_ppdas(
 
         if use_vec_sparsity:
             x3_sparse = scipy.sparse.coo_matrix(x3).T
-        if Aeq is not None:
+        if a_eq is not None:
             if use_vec_sparsity:
-                r_eq = (Aeq * x3_sparse).toarray().ravel() - beq
+                r_eq = (a_eq * x3_sparse).toarray().ravel() - beq
             else:
 
-                # r_eq=r_eq+(Aeq[:,list_active_variables]*diff_active_x)# can use sparisity in diff_x3
-                # r_eq=r_eq+Aeq*sparse_diff_x
+                # r_eq=r_eq+(a_eq[:,list_active_variables]*diff_active_x)# can use sparisity in diff_x3
+                # r_eq=r_eq+a_eq*sparse_diff_x
                 # increment=subAeqCSC*sparse_diff_x # to do : update only the active constraints residuals
                 # r_eq_active[increment.indices]=r_eq_active[increment.indices]+increment.data
 
-                r_eq_active += subAeqCSC2 * diff_active_x3
+                r_eq_active += sub_a_eq_csc2 * diff_active_x3
                 # r_eq=r_eq+increment.toarray().ravel()
 
-        if Aineq is not None:
+        if a_ineq is not None:
             if use_vec_sparsity:
-                r_ineq = (Aineq * x3_sparse).toarray().ravel() - bineq
+                r_ineq = (a_ineq * x3_sparse).toarray().ravel() - b_ineq
             else:
 
-                # r_ineq=r_ineq+(Aineq[:,list_active_variables]*diff_active_x)
-                # r_ineq=r_ineq+Aineq*sparse_diff_x
-                # increment=subAineqCSC*sparse_diff_x# to do : update only the active constraints residuals
-                # increment=subAineqCSC2*diff_active_x
+                # r_ineq=r_ineq+(a_ineq[:,list_active_variables]*diff_active_x)
+                # r_ineq=r_ineq+a_ineq*sparse_diff_x
+                # increment=suba_ineq_csc*sparse_diff_x# to do : update only the active constraints residuals
+                # increment=sub_a_ineq_csc2*diff_active_x
                 # r_ineq=r_ineq+increment.toarray().ravel()
                 # r_ineq_active[increment.indices]=r_ineq_active[increment.indices]+increment.data
-                r_ineq_active += subAineqCSC2 * diff_active_x3
+                r_ineq_active += sub_a_ineq_csc2 * diff_active_x3
 
         if i > 0 and i % nb_iter_plot == 0:
             x[list_active_variables] = x_active
-            if Aineq is not None:
+            if a_ineq is not None:
                 y_ineq[list_active_inequality_constraints] = active_y_ineq
-                r_ineq = (AineqCSC * x) - bineq
-            if Aeq is not None:
-                r_eq = (AeqCSC * x) - beq
+                r_ineq = (a_ineq_csc * x) - b_ineq
+            if a_eq is not None:
+                r_eq = (a_eq_csc * x) - beq
 
             prev_elapsed = elapsed
             elapsed = time.clock() - start
-            mean_iter_priod = (elapsed - prev_elapsed) / 10
+            mean_iter_period = (elapsed - prev_elapsed) / 10
             if (max_time is not None) and elapsed > max_time:
                 break
             energy1 = c.dot(x)
@@ -442,10 +442,10 @@ def chambolle_pock_ppdas(
             x4 = np.zeros(lb.size)
 
             # c_bar=LP2.costsvector.copy()
-            # if not LP2.Aequalities	 is None and LP2.Aequalities.shape[0]>0:
-            # c_bar+=y_eq*LP2.Aequalities
-            # if not LP2.Ainequalities is None:
-            # c_bar+=y_ineq*LP2.Ainequalities
+            # if not LP2.a_equalities	 is None and LP2.a_equalities.shape[0]>0:
+            # c_bar+=y_eq*LP2.a_equalities
+            # if not LP2.a_inequalities is None:
+            # c_bar+=y_ineq*LP2.a_inequalities
 
             d[list_active_variables] = d_active
             c_bar = d.copy()
@@ -457,26 +457,26 @@ def chambolle_pock_ppdas(
 
             max_violated_equality = 0
             max_violated_inequality = 0
-            if Aeq is not None:
-                energy1 += y_eq.T.dot(Aeq * x - beq)
+            if a_eq is not None:
+                energy1 += y_eq.T.dot(a_eq * x - beq)
                 energy2 -= y_eq.dot(beq)
                 max_violated_equality = np.max(np.abs(r_eq))
-            if Aineq is not None:
-                energy1 += y_ineq.T.dot(Aineq * x - bineq)
-                energy2 -= y_ineq.dot(bineq)
+            if a_ineq is not None:
+                energy1 += y_ineq.T.dot(a_ineq * x - b_ineq)
+                energy2 -= y_ineq.dot(b_ineq)
                 max_violated_inequality = np.max(r_ineq)
 
-            xrounded = np.round(x)
-            # xrounded=greedy_round(x,c,Aeq,beq,Aineq,np.full(bineq.shape,-np.inf),bineq,lb.copy(),ub.copy(),callback_func=callback_func)
+            x_rounded = np.round(x)
+            # x_rounded=greedy_round(x,c,a_eq,beq,a_ineq,np.full(b_ineq.shape,-np.inf),b_ineq,lb.copy(),ub.copy(),callback_func=callback_func)
 
-            energy_rounded = c.dot(xrounded)
-            if Aeq is not None:
-                nb_violated_equality_rounded = np.sum(np.abs(Aeq * xrounded - beq))
+            energy_rounded = c.dot(x_rounded)
+            if a_eq is not None:
+                nb_violated_equality_rounded = np.sum(np.abs(a_eq * x_rounded - beq))
             else:
                 nb_violated_equality_rounded = 0
-            if Aineq is not None:
+            if a_ineq is not None:
                 nb_violated_inequality_rounded = np.sum(
-                    np.maximum(Aineq * xrounded - bineq, 0)
+                    np.maximum(a_ineq * x_rounded - b_ineq, 0)
                 )
             else:
                 nb_violated_inequality_rounded = 0
@@ -491,7 +491,7 @@ def chambolle_pock_ppdas(
                 )
                 if energy_rounded < best_integer_solution_energy:
                     best_integer_solution_energy = energy_rounded
-                    best_integer_solution = xrounded
+                    best_integer_solution = x_rounded
 
             print(
                 "iter"
@@ -500,7 +500,7 @@ def chambolle_pock_ppdas(
                 + str(energy1)
                 + " energy2="
                 + str(energy2)
-                + " elaspsed "
+                + " elapsed "
                 + str(elapsed)
                 + " second"
                 + " max violated inequality:"
@@ -508,7 +508,7 @@ def chambolle_pock_ppdas(
                 + " max violated equality:"
                 + str(max_violated_equality)
                 + "mean_iter_period="
-                + str(mean_iter_priod)
+                + str(mean_iter_period)
                 + "rounded : %f ineq %f eq"
                 % (nb_violated_inequality_rounded, nb_violated_equality_rounded)
             )
@@ -530,27 +530,27 @@ def chambolle_pock_ppdas(
 
         # Update the dual variables
 
-        if Aeq is not None:
+        if a_eq is not None:
             diff_active_y_eq = (
-                diagSigma_eq[list_active_equality_constraints] * r_eq_active
+                diag_sigma_eq[list_active_equality_constraints] * r_eq_active
             )
             y_eq[list_active_equality_constraints] = (
                 y_eq[list_active_equality_constraints] + diff_active_y_eq
             )
 
-            # y_eq=y_eq+diagSigma_eq*r_eq
-            # y_eq+=diagSigma_eq*r_eq
+            # y_eq=y_eq+diag_sigma_eq*r_eq
+            # y_eq+=diag_sigma_eq*r_eq
 
-        if Aineq is not None:
+        if a_ineq is not None:
             # active_y_ineq=y_ineq[list_active_inequality_constraints]
-            new_active_y_ineq = active_y_ineq + diagSigma_ineq_active * r_ineq_active
+            new_active_y_ineq = active_y_ineq + diag_sigma_ineq_active * r_ineq_active
             new_active_y_ineq = np.maximum(new_active_y_ineq, 0)
             diff_active_y_ineq = new_active_y_ineq - active_y_ineq
             # np.mean(diff_active_y_ineq!=0) often give me 0.05 on the facade , can i use that for more speedups ?
             active_y_ineq = new_active_y_ineq
             # y_ineq[list_active_inequality_constraints]=active_y_ineq
 
-            # y_ineq+=diagSigma_ineq*r_ineq
+            # y_ineq+=diag_sigma_ineq*r_ineq
             # np.maximum(y_ineq, 0,y_ineq)
 
     return x[:n], best_integer_solution

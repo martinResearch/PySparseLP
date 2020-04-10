@@ -27,4 +27,4 @@ def test_example3(update_results=False):
 
 
 if __name__ == "__main__":
-    test_example3()
+    test_example3(update_results=False)

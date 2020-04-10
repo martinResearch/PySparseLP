@@ -35,21 +35,21 @@ from .MPSparser import mps_parser
 def get_problem(pbname):
     thisfilepath = os.path.dirname(os.path.abspath(__file__))
 
-    filenameLP = os.path.join(thisfilepath, "data", "netlib", pbname.upper() + ".SIF")
-    filenameSol = os.path.join(thisfilepath, "data", "perPlex", pbname.lower() + ".txt")
+    filename_lp = os.path.join(thisfilepath, "data", "netlib", pbname.upper() + ".SIF")
+    filename_sol = os.path.join(thisfilepath, "data", "perPlex", pbname.lower() + ".txt")
 
-    if not os.path.isfile(filenameLP):
+    if not os.path.isfile(filename_lp):
         urllib.request.urlretrieve(
             "ftp://ftp.numerical.rl.ac.uk/pub/cuter/netlib/%s.SIF" % pbname.upper(),
-            filenameLP,
+            filename_lp,
         )
-    if not os.path.isfile(filenameSol):
+    if not os.path.isfile(filename_sol):
         urllib.request.urlretrieve(
             "http://www.zib.de/koch/perplex/data/netlib/txt/%s.txt.gz" % pbname.lower(),
-            filenameSol + ".gz",
+            filename_sol + ".gz",
         )
-        fgz = gzip.open(filenameSol + ".gz")
-        f = open(filenameSol, "w")
+        fgz = gzip.open(filename_sol + ".gz")
+        f = open(filename_sol, "w")
         for l in fgz.readlines():
             f.write(l)
         f.close()
@@ -57,20 +57,20 @@ def get_problem(pbname):
     # netlib problems ftp://ftp.numerical.rl.ac.uk/pub/cuter/netlib.tar.gz
     # netlib exact solutions http://www.zib.de/koch/perplex/data/netlib/txt/
 
-    fLP = open(filenameLP, "r")
-    if filenameSol is not None:
-        fSol = open(filenameSol, "r")
+    file_lp = open(filename_lp, "r")
+    if filename_sol is not None:
+        f_sol = open(filename_sol, "r")
     else:
-        fSol = None
+        f_sol = None
 
-    LPDict = mps_parser(fLP, fSol)
-    return LPDict
+    lp_dict = mps_parser(file_lp, f_sol)
+    return lp_dict
 
 
 if __name__ == "__main__":
 
-    filenameLP = "./data/netlib/AFIRO.SIF"
-    filenameSol = "./data/perPlex/afiro.txt"
-    fLP = open(filenameLP, "r")
-    fsol = open(filenameSol, "r")
-    LP = mps_parser(fLP, fsol)
+    filename_lp = "./data/netlib/AFIRO.SIF"
+    filename_sol = "./data/perPlex/afiro.txt"
+    file_lp = open(filename_lp, "r")
+    fsol = open(filename_sol, "r")
+    LP = mps_parser(file_lp, fsol)

@@ -18,46 +18,46 @@ __folder__ = os.path.dirname(__file__)
 
 def solve_netlib(pbname, display=False, max_time_seconds=30):
 
-    LPDict = get_problem(pbname)
-    groundTruth = LPDict["solution"]
+    lp_dict = get_problem(pbname)
+    ground_truth = lp_dict["solution"]
 
-    LP = SparseLP()
-    nbvar = len(LPDict["costVector"])
-    LP.add_variables_array(
+    lp = SparseLP()
+    nbvar = len(lp_dict["cost_vector"])
+    lp.add_variables_array(
         nbvar,
-        lowerbounds=LPDict["lowerbounds"],
-        upperbounds=np.minimum(LPDict["upperbounds"], np.max(groundTruth) * 2),
-        costs=LPDict["costVector"],
+        lower_bounds=lp_dict["lower_bounds"],
+        upper_bounds=np.minimum(lp_dict["upper_bounds"], np.max(ground_truth) * 2),
+        costs=lp_dict["cost_vector"],
     )
-    LP.add_equality_constraints_sparse(LPDict["Aeq"], LPDict["Beq"])
-    LP.add_constraints_sparse(LPDict["Aineq"], LPDict["B_lower"], LPDict["B_upper"])
+    lp.add_equality_constraints_sparse(lp_dict["a_eq"], lp_dict["b_eq"])
+    lp.add_constraints_sparse(lp_dict["a_ineq"], lp_dict["b_lower"], lp_dict["b_upper"])
 
     print("solving")
     if display:
-        f, axarr = plt.subplots(3, sharex=True)
-        axarr[0].set_title("mean absolute distance to solution")
-        axarr[1].set_title("maximum constraint violation")
-        axarr[2].set_title("difference with optimum value")
+        f, ax_arr = plt.subplots(3, sharex=True)
+        ax_arr[0].set_title("mean absolute distance to solution")
+        ax_arr[1].set_title("maximum constraint violation")
+        ax_arr[2].set_title("difference with optimum value")
 
-    LP2 = copy.deepcopy(LP)
-    LP2.convert_to_one_sided_inequality_system()
+    lp2 = copy.deepcopy(lp)
+    lp2.convert_to_one_sided_inequality_system()
 
     # LP2.save_mps(os.path.join(thisfilepath,'data','example_reexported.mps'))
 
-    LP = LP2
-    assert LP.check_solution(groundTruth)
-    costGT = LP.costsvector.dot(groundTruth.T)
-    print("gt  cost :%f" % costGT)
+    lp = lp2
+    assert lp.check_solution(ground_truth)
+    cost_gt = lp.costsvector.dot(ground_truth.T)
+    print("gt  cost :%f" % cost_gt)
 
-    # scipySol,elapsed=LP2.solve(method='scipy_linprog',getTiming=True,nb_iter=100000)
+    # scipy_sol,elapsed=LP2.solve(method='scipy_linprog',get_timing=True,nb_iter=100000)
 
     # method='scipy_linprog'
-    # if not scipySol is np.nan:
-    # sol1=scipySol
+    # if not scipy_sol is np.nan:
+    # sol1=scipy_sol
     # maxv=LP.max_constraint_violation(sol1)
     # compute the primal and dual infeasibility
     # print ('%s found  solution with maxviolation=%2.2e and  cost %f (vs %f for ground truth) in %f seconds'%(method,maxv,LP.costsvector.dot(sol1),costGT,elapsed))
-    # print ('mean of absolute distance to gt solution =%f'%np.mean(np.abs(groundTruth-sol1)))
+    # print ('mean of absolute distance to gt solution =%f'%np.mean(np.abs(ground_truth-sol1)))
     # else:
     # print ('scipy simplex did not find a solution')
 
@@ -65,30 +65,30 @@ def solve_netlib(pbname, display=False, max_time_seconds=30):
 
     solving_methods2 = [m for m in solving_methods if (m not in ["scipy_linprog"])]
     # solving_methods2=['mehrotra']
-    distanceToGroundTruth = {}
+    distance_to_ground_truth = {}
     for method in solving_methods2:
         print(
             "\n\n----------------------------------------------------------\nSolving LP using %s"
             % method
         )
-        sol1, elapsed = LP.solve(
+        sol1, elapsed = lp.solve(
             method=method,
-            getTiming=True,
+            get_timing=True,
             nb_iter=1000000,
             max_time=max_time_seconds,
-            groundTruth=groundTruth,
+            ground_truth=ground_truth,
             plot_solution=None,
             nb_iter_plot=500,
         )
-        distanceToGroundTruth[method] = LP.distanceToGroundTruth
+        distance_to_ground_truth[method] = lp.distance_to_ground_truth
         if display:
-            axarr[0].semilogy(LP.opttime_curve, LP.distanceToGroundTruth, label=method)
-            axarr[1].semilogy(LP.opttime_curve, LP.max_violated_constraint)
-            axarr[2].semilogy(LP.opttime_curve, LP.pobj_curve - costGT)
-            axarr[0].legend()
+            ax_arr[0].semilogy(lp.opttime_curve, lp.distance_to_ground_truth, label=method)
+            ax_arr[1].semilogy(lp.opttime_curve, lp.max_violated_constraint)
+            ax_arr[2].semilogy(lp.opttime_curve, lp.pobj_curve - cost_gt)
+            ax_arr[0].legend()
             plt.show()
     print("done")
-    return distanceToGroundTruth
+    return distance_to_ground_truth
 
 
 def trim_length(a, b):
@@ -101,20 +101,20 @@ def test_netlib(pb_names=None, max_time_seconds: int = 10, update_results: bool 
         pb_names = ["SC105"]
 
     for pb_name in pb_names:
-        distanceToGroundTruthCurves = solve_netlib(
+        distance_to_ground_truth_curves = solve_netlib(
             pb_name, display=False, max_time_seconds=max_time_seconds
         )
 
         curves_json_file = os.path.join(__folder__, f"netlib_curves_{pb_name}.json")
         if update_results:
             with open(curves_json_file, "w") as f:
-                json.dump(distanceToGroundTruthCurves, f, indent=4)
+                json.dump(distance_to_ground_truth_curves, f, indent=4)
 
         with open(curves_json_file, "r") as f:
-            distanceToGroundTruthCurves_expected = json.load(f)
+            distance_to_ground_truth_curves_expected = json.load(f)
 
-        for k, v1 in distanceToGroundTruthCurves.items():
-            v2 = distanceToGroundTruthCurves_expected[k]
+        for k, v1 in distance_to_ground_truth_curves.items():
+            v2 = distance_to_ground_truth_curves_expected[k]
             tv1, tv2 = trim_length(v1, v2)
             max_diff = np.max(np.abs(np.array(tv1) - np.array(tv2)))
             print(f"{pb_name} max diff {k} = {max_diff}")

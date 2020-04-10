@@ -23,7 +23,7 @@ This project also provides:
 * methods to import and export the linear program from and to standard file formats (MPS), It is used here to run [netlib](http://www.netlib.org/lp/data/) LP problems. Using mps file one can upload and solve LP on the [neos](https://neos-server.org/neos/) servers.
 * a simple constraint propagation method with back-tracking to find feasible integer values solutions (for integer programs)
 * interfaces to other solvers (SCS, ECOS, CVXOPT) through CVXPY
-* interfaces to other LP and MILP solvers ([CLP](https://www.coin-or.org/download/binary/Clp/),[CBC](https://www.coin-or.org/download/binary/Cbc/),[MIPLC](http://mipcl-cpp.appspot.com/),[GLPSOL](https://sourceforge.net/projects/winglpk/),[QSOPT](http://www.math.uwaterloo.ca/~bico/qsopt/downloads/downloads.htm)) using mps text files
+* interfaces to other LP and MILP solvers ([CLP](https://www.coin-or.org/download/binary/Clp/),[CBC](https://www.coin-or.org/download/binary/Cbc/), [MIPLC](http://mipcl-cpp.appspot.com/), [GLPSOL](https://sourceforge.net/projects/winglpk/), [QSOPT](http://www.math.uwaterloo.ca/~bico/qsopt/downloads/downloads.htm)) using mps text files
 
 # Build and test status
 
@@ -68,15 +68,15 @@ SparseLP is written in python and relies on scipy sparse matrices and numpy matr
 
 Creating variables
 
- * *add_variables_array(self,shape,lowerbounds,upperbounds,costs=0,name=None,isinteger=False)*
+ * *add_variables_array(self,shape,lower_bounds,upper_bounds,costs=0,name=None,is_integer=False)*
 
 Various method to add constraints:
 
  * *add_linear_constraint_row*. Add a single row at the bottom of the constraints matrix. cols and vals should be vector of same size (flatten internaly if arrays)
- * *add_linear_constraint_rows(self,cols,vals,lowerbounds=None,upperbounds=0)*. Add a set of rows that all have the same number of non zero values at the bottom of the constraints matrix. cols and vals should be 2D arrays of same size with each row cols[i,:] with vals[i,:] defines a different a sparse constraint to add.
+ * *add_linear_constraint_rows(self,cols,vals,lower_bounds=None,upper_bounds=0)*. Add a set of rows that all have the same number of non zero values at the bottom of the constraints matrix. cols and vals should be 2D arrays of same size with each row cols[i,:] with vals[i,:] defines a different a sparse constraint to add.
 
  * *add_linear_constraints_with_broadcasting*
- * *addInequalities*. Take a list of tuples (indices,coefs) that are tiled if needed to get the right size. More flexible than add_soft_linear_constraint_rows as coefs can heterogenous across tuples (scalar or vector)
+ * *add_inequalities*. Take a list of tuples (indices,coefs) that are tiled if needed to get the right size. More flexible than add_soft_linear_constraint_rows as coefs can heterogenous across tuples (scalar or vector)
  * *add_constraints_sparse*. Just append the sparse matrix under the existing constraints matrix and add bound and costs in 
   bound vectors.
  * *addSoftConstraints*. same as add_linear_constraint_rows but constraints are soft constraints. This is done by adding slack variables that are penalized.  
@@ -85,7 +85,7 @@ other main methods
 
  * *set_costs_variables*. Overwrite the cost associated with the 
  * *get_variables_indices(self,name)*. Returns the set of indices corresponding to the variables that have have been added with the given *name* when using *add_variables_array*.
- * *solve(method,getTiming,nb\_iter,max\_time,groundTruth,groundTruthIndices,plot_solution)*. Solve the linear program and return the vector of all the variables values.
+ * *solve(method,get_timing,nb\_iter,max\_time,ground_truth,ground_truth_indices,plot_solution)*. Solve the linear program and return the vector of all the variables values.
  * *save_mps*
 
 We can check the feasibility of a solution using
@@ -106,6 +106,8 @@ But they have some limitations:
 
 * CyLP: use operator oveloading so that we can use notation that are close to mathetmatical notations. But variables are defined as 1D vectors
 * GLOP
+* [PuLP](https://github.com/coin-or/pulp). Variables are added as scalars, one at a time, instead of usigbn arrays, which make the creation of large LPs very slow.
+* [Pyomo](http://www.pyomo.org/)
 
 the approach I have taken is lower level than this tools but provide more control and flexibility on how to define the constraints and the objective function. It is made easy by using numpy arrays to store variables indices.
 

@@ -92,7 +92,7 @@ class boundedGaussSeidelClass:
 		self.invD=1/D
 		
 	@cython.boundscheck(False)
-	def solve(self,np.ndarray[cDOUBLE, ndim=1] b,np.ndarray[cDOUBLE, ndim=1] lowerbounds,np.ndarray[cDOUBLE, ndim=1] upperbounds,cDOUBLE[:] x,int maxiter=3,double w=1,order=None):
+	def solve(self,np.ndarray[cDOUBLE, ndim=1] b,np.ndarray[cDOUBLE, ndim=1] lower_bounds,np.ndarray[cDOUBLE, ndim=1] upper_bounds,cDOUBLE[:] x,int maxiter=3,double w=1,order=None):
 
 	
 		# turn of bounds-checking for entire function		
@@ -143,8 +143,8 @@ class boundedGaussSeidelClass:
 				#nv=(b[i]-v)*invD[i]+x[i]		
 				#v=w*nv+(1-w)*x[i]
 				v=w*(b[i]-v)*invD[i]+x[i]
-				l=lowerbounds[i]
-				u=upperbounds[i]
+				l=lower_bounds[i]
+				u=upper_bounds[i]
 				if v<l:
 					v=l
 				elif v>u:

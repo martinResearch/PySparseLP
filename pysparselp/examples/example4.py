@@ -6,36 +6,36 @@ import numpy as np
 from pysparselp.SparseLP import SparseLP
 
 
-def add_bipartite_constraint(LP, indices):
-    cols = indices
-    vals = np.ones(cols.shape)
-    LP.add_linear_constraint_rows(cols, vals, lowerbounds=-np.inf, upperbounds=1)
-    cols = indices.T
-    vals = np.ones(cols.shape)
-    LP.add_linear_constraint_rows(cols, vals, lowerbounds=-np.inf, upperbounds=1)
+def add_bipartite_constraint(lp, indices):
+    columns = indices
+    values = np.ones(columns.shape)
+    lp.add_linear_constraint_rows(columns, values, lower_bounds=-np.inf, upper_bounds=1)
+    columns = indices.T
+    values = np.ones(columns.shape)
+    lp.add_linear_constraint_rows(columns, values, lower_bounds=-np.inf, upper_bounds=1)
 
 
 def run():
 
     n = 50
     np.random.seed(2)
-    Cost = -np.random.rand(n, n)
-    LP = SparseLP()
-    indices = LP.add_variables_array(Cost.shape, 0, 1, Cost)
-    add_bipartite_constraint(LP, indices)
+    cost = -np.random.rand(n, n)
+    lp = SparseLP()
+    indices = lp.add_variables_array(cost.shape, 0, 1, cost)
+    add_bipartite_constraint(lp, indices)
 
-    s = LP.solve(method="Mehrotra", nb_iter=7, max_time=np.inf)[0]
-    print(LP.costsvector.dot(s))
+    s = lp.solve(method="mehrotra", nb_iter=7, max_time=np.inf)[0]
+    print(lp.costsvector.dot(s))
 
-    s = LP.solve(
+    s = lp.solve(
         method="dual_coordinate_ascent", nb_iter=2000, max_time=40, nb_iter_plot=500
     )[0]
-    print(LP.costsvector.dot(s))
+    print(lp.costsvector.dot(s))
 
-    s = LP.solve(
+    s = lp.solve(
         method="chambolle_pock_ppd", nb_iter=2000, max_time=10, nb_iter_plot=500
     )[0]
-    print(LP.costsvector.dot(s))
+    print(lp.costsvector.dot(s))
 
     x = s[indices]
     print(np.round(x * 1000) / 1000)

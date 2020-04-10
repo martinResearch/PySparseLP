@@ -61,44 +61,44 @@ except Exception:
     print("could not import cvxpy, theuse_preconditioningl not be available")
 
 
-def csr_matrix_append_row(A, n, cols, vals):
-    A.blocks.append((A.shape[0], A.shape[0]))
-    A._shape = (A.shape[0] + 1, n)
-    A.indices = np.append(A.indices, cols.astype(A.indices.dtype))
-    A.data = np.append(A.data, vals.astype(A.data.dtype))
-    A.indptr = np.append(A.indptr, np.int32(A.indptr[-1] + cols.size))
-    assert A.data.size == A.indices.size
-    assert A.indptr.size == A.shape[0] + 1
-    assert A.indptr[-1] == A.data.size
+def csr_matrix_append_row(a, n, cols, vals):
+    a.blocks.append((a.shape[0], a.shape[0]))
+    a._shape = (a.shape[0] + 1, n)
+    a.indices = np.append(a.indices, cols.astype(a.indices.dtype))
+    a.data = np.append(a.data, vals.astype(a.data.dtype))
+    a.indptr = np.append(a.indptr, np.int32(a.indptr[-1] + cols.size))
+    assert a.data.size == a.indices.size
+    assert a.indptr.size == a.shape[0] + 1
+    assert a.indptr[-1] == a.data.size
 
 
-def check_csr_matrix(A):
-    assert np.max(A.indices) < A.shape[1]
-    assert len(A.data) == len(A.indices)
-    assert len(A.indptr) == A.shape[0] + 1
-    assert np.all(np.diff(A.indptr) >= 0)
+def check_csr_matrix(a):
+    assert np.max(a.indices) < a.shape[1]
+    assert len(a.data) == len(a.indices)
+    assert len(a.indptr) == a.shape[0] + 1
+    assert np.all(np.diff(a.indptr) >= 0)
 
 
-def csr_matrix_append_rows(A, B):
+def csr_matrix_append_rows(a, b):
     # A._shape=-A.shape[0],B._shape[1])
-    A.blocks.append((A.shape[0], A.shape[0] + B.shape[0] - 1))
-    A._shape = (A.shape[0] + B.shape[0], max(A.shape[1], B.shape[1]))
-    A.indices = np.append(A.indices, B.indices)
-    A.data = np.append(A.data, B.data)
-    A.indptr = np.append(A.indptr[:-1], A.indptr[-1] + B.indptr)
+    a.blocks.append((a.shape[0], a.shape[0] + b.shape[0] - 1))
+    a._shape = (a.shape[0] + b.shape[0], max(a.shape[1], b.shape[1]))
+    a.indices = np.append(a.indices, b.indices)
+    a.data = np.append(a.data, b.data)
+    a.indptr = np.append(a.indptr[:-1], a.indptr[-1] + b.indptr)
 
-    assert np.max(A.indices) < A.shape[1]
-    assert A.data.size == A.indices.size
-    assert A.indptr.size == A.shape[0] + 1
-    assert A.indptr[-1] == A.data.size
+    assert np.max(a.indices) < a.shape[1]
+    assert a.data.size == a.indices.size
+    assert a.indptr.size == a.shape[0] + 1
+    assert a.indptr[-1] == a.data.size
 
 
 def empty_csr_matrix():
-    A = scipy.sparse.csr_matrix((1, 1), dtype=np.float)
+    a = scipy.sparse.csr_matrix((1, 1), dtype=np.float)
     # trick , because it would not let me create and empty matrix
-    A._shape = (0 * A._shape[0], 0 * A._shape[1])
-    A.indptr = A.indptr[-1:]
-    return A
+    a._shape = (0 * a._shape[0], 0 * a._shape[1])
+    a.indptr = a.indptr[-1:]
+    return a
 
 
 def unique_rows(data, prec=5):
@@ -121,17 +121,17 @@ class SparseLP:
 
         self.nb_variables = 0
         self.variables_dict = dict()
-        self.upperbounds = np.empty((0), dtype=np.float)
-        self.lowerbounds = np.empty((0), dtype=np.float)
+        self.upper_bounds = np.empty((0), dtype=np.float)
+        self.lower_bounds = np.empty((0), dtype=np.float)
         self.costsvector = np.empty((0), dtype=np.float)
-        self.isinteger = np.empty((0), dtype=np.bool)
-        self.Ainequalities = empty_csr_matrix()
-        self.Ainequalities.__dict__["blocks"] = []
-        self.B_lower = np.empty((0), dtype=np.float)
-        self.B_upper = np.empty((0), dtype=np.float)
-        self.Aequalities = empty_csr_matrix()
-        self.Bequalities = np.empty((0), dtype=np.float)
-        self.Aequalities.__dict__["blocks"] = []
+        self.is_integer = np.empty((0), dtype=np.bool)
+        self.a_inequalities = empty_csr_matrix()
+        self.a_inequalities.__dict__["blocks"] = []
+        self.b_lower = np.empty((0), dtype=np.float)
+        self.b_upper = np.empty((0), dtype=np.float)
+        self.a_equalities = empty_csr_matrix()
+        self.b_equalities = np.empty((0), dtype=np.float)
+        self.a_equalities.__dict__["blocks"] = []
         self.solver = "chambolle_pock"
         self.equalityConstraintNames = []
         self.inequalityConstraintNames = []
@@ -139,19 +139,19 @@ class SparseLP:
 
     def max_constraint_violation(self, solution):
         types, lb, ub = self.get_variables_bounds()
-        maxv = 0
-        maxv = max(maxv, np.max(lb - solution))
-        maxv = max(maxv, np.max(solution - ub))
-        if self.Aequalities.shape[0] > 0:
-            maxv = max(
-                maxv, np.max(np.abs(self.Aequalities * solution - self.Bequalities))
+        max_v = 0
+        max_v = max(max_v, np.max(lb - solution))
+        max_v = max(max_v, np.max(solution - ub))
+        if self.a_equalities.shape[0] > 0:
+            max_v = max(
+                max_v, np.max(np.abs(self.a_equalities * solution - self.b_equalities))
             )
-        if self.Ainequalities.shape[0] > 0:
-            if self.B_upper is not None:
-                maxv = max(maxv, np.max(self.Ainequalities * solution - self.B_upper))
-            if self.B_lower is not None:
-                maxv = max(maxv, np.max(self.B_lower - self.Ainequalities * solution))
-        return maxv
+        if self.a_inequalities.shape[0] > 0:
+            if self.b_upper is not None:
+                max_v = max(max_v, np.max(self.a_inequalities * solution - self.b_upper))
+            if self.b_lower is not None:
+                max_v = max(max_v, np.max(self.b_lower - self.a_inequalities * solution))
+        return max_v
 
     def check_solution(self, solution, tol=1e-6):
         types, lb, ub = self.get_variables_bounds()
@@ -160,18 +160,18 @@ class SparseLP:
             valid = valid & (np.max(lb - solution) < tol)
         if ub is not None:
             valid = valid & (np.max(solution - ub) < tol)
-        if (self.Aequalities is not None) and self.Aequalities.shape[0] > 0:
+        if (self.a_equalities is not None) and self.a_equalities.shape[0] > 0:
             valid = valid & (
-                np.max(np.abs(self.Aequalities * solution - self.Bequalities)) < tol
+                np.max(np.abs(self.a_equalities * solution - self.b_equalities)) < tol
             )
-        if (self.Ainequalities is not None) and self.Ainequalities.shape[0] > 0:
-            if self.B_upper is not None:
+        if (self.a_inequalities is not None) and self.a_inequalities.shape[0] > 0:
+            if self.b_upper is not None:
                 valid = valid & (
-                    np.max(self.Ainequalities * solution - self.B_upper) < tol
+                    np.max(self.a_inequalities * solution - self.b_upper) < tol
                 )
-            if self.B_lower is not None:
+            if self.b_lower is not None:
                 valid = valid & (
-                    np.max(self.B_lower - self.Ainequalities * solution) < tol
+                    np.max(self.b_lower - self.a_inequalities * solution) < tol
                 )
         return valid
 
@@ -182,10 +182,10 @@ class SparseLP:
             self.lastNameInequalityStart = self.nb_inequality_constraints()
 
     def nb_equality_constraints(self):
-        return self.Aequalities.shape[0]
+        return self.a_equalities.shape[0]
 
     def nb_inequality_constraints(self):
-        return self.Ainequalities.shape[0]
+        return self.a_inequalities.shape[0]
 
     def end_constraint_name(self, name):
         if not (name is None or name == ""):
@@ -228,80 +228,80 @@ class SparseLP:
         self.convertToMosek().save(filename, force_integer=force_integer)
 
     def save_mps(self, filename):
-        assert self.B_lower is None
+        assert self.b_lower is None
 
         f = open(filename, "w")
         f.write("NAME  exportedFromPython\n")
         f.write("ROWS\n")
         f.write(" N  OBJ\n")
 
-        # for i in range(self.Bequalities.size):
+        # for i in range(self.b_equalities.size):
         # f.write(' E  E%d\n'%i)
-        np.savetxt(f, np.arange(self.Bequalities.size), fmt=" E  E%d", newline="\n")
+        np.savetxt(f, np.arange(self.b_equalities.size), fmt=" E  E%d", newline="\n")
 
-        # for i in range(self.B_upper.size):
+        # for i in range(self.b_upper.size):
         # f.write(' L  I%d\n'%i)
-        np.savetxt(f, np.arange(self.B_upper.size), fmt=" L  I%d", newline="\n")
+        np.savetxt(f, np.arange(self.b_upper.size), fmt=" L  I%d", newline="\n")
 
         f.write("COLUMNS\n")
 
-        Aeq = self.Aequalities.tocsc().tocoo()
-        Aineq = self.Ainequalities.tocsc().tocoo()
+        a_eq = self.a_equalities.tocsc().tocoo()
+        a_ineq = self.a_inequalities.tocsc().tocoo()
 
-        kEq = 0
-        kIneq = 0
-        nEqEntries = len(Aeq.col)
-        nIneqEntries = len(Aineq.col)
+        k_eq = 0
+        k_ineq = 0
+        n_eq_entries = len(a_eq.col)
+        n_ineq_entries = len(a_ineq.col)
 
         for i in range(self.nb_variables):
             f.write("    X%-9dOBJ       %f\n" % (i, self.costsvector[i]))
 
-            while kEq < nEqEntries and Aeq.col[kEq] == i:
-                f.write("    X%-9dE%-9d%f\n" % (i, Aeq.ruse_preconditioning))
-                kEq += 1
-            while kIneq < nIneqEntries and Aineq.col[kIneq] == i:
-                f.write("    X%-9dI%-9d%f\n" % (i, Aineq.row[kIneq], Aineq.data[kIneq]))
-                kIneq += 1
+            while k_eq < n_eq_entries and a_eq.col[k_eq] == i:
+                f.write("    X%-9dE%-9d%f\n" % (i, a_eq.ruse_preconditioning))
+                k_eq += 1
+            while k_ineq < n_ineq_entries and a_ineq.col[k_ineq] == i:
+                f.write("    X%-9dI%-9d%f\n" % (i, a_ineq.row[k_ineq], a_ineq.data[k_ineq]))
+                k_ineq += 1
 
         f.write("RHS\n")
         np.savetxt(
             f,
-            np.column_stack((np.arange(Aeq.shape[0]), self.Bequalities)),
+            np.column_stack((np.arange(a_eq.shape[0]), self.b_equalities)),
             fmt="    RHS0      E%-9d%f",
             newline="\n",
         )
         np.savetxt(
             f,
-            np.column_stack((np.arange(Aineq.shape[0]), self.B_upper)),
+            np.column_stack((np.arange(a_ineq.shape[0]), self.b_upper)),
             fmt="    RHS0      I%-9d%f",
             newline="\n",
         )
 
         f.write("RANGES\n")
         f.write("BOUNDS\n")
-        integerIndices = np.nonzero(self.isinteger)[0]
+        integer_indices = np.nonzero(self.is_integer)[0]
         np.savetxt(
             f,
-            np.column_stack((integerIndices, self.upperbounds[integerIndices])),
+            np.column_stack((integer_indices, self.upper_bounds[integer_indices])),
             fmt=" UI bound     X%-9d%f",
             newline="\n",
         )
         np.savetxt(
             f,
-            np.column_stack((integerIndices, self.lowerbounds[integerIndices])),
+            np.column_stack((integer_indices, self.lower_bounds[integer_indices])),
             fmt=" LI bound     X%-9d%f",
             newline="\n",
         )
-        continousIndices = np.nonzero(~self.isinteger)[0]
+        continous_indices = np.nonzero(~self.is_integer)[0]
         np.savetxt(
             f,
-            np.column_stack((continousIndices, self.upperbounds[continousIndices])),
+            np.column_stack((continous_indices, self.upper_bounds[continous_indices])),
             fmt=" UP bound     X%-9d%f",
             newline="\n",
         )
         np.savetxt(
             f,
-            np.column_stack((continousIndices, self.lowerbounds[continousIndices])),
+            np.column_stack((continous_indices, self.lower_bounds[continous_indices])),
             fmt=" LO bound     X%-9d%f",
             newline="\n",
         )
@@ -310,60 +310,60 @@ class SparseLP:
         f.close()
 
     def save_ian_e_h_yen(self, folder):
-        if self.B_lower is not None:
+        if self.b_lower is not None:
             print(
-                "self.B_lower is not None, you should convert your problem with convert_to_one_sided_inequality_system first"
+                "self.b_lower is not None, you should convert your problem with convert_to_one_sided_inequality_system first"
             )
             raise
-        if not np.all(self.lowerbounds == 0):
+        if not np.all(self.lower_bounds == 0):
             print("lower bound constraint on variables should at 0")
             raise
 
         import os
 
-        Aeq = self.Aequalities.tocoo()
+        a_eq = self.a_equalities.tocoo()
         tmp = np.row_stack(
             (
-                [Aeq.shape[0], Aeq.shape[1], 0.0],
-                np.column_stack((Aeq.row + 1, Aeq.col + 1, Aeq.data)),
+                [a_eq.shape[0], a_eq.shape[1], 0.0],
+                np.column_stack((a_eq.row + 1, a_eq.col + 1, a_eq.data)),
             )
         )
-        np.savetxt(os.path.join(folder, "Aeq"), tmp, fmt="%d %d %f")
-        np.savetxt(os.path.join(folder, "beq"), self.Bequalities, fmt="%f")
+        np.savetxt(os.path.join(folder, "a_eq"), tmp, fmt="%d %d %f")
+        np.savetxt(os.path.join(folder, "beq"), self.b_equalities, fmt="%f")
         np.savetxt(os.path.join(folder, "c"), self.costsvector, fmt="%f")
-        nbvariables = self.costsvector.size
-        upperbounded = np.nonzero(~np.isinf(self.upperbounds))[0]
-        nbupperbounded = len(upperbounded)
-        Aineq2 = scipy.sparse.coo_matrix(
-            (np.ones(nbupperbounded), (np.arange(nbupperbounded), upperbounded)),
-            (nbupperbounded, nbvariables),
+        nb_variables = self.costsvector.size
+        upper_bounded = np.nonzero(~np.isinf(self.upper_bounds))[0]
+        nb_upper_bounded = len(upper_bounded)
+        a_ineq2 = scipy.sparse.coo_matrix(
+            (np.ones(nb_upper_bounded), (np.arange(nb_upper_bounded), upper_bounded)),
+            (nb_upper_bounded, nb_variables),
         )
-        Aineq = scipy.sparse.vstack((self.Ainequalities, Aineq2)).tocoo()
-        bupper = np.hstack((self.B_upper, self.upperbounds[upperbounded]))
+        a_ineq = scipy.sparse.vstack((self.a_inequalities, a_ineq2)).tocoo()
+        b_upper = np.hstack((self.b_upper, self.upper_bounds[upper_bounded]))
         tmp = np.row_stack(
             (
-                [Aineq.shape[0], Aineq.shape[1], 0.0],
-                np.column_stack((Aineq.row + 1, Aineq.col + 1, Aineq.data)),
+                [a_ineq.shape[0], a_ineq.shape[1], 0.0],
+                np.column_stack((a_ineq.row + 1, a_ineq.col + 1, a_ineq.data)),
             )
         )
         np.savetxt(os.path.join(folder, "A"), tmp, fmt="%d %d %f")
-        np.savetxt(os.path.join(folder, "b"), bupper, fmt="%f")
+        np.savetxt(os.path.join(folder, "b"), b_upper, fmt="%f")
 
         with open(os.path.join(folder, "meta"), "w") as f:
-            f.write("nb	%d\n" % nbvariables)
+            f.write("nb	%d\n" % nb_variables)
             f.write("nf	%d\n" % 0)
-            f.write("mI	%d\n" % Aineq.shape[0])
-            f.write("mE	%d\n" % Aeq.shape[0])
+            f.write("mI	%d\n" % a_ineq.shape[0])
+            f.write("mE	%d\n" % a_eq.shape[0])
 
     def get_variables_bounds(self):
         types = None
-        bl = self.lowerbounds
-        bu = self.upperbounds
+        bl = self.lower_bounds
+        bu = self.upper_bounds
 
         return types, bl, bu
 
     def add_variables_array(
-        self, shape, lowerbounds, upperbounds, costs=0, name=None, isinteger=False
+        self, shape, lower_bounds, upper_bounds, costs=0, name=None, is_integer=False
     ):
         if isinstance(shape, type(0)):
             shape = (shape,)
@@ -372,8 +372,8 @@ class SparseLP:
         indices = np.arange(nb_variables_added).reshape(shape) + self.nb_variables
         self.nb_variables = self.nb_variables + nb_variables_added
 
-        self.Ainequalities._shape = (self.Ainequalities.shape[0], self.nb_variables)
-        self.Aequalities._shape = (self.Aequalities.shape[0], self.nb_variables)
+        self.a_inequalities._shape = (self.a_inequalities.shape[0], self.nb_variables)
+        self.a_equalities._shape = (self.a_equalities.shape[0], self.nb_variables)
 
         if isinstance(costs, type(0)) or isinstance(costs , type(0.0)):
             v = costs
@@ -381,68 +381,68 @@ class SparseLP:
             costs.fill(v)
 
         assert np.all(costs.shape == shape)
-        lowerbounds, upperbounds = self.convert_bounds_to_vectors(
-            shape, lowerbounds, upperbounds
+        lower_bounds, upper_bounds = self.convert_bounds_to_vectors(
+            shape, lower_bounds, upper_bounds
         )
-        assert np.all(lowerbounds.shape == shape)
-        assert np.all(upperbounds.shape == shape)
+        assert np.all(lower_bounds.shape == shape)
+        assert np.all(upper_bounds.shape == shape)
 
-        self.upperbounds = np.append(self.upperbounds, upperbounds.ravel())
-        self.lowerbounds = np.append(self.lowerbounds, lowerbounds.ravel())
+        self.upper_bounds = np.append(self.upper_bounds, upper_bounds.ravel())
+        self.lower_bounds = np.append(self.lower_bounds, lower_bounds.ravel())
         self.costsvector = np.append(self.costsvector, costs.ravel())
-        self.isinteger = np.append(
-            self.isinteger, np.full((nb_variables_added), isinteger, dtype=np.bool)
+        self.is_integer = np.append(
+            self.is_integer, np.full((nb_variables_added), is_integer, dtype=np.bool)
         )
 
         if name:
             self.variables_dict[name] = indices
-        self.set_bounds_on_variables(indices, lowerbounds, upperbounds)
+        self.set_bounds_on_variables(indices, lower_bounds, upper_bounds)
         return indices
 
-    def convert_bounds_to_vectors(self, shape, lowerbounds, upperbounds):
+    def convert_bounds_to_vectors(self, shape, lower_bounds, upper_bounds):
 
         if (
-            isinstance(lowerbounds , type(0))
-            or isinstance(lowerbounds, type(0.0))
-            or isinstance(lowerbounds, np.float64)
+            isinstance(lower_bounds , type(0))
+            or isinstance(lower_bounds, type(0.0))
+            or isinstance(lower_bounds, np.float64)
         ):
-            v = lowerbounds
-            lowerbounds = np.empty(shape, dtype=np.float)
-            lowerbounds.fill(v)
+            v = lower_bounds
+            lower_bounds = np.empty(shape, dtype=np.float)
+            lower_bounds.fill(v)
         if (
-            isinstance(upperbounds, type(0))
-            or isinstance(upperbounds, type(0.0))
-            or isinstance(upperbounds, np.float64)
+            isinstance(upper_bounds, type(0))
+            or isinstance(upper_bounds, type(0.0))
+            or isinstance(upper_bounds, np.float64)
         ):
-            v = upperbounds
-            upperbounds = np.empty(shape, dtype=np.float)
-            upperbounds.fill(v)
+            v = upper_bounds
+            upper_bounds = np.empty(shape, dtype=np.float)
+            upper_bounds.fill(v)
 
-        if upperbounds is None:
-            # assert np.all((lowerbounds.shape==shape))
-            upperbounds = np.empty(shape, dtype=np.float)
-            upperbounds.fill(np.inf)
+        if upper_bounds is None:
+            # assert np.all((lower_bounds.shape==shape))
+            upper_bounds = np.empty(shape, dtype=np.float)
+            upper_bounds.fill(np.inf)
 
-        if lowerbounds is None:
-            # assert np.all((upperbounds.shape==shape))
-            lowerbounds = np.empty(shape, dtype=np.float)
-            lowerbounds.fill(-np.inf)
+        if lower_bounds is None:
+            # assert np.all((upper_bounds.shape==shape))
+            lower_bounds = np.empty(shape, dtype=np.float)
+            lower_bounds.fill(-np.inf)
 
-        assert np.all((upperbounds.shape == shape))
-        assert np.all((lowerbounds.shape == shape))
+        assert np.all((upper_bounds.shape == shape))
+        assert np.all((lower_bounds.shape == shape))
 
-        return lowerbounds, upperbounds
+        return lower_bounds, upper_bounds
 
-    def set_bounds_on_variables(self, indices, lowerbounds, upperbounds):
+    def set_bounds_on_variables(self, indices, lower_bounds, upper_bounds):
         # could use task.putboundslice if we were sure that the indices is an increasing sequence n with increments of 1 i.e,n+1,n+2,....n+k
-        if isinstance(lowerbounds, type(0)) or isinstance(lowerbounds, type(0.0)):
-            self.lowerbounds[indices.ravel()] = lowerbounds
+        if isinstance(lower_bounds, type(0)) or isinstance(lower_bounds, type(0.0)):
+            self.lower_bounds[indices.ravel()] = lower_bounds
         else:
-            self.lowerbounds[indices.ravel()] = lowerbounds.ravel()
-        if isinstance(upperbounds, type(0)) or isinstance(upperbounds, type(0.0)):
-            self.upperbounds[indices.ravel()] = upperbounds
+            self.lower_bounds[indices.ravel()] = lower_bounds.ravel()
+        if isinstance(upper_bounds, type(0)) or isinstance(upper_bounds, type(0.0)):
+            self.upper_bounds[indices.ravel()] = upper_bounds
         else:
-            self.upperbounds[indices.ravel()] = upperbounds.ravel()
+            self.upper_bounds[indices.ravel()] = upper_bounds.ravel()
 
     def get_variables_indices(self, name):
         """Return the set of indices corresponding to the variables that have have been added with the given name when using add_variables_array"""
@@ -456,56 +456,56 @@ class SparseLP:
         assert len(ids) == len(coefs)
 
         if upperbound == lowerbound:
-            csr_matrix_append_row(self.Aequalities, self.nb_variables, ids, coefs)
-            self.Bequalities = np.append(self.Bequalities, lowerbound)
+            csr_matrix_append_row(self.a_equalities, self.nb_variables, ids, coefs)
+            self.b_equalities = np.append(self.b_equalities, lowerbound)
 
         else:
-            csr_matrix_append_row(self.Ainequalities, self.nb_variables, ids, coefs)
+            csr_matrix_append_row(self.a_inequalities, self.nb_variables, ids, coefs)
             if lowerbound is None:
-                if self.B_lower is not None:
-                    self.B_lower = np.append(self.B_lower, -np.inf)
+                if self.b_lower is not None:
+                    self.b_lower = np.append(self.b_lower, -np.inf)
             else:
-                if self.B_lower is None:
+                if self.b_lower is None:
                     print("not coded yet")
                 else:
-                    self.B_lower = np.append(self.B_lower, lowerbound)
+                    self.b_lower = np.append(self.b_lower, lowerbound)
             if upperbound is None:
-                if self.B_upper is not None:
-                    self.B_upper = np.append(self.B_upper, np.inf)
+                if self.b_upper is not None:
+                    self.b_upper = np.append(self.b_upper, np.inf)
             else:
-                if self.B_upper is None:
+                if self.b_upper is None:
                     print("not coded yet")
                 else:
-                    self.B_upper = np.append(self.B_upper, upperbound)
+                    self.b_upper = np.append(self.b_upper, upperbound)
 
-    def add_equality_constraints_sparse(self, A, b):
+    def add_equality_constraints_sparse(self, a, b):
 
-        csr_matrix_append_rows(self.Aequalities, A.tocsr())
-        self.Bequalities = np.append(self.Bequalities, b)
+        csr_matrix_append_rows(self.a_equalities, a.tocsr())
+        self.b_equalities = np.append(self.b_equalities, b)
 
-    def add_constraints_sparse(self, A, lowerbounds=None, upperbounds=None):
-        # add the constraint lowerbounds<=Ax<=upperbounds to the list of constraints
+    def add_constraints_sparse(self, a, lower_bounds=None, upper_bounds=None):
+        # add the constraint lower_bounds<=Ax<=upper_bounds to the list of constraints
         # try to use A as a sparse matrix
         # take advantage of the snipy sparse marices to ease things
 
         if (
-            isinstance(lowerbounds, type(0)) or isinstance(lowerbounds, type(0.0))
-        ) and lowerbounds == upperbounds:
-            lowerbounds, upperbounds = self.convert_bounds_to_vectors(
-                (A.shape[0],), lowerbounds, upperbounds
+            isinstance(lower_bounds, type(0)) or isinstance(lower_bounds, type(0.0))
+        ) and lower_bounds == upper_bounds:
+            lower_bounds, upper_bounds = self.convert_bounds_to_vectors(
+                (a.shape[0],), lower_bounds, upper_bounds
             )
-            csr_matrix_append_rows(self.Aequalities, A.tocsr())
-            self.Bequalities = np.append(self.Bequalities, lowerbounds)
+            csr_matrix_append_rows(self.a_equalities, a.tocsr())
+            self.b_equalities = np.append(self.b_equalities, lower_bounds)
 
         else:
-            lowerbounds, upperbounds = self.convert_bounds_to_vectors(
-                (A.shape[0],), lowerbounds, upperbounds
+            lower_bounds, upper_bounds = self.convert_bounds_to_vectors(
+                (a.shape[0],), lower_bounds, upper_bounds
             )
-            csr_matrix_append_rows(self.Ainequalities, A.tocsr())
-            self.B_lower = np.append(self.B_lower, lowerbounds)
-            self.B_upper = np.append(self.B_upper, upperbounds)
+            csr_matrix_append_rows(self.a_inequalities, a.tocsr())
+            self.b_lower = np.append(self.b_lower, lower_bounds)
+            self.b_upper = np.append(self.b_upper, upper_bounds)
 
-    def add_linear_constraint_rows(self, cols, vals, lowerbounds=None, upperbounds=None):
+    def add_linear_constraint_rows(self, cols, vals, lower_bounds=None, upper_bounds=None):
         if not (np.all(np.diff(np.sort(cols, axis=1), axis=1) > 0)):
             print("you have twice the same variable in the constraint")
             raise
@@ -517,66 +517,66 @@ class SparseLP:
             assert np.ndim(vals) == 2
         assert np.all(vals.shape == cols.shape)
 
-        valsFlat = vals.ravel()
-        colsFlat = cols.ravel()
+        vals_flat = vals.ravel()
+        cols_flat = cols.ravel()
         keep = ~(vals == 0)
-        valsFlat = valsFlat[keep.ravel()]
-        colsFlat = colsFlat[keep.ravel()]
+        vals_flat = vals_flat[keep.ravel()]
+        cols_flat = cols_flat[keep.ravel()]
         iptr = np.hstack(([0], np.cumsum(np.sum(keep, axis=1))))
-        A = scipy.sparse.csr_matrix((valsFlat, colsFlat, iptr))
-        self.add_constraints_sparse(A, lowerbounds=lowerbounds, upperbounds=upperbounds)
+        a = scipy.sparse.csr_matrix((vals_flat, cols_flat, iptr))
+        self.add_constraints_sparse(a, lower_bounds=lower_bounds, upper_bounds=upper_bounds)
 
     def add_soft_linear_constraint_rows(
-        self, cols, vals, lowerbounds=None, upperbounds=None, coef_penalization=0
+        self, cols, vals, lower_bounds=None, upper_bounds=None, coef_penalization=0
     ):
         if np.all(coef_penalization == np.inf):
             self.add_linear_constraint_rows(
-                cols, vals, lowerbounds=lowerbounds, upperbounds=upperbounds
+                cols, vals, lower_bounds=lower_bounds, upper_bounds=upper_bounds
             )
 
         else:
             aux = self.add_variables_array(
                 (cols.shape[0],),
-                upperbounds=None,
-                lowerbounds=0,
+                upper_bounds=None,
+                lower_bounds=0,
                 costs=coef_penalization,
             )
 
             cols2 = np.column_stack((cols, aux))
-            if upperbounds is not None:
+            if upper_bounds is not None:
                 vals2 = np.column_stack((vals, -np.ones((vals.shape[0], 1))))
                 self.add_linear_constraint_rows(
-                    cols2, vals2, lowerbounds=None, upperbounds=upperbounds
+                    cols2, vals2, lower_bounds=None, upper_bounds=upper_bounds
                 )
-            if lowerbounds is not None:
+            if lower_bounds is not None:
                 vals2 = np.column_stack((vals, np.ones((vals.shape[0], 1))))
                 self.add_linear_constraint_rows(
-                    cols2, vals2, lowerbounds, upperbounds=None
+                    cols2, vals2, lower_bounds, upper_bounds=None
                 )
             return aux
 
     def add_linear_constraints_with_broadcasting(
-        self, cols, vals, lowerbounds=None, upperbounds=None
+        self, cols, vals, lower_bounds=None, upper_bounds=None
     ):
         cols2 = cols.reshape(-1, cols.shape[-1])
         vals2 = np.tile(np.array(vals), (cols2.shape[0], 1))
         self.add_linear_constraint_rows(
-            cols2, vals2, lowerbounds=lowerbounds, upperbounds=upperbounds
+            cols2, vals2, lower_bounds=lower_bounds, upper_bounds=upper_bounds
         )
 
-    def addInequalities(
-        self, indicesAndWeightPairs, lowerbounds, upperbounds, check=True
+    def add_inequalities(
+        self, indices_and_weight_pairs, lower_bounds, upper_bounds, check=True
     ):
         cols = []
         vals = []
-        for t in indicesAndWeightPairs:
+        for t in indices_and_weight_pairs:
             cols.append(t[0].flatten())
             # trick to do broadcasting on vals if needed
             vals.append((np.ones(t[0].shape) * t[1]).flatten())
-        if isinstance(upperbounds, np.ndarray):
-            upperbounds = upperbounds.flatten()
+        if isinstance(upper_bounds, np.ndarray):
+            upper_bounds = upper_bounds.flatten()
         self.add_linear_constraint_rows(
-            np.column_stack(cols), np.column_stack(vals), lowerbounds, upperbounds
+            np.column_stack(cols), np.column_stack(vals), lower_bounds, upper_bounds
         )
         if (self.solution is not None) and check:
             assert self.check_solution(self.solution)
@@ -584,211 +584,211 @@ class SparseLP:
     def remove_fixed_variables(self):
         # should you more complete presolve procedure in case we use interior point method
         # http://www.davi.ws/doc/gondzio94presolve.pdf
-        free = self.upperbounds > self.lowerbounds
-        idfree = np.nonzero(free)[0]
-        nbfree = np.sum(free)
-        Mchange = scipy.sparse.coo_matrix(
-            (np.ones((nbfree)), (idfree, np.arange(nbfree))),
-            (self.nb_variables, nbfree),
+        free = self.upper_bounds > self.lower_bounds
+        id_free = np.nonzero(free)[0]
+        nb_free = np.sum(free)
+        m_change = scipy.sparse.coo_matrix(
+            (np.ones((nb_free)), (id_free, np.arange(nb_free))),
+            (self.nb_variables, nb_free),
         )
         shift = np.zeros((self.nb_variables))
-        shift[~free] = self.lowerbounds[~free]
+        shift[~free] = self.lower_bounds[~free]
 
-        self.Bequalities = self.Bequalities - self.Aequalities * shift
-        if self.B_lower is not None:
-            self.B_lower = self.B_lower - self.Ainequalities * shift
-        if self.B_upper is not None:
-            self.B_upper = self.B_upper - self.Ainequalities * shift
+        self.b_equalities = self.b_equalities - self.a_equalities * shift
+        if self.b_lower is not None:
+            self.b_lower = self.b_lower - self.a_inequalities * shift
+        if self.b_upper is not None:
+            self.b_upper = self.b_upper - self.a_inequalities * shift
 
-        # self.Bequalities equalities= self.Bequalities-self.Aequalities*shift
+        # self.b_equalities equalities= self.b_equalities-self.a_equalities*shift
 
         self.costsvector = self.costsvector[free]
-        b = self.Ainequalities.__dict__["blocks"]
-        self.Ainequalities = self.Ainequalities[:, free]
-        self.Ainequalities.__dict__["blocks"] = b
+        b = self.a_inequalities.__dict__["blocks"]
+        self.a_inequalities = self.a_inequalities[:, free]
+        self.a_inequalities.__dict__["blocks"] = b
 
-        # u,ia,ib=unique_rows(self.Ainequalities.todense())
+        # u,ia,ib=unique_rows(self.a_inequalities.todense())
 
-        b = self.Aequalities.__dict__["blocks"]
-        self.Aequalities = self.Aequalities[:, free]
-        self.Aequalities.__dict__["blocks"] = b
+        b = self.a_equalities.__dict__["blocks"]
+        self.a_equalities = self.a_equalities[:, free]
+        self.a_equalities.__dict__["blocks"] = b
 
-        # find constrinats with single variable left
-        # self.Aequalities
+        # find constraints with single variable left
+        # self.a_equalities
 
-        # u,ia,ib=unique_rows(self.Aequalities.todense())
-        self.nb_variables = nbfree
-        self.lowerbounds = self.lowerbounds[free]
-        self.upperbounds = self.upperbounds[free]
+        # u,ia,ib=unique_rows(self.a_equalities.todense())
+        self.nb_variables = nb_free
+        self.lower_bounds = self.lower_bounds[free]
+        self.upper_bounds = self.upper_bounds[free]
 
-        # Bequalities= LP.Bequalities
-        # Bequalities= LP.Bequalities
-        return Mchange, shift
+        # b_equalities= LP.b_equalities
+        # b_equalities= LP.b_equalities
+        return m_change, shift
 
     def convert_to_slack_form(self):
         """Convert to the form min_y c.t Ay=b y>=0 by adding slack variables and shift on x
-        the solution of the original problem is obtained using x = Mchange*y+ shift with
+        the solution of the original problem is obtained using x = m_change*y+ shift with
         y the solution of the new problem
         have a look at https://ocw.mit.edu/courses/sloan-school-of-management/15-053-optimization-methods-in-management-science-spring-2013/tutorials/MIT15_053S13_tut06.pdf
         """
         self.convert_to_one_sided_inequality_system()
 
         # inverse variables that are only bounded above using a change of variable x=M*y
-        reverse = np.isinf(self.lowerbounds) & (~np.isinf(self.upperbounds))
+        reverse = np.isinf(self.lower_bounds) & (~np.isinf(self.upper_bounds))
         if np.any(reverse):
             raise ("this part of the code has not been tested yet")
             d = np.ones(self.nb_variables)
             d[reverse] = -1
-            M1 = scipy.sparse.spdiags([d], [0], self.nb_variables, self.nb_variables)
-            Ainequalities = None
-            Aequalities = None
-            if self.Ainequalities is not None:
-                Ainequalities = self.Ainequalities * M1
-                Ainequalities.__dict__["blocks"] = [(0, Ainequalities.shape[0] - 1)]
-            if self.Aequalities is not None:
-                Aequalities = self.Aequalities * M1
-                Aequalities.__dict__["blocks"] = [(0, Aequalities.shape[0] - 1)]
-            lowerbounds = copy.copy(self.lowerbounds)
-            upperbounds = copy.copy(self.upperbounds)
-            lowerbounds[reverse] = -self.upperbounds[reverse]
-            upperbounds[reverse] = -self.lowerbounds[reverse]
+            m1 = scipy.sparse.spdiags([d], [0], self.nb_variables, self.nb_variables)
+            a_inequalities = None
+            a_equalities = None
+            if self.a_inequalities is not None:
+                a_inequalities = self.a_inequalities * m1
+                a_inequalities.__dict__["blocks"] = [(0, a_inequalities.shape[0] - 1)]
+            if self.a_equalities is not None:
+                a_equalities = self.a_equalities * m1
+                a_equalities.__dict__["blocks"] = [(0, a_equalities.shape[0] - 1)]
+            lower_bounds = copy.copy(self.lower_bounds)
+            upper_bounds = copy.copy(self.upper_bounds)
+            lower_bounds[reverse] = -self.upper_bounds[reverse]
+            upper_bounds[reverse] = -self.lower_bounds[reverse]
 
         else:
-            M1 = scipy.sparse.eye(self.nb_variables)
-            lowerbounds = copy.copy(self.lowerbounds)
-            upperbounds = copy.copy(self.upperbounds)
-            Ainequalities = copy.copy(self.Ainequalities)
-            Aequalities = copy.copy(self.Aequalities)
+            m1 = scipy.sparse.eye(self.nb_variables)
+            lower_bounds = copy.copy(self.lower_bounds)
+            upper_bounds = copy.copy(self.upper_bounds)
+            a_inequalities = copy.copy(self.a_inequalities)
+            a_equalities = copy.copy(self.a_equalities)
 
         # shift lower bounds to 0 by a change of variable y =x-lb
         # Ax=b lb<=x<=ub =>	Ay=A(x-lb)=b-A*lb
-        shift = np.zeros(lowerbounds.size)
-        shift[~np.isinf(lowerbounds)] = lowerbounds[~np.isinf(lowerbounds)]
-        assert self.B_lower is None
-        B_upper = self.B_upper - Ainequalities * shift
+        shift = np.zeros(lower_bounds.size)
+        shift[~np.isinf(lower_bounds)] = lower_bounds[~np.isinf(lower_bounds)]
+        assert self.b_lower is None
+        b_upper = self.b_upper - a_inequalities * shift
 
-        if self.Bequalities is not None:
-            Bequalities = self.Bequalities - Aequalities * shift
+        if self.b_equalities is not None:
+            b_equalities = self.b_equalities - a_equalities * shift
         else:
-            Bequalities = None
+            b_equalities = None
 
-        upperbounds = upperbounds - shift
-        lowerbounds = lowerbounds - shift
+        upper_bounds = upper_bounds - shift
+        lower_bounds = lower_bounds - shift
 
         # put upper bound constraints into the inequality matrix
-        idupper = np.nonzero(~np.isinf(self.upperbounds))[0]
-        nbupper = len(idupper)
-        if nbupper > 0:
+        id_upper = np.nonzero(~np.isinf(self.upper_bounds))[0]
+        nb_upper = len(id_upper)
+        if nb_upper > 0:
             # raise 'this part of the code has not been tested yet'
-            T = scipy.sparse.coo_matrix(
-                (np.ones(nbupper), (np.arange(nbupper), idupper))
+            t = scipy.sparse.coo_matrix(
+                (np.ones(nb_upper), (np.arange(nb_upper), id_upper))
             )
-            csr_matrix_append_rows(Ainequalities, T.tocsr())
-            B_upper = np.append(B_upper, upperbounds[idupper])
-        upperbounds = None
+            csr_matrix_append_rows(a_inequalities, t.tocsr())
+            b_upper = np.append(b_upper, upper_bounds[id_upper])
+        upper_bounds = None
 
         # replace free variables by a difference of positive variables
-        free = np.isinf(-self.lowerbounds) & np.isinf(self.upperbounds)
+        free = np.isinf(-self.lower_bounds) & np.isinf(self.upper_bounds)
         # create the permutation matrix that set the all free variables after the other variables
-        nbfree = np.sum(free)
+        nb_free = np.sum(free)
         nb_variables = self.nb_variables
         costsvector = self.costsvector
-        if nbfree > 0:
+        if nb_free > 0:
             # raise 'this part of the code has not been tested yet'
-            nbnotfree = nb_variables - nbfree
-            J = (np.cumsum(~free) - 1) * (~free) + (np.cumsum(free) + nbnotfree - 1) * (
+            nb_not_free = nb_variables - nb_free
+            j_mat = (np.cumsum(~free) - 1) * (~free) + (np.cumsum(free) + nb_not_free - 1) * (
                 free
             )
             perm = scipy.sparse.coo_matrix(
-                (np.ones(self.nb_variables), (np.arange(self.nb_variables), J))
+                (np.ones(self.nb_variables), (np.arange(self.nb_variables), j_mat))
             )
             tmp = scipy.sparse.vstack(
                 (
                     scipy.sparse.hstack(
                         (
-                            scipy.sparse.eye(nbnotfree),
-                            scipy.sparse.coo_matrix((nbnotfree, 2 * nbfree)),
+                            scipy.sparse.eye(nb_not_free),
+                            scipy.sparse.coo_matrix((nb_not_free, 2 * nb_free)),
                         )
                     ),
                     scipy.sparse.hstack(
                         (
-                            scipy.sparse.coo_matrix((nbfree, nbnotfree)),
-                            scipy.sparse.eye(nbfree),
-                            -scipy.sparse.eye(nbfree),
+                            scipy.sparse.coo_matrix((nb_free, nb_not_free)),
+                            scipy.sparse.eye(nb_free),
+                            -scipy.sparse.eye(nb_free),
                         )
                     ),
                 )
             )
-            M2 = perm * tmp
-            Mchange = M1 * M2
-            nb_variables = nbnotfree + 2 * nbfree
-            lowerbounds = np.zeros(nb_variables)
-            costsvector = costsvector * Mchange
-            if Aequalities is not None:
-                Aequalities = Aequalities * Mchange
-                Aequalities.__dict__["blocks"] = [(0, Aequalities.shape[0] - 1)]
-            if Ainequalities is not None:
-                Ainequalities = Ainequalities * Mchange
-                Ainequalities.__dict__["blocks"] = [(0, Ainequalities.shape[0] - 1)]
+            m2 = perm * tmp
+            m_change = m1 * m2
+            nb_variables = nb_not_free + 2 * nb_free
+            lower_bounds = np.zeros(nb_variables)
+            costsvector = costsvector * m_change
+            if a_equalities is not None:
+                a_equalities = a_equalities * m_change
+                a_equalities.__dict__["blocks"] = [(0, a_equalities.shape[0] - 1)]
+            if a_inequalities is not None:
+                a_inequalities = a_inequalities * m_change
+                a_inequalities.__dict__["blocks"] = [(0, a_inequalities.shape[0] - 1)]
         else:
-            Mchange = M1
+            m_change = m1
 
         # remove lower inequality constraints
 
         # replace inequality constraint Ax<=b  by ax+s=b s>=0
-        nbslack = Ainequalities.shape[0]
+        nbslack = a_inequalities.shape[0]
 
         nb_variables = nb_variables + nbslack
-        Ainequalities = scipy.sparse.hstack((Ainequalities, scipy.sparse.eye(nbslack)))
-        Aequalities._shape = (Aequalities.shape[0], nb_variables)
-        Mchange = Mchange.tocsr()
-        Mchange._shape = (Mchange.shape[0], nb_variables)
+        a_inequalities = scipy.sparse.hstack((a_inequalities, scipy.sparse.eye(nbslack)))
+        a_equalities._shape = (a_equalities.shape[0], nb_variables)
+        m_change = m_change.tocsr()
+        m_change._shape = (m_change.shape[0], nb_variables)
 
-        lowerbounds = np.append(lowerbounds, np.zeros(nbslack))
+        lower_bounds = np.append(lower_bounds, np.zeros(nbslack))
         costsvector = np.append(costsvector, np.zeros(nbslack))
 
-        csr_matrix_append_rows(Aequalities, Ainequalities.tocsr())
-        Bequalities = np.append(Bequalities, B_upper)
+        csr_matrix_append_rows(a_equalities, a_inequalities.tocsr())
+        b_equalities = np.append(b_equalities, b_upper)
 
-        B_lower = None
-        B_upper = None
-        Ainequalities = None
+        b_lower = None
+        b_upper = None
+        a_inequalities = None
 
         self.nb_variables = nb_variables
-        self.B_lower = B_lower
-        self.B_upper = B_upper
-        self.Ainequalities = Ainequalities
-        self.Bequalities = Bequalities
-        self.Aequalities = Aequalities
-        self.lowerbounds = lowerbounds
-        self.upperbounds = upperbounds
+        self.b_lower = b_lower
+        self.b_upper = b_upper
+        self.a_inequalities = a_inequalities
+        self.b_equalities = b_equalities
+        self.a_equalities = a_equalities
+        self.lower_bounds = lower_bounds
+        self.upper_bounds = upper_bounds
         self.costsvector = costsvector
 
-        return Mchange, shift
+        return m_change, shift
 
     def convert_to_all_equalities(self):
         """Convert to the form min c.t Ax=b lb<=x<=ub by adding slack variables
         the solution of th original problem is obtained using the first elements in x.
         """
-        if self.Ainequalities is not None:
-            m = self.Ainequalities.shape[0]
-            n = self.Ainequalities.shape[1]
-            self.add_variables_array(m, self.B_lower, self.B_upper)
-            self.Ainequalities._shape = (self.Ainequalities.shape[0], n)
+        if self.a_inequalities is not None:
+            m = self.a_inequalities.shape[0]
+            n = self.a_inequalities.shape[1]
+            self.add_variables_array(m, self.b_lower, self.b_upper)
+            self.a_inequalities._shape = (self.a_inequalities.shape[0], n)
             self.add_constraints_sparse(
-                scipy.sparse.hstack((self.Ainequalities, -scipy.sparse.eye(m))), 0, 0
+                scipy.sparse.hstack((self.a_inequalities, -scipy.sparse.eye(m))), 0, 0
             )
-            self.B_lower = None
-            self.B_upper = None
-            self.Ainequalities = None
+            self.b_lower = None
+            self.b_upper = None
+            self.a_inequalities = None
 
     def convert_to_one_sided_inequality_system(self):
-        """Convert to the form min c.t Aineq x<=b_ineq Ax=b lb<=x<=ub by adding augmenting the size of Aineq."""
-        if (self.Ainequalities is not None) and (self.B_lower is not None):
-            idskeep_upper = np.nonzero(self.B_upper != np.inf)[0]
-            mapping_upper = np.hstack(([0], np.cumsum(self.B_upper != np.inf)))
-            idskeep_lower = np.nonzero(self.B_lower != -np.inf)[0]
-            mapping_lower = np.hstack(([0], np.cumsum(self.B_lower != np.inf)))
+        """Convert to the form min c.t a_ineq x<=b_ineq Ax=b lb<=x<=ub by adding augmenting the size of a_ineq."""
+        if (self.a_inequalities is not None) and (self.b_lower is not None):
+            idskeep_upper = np.nonzero(self.b_upper != np.inf)[0]
+            mapping_upper = np.hstack(([0], np.cumsum(self.b_upper != np.inf)))
+            idskeep_lower = np.nonzero(self.b_lower != -np.inf)[0]
+            mapping_lower = np.hstack(([0], np.cumsum(self.b_lower != np.inf)))
             if len(idskeep_lower) > 0 and len(idskeep_upper) > 0:
 
                 new_inequality_constraint_names = []
@@ -809,28 +809,28 @@ class SparseLP:
                     new_inequality_constraint_names.append(d)
 
                 self.inequalityConstraintNames = new_inequality_constraint_names
-                self.Ainequalities = scipy.sparse.vstack(
+                self.a_inequalities = scipy.sparse.vstack(
                     (
-                        self.Ainequalities[idskeep_upper, :],
-                        -self.Ainequalities[idskeep_lower, :],
+                        self.a_inequalities[idskeep_upper, :],
+                        -self.a_inequalities[idskeep_lower, :],
                     )
                 ).tocsr()
 
             elif len(idskeep_lower) > 0:
-                self.Ainequalities = -self.Ainequalities
+                self.a_inequalities = -self.a_inequalities
             else:
-                self.Ainequalities = self.Ainequalities
-            self.Ainequalities.__dict__["blocks"] = [
-                (0, self.Ainequalities.shape[0] - 1)
+                self.a_inequalities = self.a_inequalities
+            self.a_inequalities.__dict__["blocks"] = [
+                (0, self.a_inequalities.shape[0] - 1)
             ]
-            self.B_upper = np.hstack(
-                (self.B_upper[idskeep_upper], -self.B_lower[idskeep_lower])
+            self.b_upper = np.hstack(
+                (self.b_upper[idskeep_upper], -self.b_lower[idskeep_lower])
             )
-            self.B_lower = None
+            self.b_lower = None
 
     def convert_to_all_inequalities(self):
-        """Convert to the form min c.t b_lower<=Aineq x<=b_upper lb<=x<=ub by adding augmenting the size of Aineq."""
-        if self.Aequalities is not None:
+        """Convert to the form min c.t b_lower<=a_ineq x<=b_upper lb<=x<=ub by adding augmenting the size of a_ineq."""
+        if self.a_equalities is not None:
 
             new_inequality_constraint_names = []
             for d in self.equalityConstraintNames:
@@ -839,38 +839,38 @@ class SparseLP:
 
                 d = {
                     "name": d["name"],
-                    "start": self.Aequalities.shape[0] + d["start"],
-                    "end": self.Aequalities.shape[0] + d["end"],
+                    "start": self.a_equalities.shape[0] + d["start"],
+                    "end": self.a_equalities.shape[0] + d["end"],
                 }
                 new_inequality_constraint_names.append(d)
             self.inequalityConstraintNames = new_inequality_constraint_names
             self.equalityConstraintNames = []
 
-            self.Ainequalities = scipy.sparse.vstack(
-                (self.Aequalities, self.Ainequalities)
+            self.a_inequalities = scipy.sparse.vstack(
+                (self.a_equalities, self.a_inequalities)
             )
-            if self.B_lower is None:
-                self.B_lower = np.full((self.Ainequalities.shape[0]), -np.inf)
-            self.B_lower = np.hstack((self.Bequalities, self.B_lower))
-            if self.B_upper is None:
-                self.B_upper = np.full((self.Ainequalities.shape[0]), np.inf)
-            self.B_upper = np.hstack((self.Bequalities, self.B_upper))
-            self.Aequalities = None
-            self.Bequalities = None
+            if self.b_lower is None:
+                self.b_lower = np.full((self.a_inequalities.shape[0]), -np.inf)
+            self.b_lower = np.hstack((self.b_equalities, self.b_lower))
+            if self.b_upper is None:
+                self.b_upper = np.full((self.a_inequalities.shape[0]), np.inf)
+            self.b_upper = np.hstack((self.b_equalities, self.b_upper))
+            self.a_equalities = None
+            self.b_equalities = None
 
     def convert_to_cvxpy(self):
 
-        if not (self.Ainequalities is None) and self.Ainequalities.shape[0] > 0:
-            check_csr_matrix(self.Ainequalities)
-            Aineq = self.Ainequalities
+        if not (self.a_inequalities is None) and self.a_inequalities.shape[0] > 0:
+            check_csr_matrix(self.a_inequalities)
+            a_ineq = self.a_inequalities
         else:
-            Aineq = None
-        if self.Aequalities.shape[0] > 0:
-            Aeq = self.Aequalities
-            Beq = self.Bequalities
+            a_ineq = None
+        if self.a_equalities.shape[0] > 0:
+            a_eq = self.a_equalities
+            b_eq = self.b_equalities
         else:
-            Aeq = None
-            Beq = None
+            a_eq = None
+            b_eq = None
 
         # uses cvxpy to call SCS as it make its easier to specify tje problem
         # Problem data.
@@ -880,73 +880,73 @@ class SparseLP:
 
         constraints = []
 
-        if np.all(np.isinf(self.lowerbounds)):
+        if np.all(np.isinf(self.lower_bounds)):
             pass
-        elif np.any(np.isinf(self.lowerbounds)):
+        elif np.any(np.isinf(self.lower_bounds)):
             print("not code yet")
             raise
         else:
-            constraints.append(self.lowerbounds <= x)
+            constraints.append(self.lower_bounds <= x)
 
-        if np.all(np.isinf(self.upperbounds)):
+        if np.all(np.isinf(self.upper_bounds)):
             pass
-        elif np.any(np.isinf(self.upperbounds)):
+        elif np.any(np.isinf(self.upper_bounds)):
             print("not code yet")
             raise
         else:
-            constraints.append(x <= self.upperbounds)
+            constraints.append(x <= self.upper_bounds)
 
-        if Aineq is not None:
-            if self.B_upper is not None:
-                if np.all(np.isinf(self.B_upper)):
+        if a_ineq is not None:
+            if self.b_upper is not None:
+                if np.all(np.isinf(self.b_upper)):
                     pass
-                elif np.any(np.isinf(self.B_upper)):
+                elif np.any(np.isinf(self.b_upper)):
                     print("not yet coded")
                     raise
                 else:
-                    constraints.append(Aineq * x <= self.B_upper)
-            if self.B_lower is not None:
-                if np.all(np.isinf(self.B_lower)):
+                    constraints.append(a_ineq * x <= self.b_upper)
+            if self.b_lower is not None:
+                if np.all(np.isinf(self.b_lower)):
                     pass
-                elif np.any(np.isinf(self.B_lower)):
+                elif np.any(np.isinf(self.b_lower)):
                     print("not yet coded")
                     raise
                 else:
-                    constraints.append(self.B_lower <= Aineq * x)
-        if Aeq is not None:
-            constraints.append(Aeq * x == Beq)
+                    constraints.append(self.b_lower <= a_ineq * x)
+        if a_eq is not None:
+            constraints.append(a_eq * x == b_eq)
         prob = cvxpy.Problem(objective, constraints)
         return prob, x
 
     def solve(
         self,
-        method="ADMM",
-        getTiming=True,
+        method="admm",
+        get_timing=True,
         x0=None,
         nb_iter=10000,
         max_time=None,
         callback_func=None,
         nb_iter_plot=10,
         plot_solution=None,
-        groundTruth=None,
-        groundTruthIndices=None,
+        ground_truth=None,
+        ground_truth_indices=None,
     ):
 
-        if not (self.Ainequalities is None) and self.Ainequalities.shape[0] > 0:
-            check_csr_matrix(self.Ainequalities)
-            Aineq = self.Ainequalities
+        if not (self.a_inequalities is None) and self.a_inequalities.shape[0] > 0:
+            check_csr_matrix(self.a_inequalities)
+            a_ineq = self.a_inequalities
         else:
-            Aineq = None
-        if self.Aequalities.shape[0] > 0:
-            Aeq = self.Aequalities
-            Beq = self.Bequalities
+            a_ineq = None
+        if self.a_equalities.shape[0] > 0:
+            a_eq = self.a_equalities
+            b_eq = self.b_equalities
         else:
-            Aeq = None
-            Beq = None
+            a_eq = None
+            b_eq = None
 
         start = time.clock()
 
-        self.distanceToGroundTruth = []
+        self.distance_to_ground_truth = []
         self.distanceToGroundTruthAfterRounding = []
         self.opttime_curve = []
         self.dopttime_curve = []
@@ -959,13 +959,13 @@ class SparseLP:
         self.itrn_curve = []
 
         def scipy_simplex_call_back(solution, **kwargs):
-            if groundTruth is not None:
-                self.distanceToGroundTruth.append(
-                    np.mean(np.abs(groundTruth - solution[groundTruthIndices]))
+            if ground_truth is not None:
+                self.distance_to_ground_truth.append(
+                    np.mean(np.abs(ground_truth - solution[ground_truth_indices]))
                 )
                 self.distanceToGroundTruthAfterRounding.append(
                     np.mean(
-                        np.abs(groundTruth - np.round(solution[groundTruthIndices]))
+                        np.abs(ground_truth - np.round(solution[ground_truth_indices]))
                     )
                 )
             duration = time.clock() - start
@@ -975,13 +975,13 @@ class SparseLP:
             self.max_violated_constraint.append(maxv)
 
         def simplex_call_back(solution, **kwargs):
-            if groundTruth is not None:
-                self.distanceToGroundTruth.append(
-                    np.mean(np.abs(groundTruth - solution[groundTruthIndices]))
+            if ground_truth is not None:
+                self.distance_to_ground_truth.append(
+                    np.mean(np.abs(ground_truth - solution[ground_truth_indices]))
                 )
                 self.distanceToGroundTruthAfterRounding.append(
                     np.mean(
-                        np.abs(groundTruth - np.round(solution[groundTruthIndices]))
+                        np.abs(ground_truth - np.round(solution[ground_truth_indices]))
                     )
                 )
             duration = time.clock() - start
@@ -1000,13 +1000,13 @@ class SparseLP:
             max_violated_inequality,
             is_active_variable=None,
         ):
-            if groundTruth is not None:
-                self.distanceToGroundTruth.append(
-                    np.mean(np.abs(groundTruth - solution[groundTruthIndices]))
+            if ground_truth is not None:
+                self.distance_to_ground_truth.append(
+                    np.mean(np.abs(ground_truth - solution[ground_truth_indices]))
                 )
                 self.distanceToGroundTruthAfterRounding.append(
                     np.mean(
-                        np.abs(groundTruth - np.round(solution[groundTruthIndices]))
+                        np.abs(ground_truth - np.round(solution[ground_truth_indices]))
                     )
                 )
             self.itrn_curve.append(niter)
@@ -1028,24 +1028,24 @@ class SparseLP:
                 print(vmethod)
             raise
         if method == "scipy_linprog":
-            if not (self.B_lower is None):
+            if not (self.b_lower is None):
                 print(
                     "you need to convert your lp to a one side inequality system using convert_to_one_sided_inequality_system"
                 )
                 raise
-            if Aeq is None:
-                A_eq = None
+            if a_eq is None:
+                a_eq = None
                 b_eq = None
             else:
-                A_eq = Aeq.toarray()
-                b_eq = Beq
+                a_eq = a_eq.toarray()
+                b_eq = b_eq
             sol = scipy.optimize.linprog(
                 self.costsvector,
-                A_ub=Aineq.toarray(),
-                b_ub=self.B_upper,
-                A_eq=A_eq,
+                A_ub=a_ineq.toarray(),
+                b_ub=self.b_upper,
+                a_eq=a_eq,
                 b_eq=b_eq,
-                bounds=np.column_stack((self.lowerbounds, self.upperbounds)),
+                bounds=np.column_stack((self.lower_bounds, self.upper_bounds)),
                 method="simplex",
                 callback=scipy_simplex_call_back,
             )
@@ -1055,25 +1055,25 @@ class SparseLP:
 
         elif method == "mehrotra":
 
-            LPslack = copy.deepcopy(self)
-            Mchange1, shift1 = LPslack.remove_fixed_variables()  # removed fixed variables
-            Mchange2, shift2 = LPslack.convert_to_slack_form()
+            lp_slack = copy.deepcopy(self)
+            m_change1, shift1 = lp_slack.remove_fixed_variables()  # removed fixed variables
+            m_change2, shift2 = lp_slack.convert_to_slack_form()
 
             def mehrotra_call_back(solution, niter, **kwargs):
-                x = Mchange2 * solution - shift2
-                x = Mchange1 * x - shift1
+                x = m_change2 * solution - shift2
+                x = m_change1 * x - shift1
                 self.itrn_curve.append(niter)
                 simplex_call_back(x)
 
-            f, x, y, s, N = mpc_sol(
-                LPslack.Aequalities,
-                LPslack.Bequalities,
-                LPslack.costsvector,
-                callBack=mehrotra_call_back,
+            f, x, y, s, n = mpc_sol(
+                lp_slack.a_equalities,
+                lp_slack.b_equalities,
+                lp_slack.costsvector,
+                callback=mehrotra_call_back,
             )
-            LPslack.check_solution(x)
-            x = Mchange2 * x - shift2
-            x = Mchange1 * x - shift1
+            lp_slack.check_solution(x)
+            x = m_change2 * x - shift2
+            x = m_change1 * x - shift1
             self.check_solution(x)
             self.max_constraint_violation(x)
 
@@ -1086,8 +1086,8 @@ class SparseLP:
 
             # from cvxopt import matrix, solvers
             # the format axcpt
-            # LPslack=copy.deepcopy(self)
-            # Mchange,shift=LPslack.convert_to_slack_form()
+            # lp_slack=copy.deepcopy(self)
+            # m_change,shift=lp_slack.convert_to_slack_form()
             # sol=solvers.lp(c, G, h, A , b)  # uses cvxopt conic solver
             # need to rewrite the problem in the form
             # minimize    c'*x
@@ -1112,13 +1112,13 @@ class SparseLP:
         elif method == "admm":
             x = lp_admm(
                 self.costsvector,
-                Aeq,
-                Beq,
-                Aineq,
-                self.B_lower,
-                self.B_upper,
-                self.lowerbounds,
-                self.upperbounds,
+                a_eq,
+                b_eq,
+                a_ineq,
+                self.b_lower,
+                self.b_upper,
+                self.lower_bounds,
+                self.upper_bounds,
                 nb_iter=nb_iter,
                 x0=x0,
                 callback_func=callback_func,
@@ -1129,13 +1129,13 @@ class SparseLP:
         elif method == "admm_blocks":
             x = lp_admm_block_decomposition(
                 self.costsvector,
-                Aeq,
-                Beq,
-                Aineq,
-                self.B_lower,
-                self.B_upper,
-                self.lowerbounds,
-                self.upperbounds,
+                a_eq,
+                b_eq,
+                a_ineq,
+                self.b_lower,
+                self.b_upper,
+                self.lower_bounds,
+                self.upper_bounds,
                 nb_iter=nb_iter,
                 nb_iter_plot=nb_iter_plot,
                 x0=x0,
@@ -1145,13 +1145,13 @@ class SparseLP:
         elif method == "admm2":
             x = lp_admm2(
                 self.costsvector,
-                Aeq,
-                Beq,
-                Aineq,
-                self.B_lower,
-                self.B_upper,
-                self.lowerbounds,
-                self.upperbounds,
+                a_eq,
+                b_eq,
+                a_ineq,
+                self.b_lower,
+                self.b_upper,
+                self.lower_bounds,
+                self.upper_bounds,
                 nb_iter=nb_iter,
                 x0=x0,
                 callback_func=callback_func,
@@ -1160,11 +1160,11 @@ class SparseLP:
             )
 
         elif method == "chambolle_pock_ppd":
-            LPreduced = copy.deepcopy(self)
+            lp_reduced = copy.deepcopy(self)
             (
-                Mchange1,
+                m_change1,
                 shift1,
-            ) = LPreduced.remove_fixed_variables()  # removed fixed variables
+            ) = lp_reduced.remove_fixed_variables()  # removed fixed variables
 
             def this_back(
                 niter,
@@ -1175,7 +1175,7 @@ class SparseLP:
                 max_violated_equality,
                 max_violated_inequality,
             ):
-                solution = Mchange1 * solution - shift1
+                solution = m_change1 * solution - shift1
                 callback_func(
                     niter,
                     solution,
@@ -1187,14 +1187,14 @@ class SparseLP:
                 )
 
             x, best_integer_solution = chambolle_pock_ppd(
-                LPreduced.costsvector,
-                LPreduced.Aequalities,
-                LPreduced.Bequalities,
-                LPreduced.Ainequalities,
-                LPreduced.B_lower,
-                LPreduced.B_upper,
-                LPreduced.lowerbounds,
-                LPreduced.upperbounds,
+                lp_reduced.costsvector,
+                lp_reduced.a_equalities,
+                lp_reduced.b_equalities,
+                lp_reduced.a_inequalities,
+                lp_reduced.b_lower,
+                lp_reduced.b_upper,
+                lp_reduced.lower_bounds,
+                lp_reduced.upper_bounds,
                 x0=None,
                 alpha=1,
                 theta=1,
@@ -1204,13 +1204,13 @@ class SparseLP:
                 save_problem=False,
                 nb_iter_plot=nb_iter_plot,
             )
-            x = Mchange1 * x - shift1
+            x = m_change1 * x - shift1
         elif method == "chambolle_pock_ppdas":
-            LPreduced = copy.deepcopy(self)
+            lp_reduced = copy.deepcopy(self)
             (
-                Mchange1,
+                m_change1,
                 shift1,
-            ) = LPreduced.remove_fixed_variables()  # removed fixed variables
+            ) = lp_reduced.remove_fixed_variables()  # removed fixed variables
 
             def this_back(
                 niter,
@@ -1222,7 +1222,7 @@ class SparseLP:
                 max_violated_inequality,
                 is_active_variable,
             ):
-                solution = Mchange1 * solution - shift1
+                solution = m_change1 * solution - shift1
                 callback_func(
                     niter,
                     solution,
@@ -1234,7 +1234,7 @@ class SparseLP:
                 )
 
             x, best_integer_x = chambolle_pock_ppdas(
-                LPreduced,
+                lp_reduced,
                 x0=x0,
                 alpha=1,
                 theta=1,
@@ -1244,13 +1244,13 @@ class SparseLP:
                 callback_func=this_back,
                 max_time=max_time,
             )
-            x = Mchange1 * x - shift1
+            x = m_change1 * x - shift1
 
         elif method == "dual_gradient_ascent":
             x, y_eq, y_ineq = dual_gradient_ascent(
                 x=x0,
-                LP=self,
-                nbmaxiter=nb_iter,
+                lp=self,
+                nb_max_iter=nb_iter,
                 callback_func=callback_func,
                 y_eq=None,
                 y_ineq=None,
@@ -1258,11 +1258,11 @@ class SparseLP:
                 nb_iter_plot=nb_iter_plot,
             )
         elif method == "dual_coordinate_ascent":
-            LPreduced = copy.deepcopy(self)
+            lp_reduced = copy.deepcopy(self)
             (
-                Mchange1,
+                m_change1,
                 shift1,
-            ) = LPreduced.remove_fixed_variables()  # removed fixed variables
+            ) = lp_reduced.remove_fixed_variables()  # removed fixed variables
 
             def this_back(
                 niter,
@@ -1273,7 +1273,7 @@ class SparseLP:
                 max_violated_equality,
                 max_violated_inequality,
             ):
-                solution = Mchange1 * solution - shift1
+                solution = m_change1 * solution - shift1
                 callback_func(
                     niter,
                     solution,
@@ -1286,22 +1286,22 @@ class SparseLP:
 
             x, y_eq, y_ineq = dual_coordinate_ascent(
                 x=None,
-                LP=LPreduced,
-                nbmaxiter=nb_iter,
+                lp=lp_reduced,
+                nb_max_iter=nb_iter,
                 callback_func=this_back,
                 y_eq=None,
                 y_ineq=None,
                 max_time=max_time,
                 nb_iter_plot=nb_iter_plot,
             )
-            x = Mchange1 * x - shift1
+            x = m_change1 * x - shift1
 
         else:
             print("unkown LP solver method " + method)
             raise
         elapsed = time.clock() - start
 
-        if getTiming:
+        if get_timing:
             return x, elapsed
         else:
             return x

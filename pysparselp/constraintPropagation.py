@@ -46,12 +46,12 @@ except BaseException:
     propagate_constraints_installed = False
 
 
-def check_constraints(i, x_r, mask, Acsr, Acsc, b_lower, b_upper):
+def check_constraints(i, x_r, mask, a_csr, a_csc, b_lower, b_upper):
     """Check that the variable i is not involed in any violated constraint."""
     violated = False
-    constraints_to_check = np.nonzero(Acsc[:, i])[0]
+    constraints_to_check = np.nonzero(a_csc[:, i])[0]
     for j in constraints_to_check:
-        line = Acsr[j, :]
+        line = a_csr[j, :]
         interval_d = 0
         interval_u = 0
         for k in range(line.indices.size):
@@ -76,8 +76,8 @@ def propagate_constraints(
     list_changed_var,
     x_l,
     x_u,
-    Acsr,
-    Acsc,
+    a_csr,
+    a_csc,
     b_lower,
     b_upper,
     back_ops,
@@ -88,16 +88,16 @@ def propagate_constraints(
 
     if propagate_constraints_installed and use_cython:
 
-        # return cython_tools.propagate_constraints(list_changed_var,x_l,x_u,Acsr,Acsc,b_lower,b_upper,back_ops,nb_iter=nb_iter)
+        # return cython_tools.propagate_constraints(list_changed_var,x_l,x_u,a_csr,a_csc,b_lower,b_upper,back_ops,nb_iter=nb_iter)
         return cython_propagate_constraints.propagate_constraints(
             list_changed_var,
             x_l,
             x_u,
-            Acsc.indices,
-            Acsr.indices,
-            Acsr.indptr,
-            Acsc.indptr,
-            Acsr.data,
+            a_csc.indices,
+            a_csr.indices,
+            a_csr.indptr,
+            a_csc.indptr,
+            a_csr.data,
             b_lower,
             b_upper,
             back_ops,
@@ -113,19 +113,19 @@ def propagate_constraints(
 
         list_constraints_to_check2 = []
         for i in list_changed_var:
-            # to_add=np.nonzero(Acsc[:,i])[0]
-            to_add2 = Acsc.indices[Acsc.indptr[i] : Acsc.indptr[i + 1]]
+            # to_add=np.nonzero(a_csc[:,i])[0]
+            to_add2 = a_csc.indices[a_csc.indptr[i] : a_csc.indptr[i + 1]]
             # assert(np.all(to_add==to_add2))
             list_constraints_to_check2.append(to_add2)
         list_constraints_to_check2 = np.unique(np.hstack(list_constraints_to_check2))
         list_changed_var = []
-        # list_constraints_to_check=np.arange(Acsr.shape[0])
+        # list_constraints_to_check=np.arange(a_csr.shape[0])
         for j in list_constraints_to_check2:
-            # line=Acsr[j,:]# very slow...
+            # line=a_csr[j,:]# very slow...
             # indices=line.indices
             # data=line.data
-            indices = Acsr.indices[Acsr.indptr[j] : Acsr.indptr[j + 1]]
-            data = Acsr.data[Acsr.indptr[j] : Acsr.indptr[j + 1]]
+            indices = a_csr.indices[a_csr.indptr[j] : a_csr.indptr[j + 1]]
+            data = a_csr.data[a_csr.indptr[j] : a_csr.indptr[j + 1]]
 
             interval_l = 0
             interval_u = 0
@@ -184,40 +184,40 @@ def revert(back_ops, x_l, x_u):
 
 
 def greedy_round(
-    x, LP, callback_func=None, maxiter=np.inf, order=None, fixed=None, displayFunc=None
+    x, lp, callback_func=None, maxiter=np.inf, order=None, fixed=None, display_func=None
 ):
 
     # save_arguments('greedy_round_test')
     if False:
         import pickle
 
-        d = {"x": x, "LP": LP}
+        d = {"x": x, "lp": lp}
         with open("greedy_test.pkl", "wb") as f:
             pickle.dump(d, f)
     if callback_func is not None:
         callback_func(0, np.round(x), 0, 0, 0, 0, 0)
-    LP2 = copy.copy(LP)
-    LP2.convert_to_all_inequalities()
-    assert LP2.Aequalities is None
+    lp2 = copy.copy(lp)
+    lp2.convert_to_all_inequalities()
+    assert lp2.a_equalities is None
 
-    x_u = LP2.upperbounds.copy()
-    x_l = LP2.lowerbounds.copy()
+    x_u = lp2.upper_bounds.copy()
+    x_l = lp2.lower_bounds.copy()
 
     if fixed is not None:
         x_l[fixed] = x[fixed]
         x_u[fixed] = x[fixed]
 
-    A = LP2.Ainequalities
-    b_l = LP2.B_lower.copy()
-    b_u = LP2.B_upper.copy()
+    a_ineq = lp2.a_inequalities
+    b_l = lp2.b_lower.copy()
+    b_u = lp2.b_upper.copy()
 
     # callback_func(0,np.maximum(x_r.astype(np.float),0),0,0,0,0,0)
-    A_csr = A.tocsr()
-    A_csc = A.tocsc()
+    a_ineq_csr = a_ineq.tocsr()
+    a_ineq_csc = a_ineq.tocsc()
     if order is None:
         # sort from the less fractional to the most fractional
         # order=np.argsort(np.abs(x-np.round(x))+c*np.round(x))
-        order = np.argsort(LP2.costsvector * (2 * np.round(x) - 1))
+        order = np.argsort(lp2.costsvector * (2 * np.round(x) - 1))
         # order=np.argsort(LP2.costsvector*np.round(x))
         # order=np.arange(x.size)
         # order=np.arange(x.size)[::-1]
@@ -228,8 +228,8 @@ def greedy_round(
     nb_backtrack = 0
     # callback_func(0,x,0,0,0,0,0)
 
-    valid, idcons = propagate_constraints(
-        np.arange(A.shape[1]), x_l, x_u, A_csr, A_csc, b_l, b_u, []
+    valid, id_constraints = propagate_constraints(
+        np.arange(a_ineq.shape[1]), x_l, x_u, a_ineq_csr, a_ineq_csc, b_l, b_u, []
     )
     if valid == 0:
         return x_r, valid
@@ -246,80 +246,80 @@ def greedy_round(
         # callback_func(0,x_l,0,0,0,0,0)
         # print depth
 
-        idvar = order[depth]
+        id_var = order[depth]
         # print mask[order]
-        if mask[idvar] == 2:
-            mask[idvar] = 0
+        if mask[id_var] == 2:
+            mask[id_var] = 0
             revert(back_ops[depth], x_l, x_u)
             depth = depth - 1
             revert(back_ops[depth], x_l, x_u)
             print("step back to depth %d" % depth)
-            if displayFunc is not None:
-                displayFunc(x_r)
+            if display_func is not None:
+                display_func(x_r)
             continue
 
         if (
-            x_u[idvar] == x_l[idvar]
+            x_u[id_var] == x_l[id_var]
         ):  # the variable is already fixed thanks to constraint propagation
             back_ops[depth] = []
             depth = depth + 1
-            x_r[idvar] = x_u[idvar]
-            mask[idvar] = 2
-        elif mask[idvar] == 0:
-            x_r[idvar] = np.round(x[idvar])
-            if displayFunc is not None:
-                displayFunc(x_r)
-            mask[idvar] = 1
+            x_r[id_var] = x_u[id_var]
+            mask[id_var] = 2
+        elif mask[id_var] == 0:
+            x_r[id_var] = np.round(x[id_var])
+            if display_func is not None:
+                display_func(x_r)
+            mask[id_var] = 1
             back_ops[depth] = []
-            back_ops[depth].append((1, idvar, x_u[idvar]))
-            back_ops[depth].append((0, idvar, x_l[idvar]))
-            x_u[idvar] = x_r[idvar]
-            x_l[idvar] = x_r[idvar]
+            back_ops[depth].append((1, id_var, x_u[id_var]))
+            back_ops[depth].append((0, id_var, x_l[id_var]))
+            x_u[id_var] = x_r[id_var]
+            x_l[id_var] = x_r[id_var]
 
             # violated_eq=check_constraints(idvar,x_r,mask,Aeq_csr,Aeq_csc,beq,beq)
             # violated_ineq=check_constraints(idvar,x_r,mask,Aineq_csr,Aineq_csc,b_lower,b_upper)
             # violated=violated_eq | violated_ineq
-            valid, idcons = propagate_constraints(
-                [idvar], x_l, x_u, A_csr, A_csc, b_l, b_u, back_ops[depth]
+            valid, id_constraints = propagate_constraints(
+                [id_var], x_l, x_u, a_ineq_csr, a_ineq_csc, b_l, b_u, back_ops[depth]
             )
             x_r[x_l == x_u] = x_l[x_l == x_u]
-            if displayFunc is not None:
-                displayFunc(x_r)
-            x_l[idvar]
+            if display_func is not None:
+                display_func(x_r)
+            x_l[id_var]
             if valid:
-                # valid,back_ops_init2=propagate_constraints(np.arange(A.shape[1]),x_l, x_u, A_csr, A_csc, b_l, b_u,[])
+                # valid,back_ops_init2=propagate_constraints(np.arange(A.shape[1]),x_l, x_u, a_csr, a_csc, b_l, b_u,[])
                 # assert(len(back_ops_init2)==0)
                 depth = depth + 1
 
             else:
                 revert(back_ops[depth], x_l, x_u)
 
-        elif mask[idvar] == 1:
+        elif mask[id_var] == 1:
 
-            x_r[idvar] = 1 - round(x[idvar])
+            x_r[id_var] = 1 - round(x[id_var])
             back_ops[depth] = []
-            back_ops[depth].append((1, idvar, x_u[idvar]))
-            back_ops[depth].append((0, idvar, x_l[idvar]))
-            x_u[idvar] = x_r[idvar]
-            x_l[idvar] = x_r[idvar]
+            back_ops[depth].append((1, id_var, x_u[id_var]))
+            back_ops[depth].append((0, id_var, x_l[id_var]))
+            x_u[id_var] = x_r[id_var]
+            x_l[id_var] = x_r[id_var]
 
-            mask[idvar] = 2
-            valid, idcons = propagate_constraints(
-                [idvar], x_l, x_u, A_csr, A_csc, b_l, b_u, back_ops[depth]
+            mask[id_var] = 2
+            valid, id_constraints = propagate_constraints(
+                [id_var], x_l, x_u, a_ineq_csr, a_ineq_csc, b_l, b_u, back_ops[depth]
             )
             if valid:
-                # valid,back_ops_init2=propagate_constraints(np.arange(A.shape[1]),x_l, x_u, A_csr, A_csc, b_l, b_u,[])
+                # valid,back_ops_init2=propagate_constraints(np.arange(A.shape[1]),x_l, x_u, a_csr, a_csc, b_l, b_u,[])
                 # assert(len(back_ops_init2)==0)
                 depth = depth + 1
 
             else:
-                mask[idvar] = 0
+                mask[id_var] = 0
                 # callback_func(0,x_l,0,0,0,0,0)
                 # name=LP.get_inequality_constraint_name_from_id(idcons)['name']
                 # print 'constaint %d of type %s violated,steping back to depth %d'%(idcons,name,depth)
 
                 x_l2 = x_l.copy() * 0.5
-                x_l2[idvar] = 1
+                x_l2[id_var] = 1
                 # callback_func(0,x_l2,0,0,0,0,0)
 
                 revert(back_ops[depth], x_l, x_u)
@@ -332,76 +332,76 @@ def greedy_round(
                 # raise # need a way to save the bound constraint to restore it
     # callback_func(0,np.maximum(x_r.astype(np.float),0),0,0,0,0,0)
     valid = propagate_constraints(
-        np.arange(A.shape[1]), x_l, x_u, A_csr, A_csc, b_l, b_u, []
+        np.arange(a_ineq.shape[1]), x_l, x_u, a_ineq_csr, a_ineq_csc, b_l, b_u, []
     )
     # assert(valid)
 
     print("backtracked %d times" % nb_backtrack)
-    print("energy after rounding =%f" % np.sum(x_r * LP.costsvector))
+    print("energy after rounding =%f" % np.sum(x_r * lp.costsvector))
 
     return x_r, valid
 
 
-def greedy_fix(x, LP, nbmaxiter=1000, callback_func=None, useXorMoves=False):
+def greedy_fix(x, lp, nb_max_iter=1000, callback_func=None, use_xor_moves=False):
     # decrease the constraints violation score using coordinate descent
 
     xr = np.round(x)
 
-    LP2 = copy.copy(LP)
+    lp2 = copy.copy(lp)
 
-    # xors=np.nonzero(LP.B_lower==1)[0]
+    # xors=np.nonzero(LP.b_lower==1)[0]
 
-    # xors=np.nonzero(LP.Bequalities==1)[0]
-    # assert(np.all(LP.Aequalities[xors,:].data==1))
+    # xors=np.nonzero(LP.b_equalities==1)[0]
+    # assert(np.all(LP.a_equalities[xors,:].data==1))
 
-    LP2.convert_to_all_inequalities()
-    LP2.convert_to_one_sided_inequality_system()
+    lp2.convert_to_all_inequalities()
+    lp2.convert_to_one_sided_inequality_system()
 
-    assert np.all(xr <= LP2.upperbounds)
-    assert np.all(xr >= LP2.lowerbounds)
+    assert np.all(xr <= lp2.upper_bounds)
+    assert np.all(xr >= lp2.lower_bounds)
 
-    assert LP2.B_lower is None
+    assert lp2.b_lower is None
     # compute the sum of the of violated constraints with the magnitude of the violation
-    AinequalitiesCSC = LP2.Ainequalities.tocsc()
-    constraints_costs = np.ones(AinequalitiesCSC.shape[0])
+    a_inequalities_csc = lp2.a_inequalities.tocsc()
+    constraints_costs = np.ones(a_inequalities_csc.shape[0])
     # constraints_costs[:]=0.2
-    xors = LP2.find_inequality_constraints_from_name("xors")
+    xors = lp2.find_inequality_constraints_from_name("xors")
     for item in xors:
         constraints_costs[item["start"] : item["end"] + 1] = 1000
     # for item in xors:
-    # print np.max(r_ineq_threholded[item['start']:item['end']+1])
-    r_ineq = LP2.Ainequalities * xr - LP2.B_upper
-    r_ineq_threholded = np.maximum(r_ineq, 0)
-    score_ineq = np.sum(r_ineq_threholded * constraints_costs)
+    # print np.max(r_ineq_thresholded[item['start']:item['end']+1])
+    r_ineq = lp2.a_inequalities * xr - lp2.b_upper
+    r_ineq_thresholded = np.maximum(r_ineq, 0)
+    score_ineq = np.sum(r_ineq_thresholded * constraints_costs)
     # test switching single variable
-    # constraints_gradient=r_ineq_theholded*LP2.Ainequalities
+    # constraints_gradient=r_ineq_theholded*LP2.a_inequalities
 
     score_decrease = np.zeros(x.size)
 
-    R = LP2.Ainequalities.copy()
-    R.data = np.random.rand(R.data.size)
-    tocheck = np.nonzero(r_ineq_threholded * R != 0)[0]
+    a_ineq = lp2.a_inequalities.copy()
+    a_ineq.data = np.random.rand(a_ineq.data.size)
+    to_check = np.nonzero(r_ineq_thresholded * a_ineq != 0)[0]
     check = False
 
-    Dx = scipy.sparse.csc.csc_matrix(
+    d_x = scipy.sparse.csc.csc_matrix(
         (1 - 2 * xr, (np.arange(xr.size), np.arange(xr.size))), (xr.size, xr.size)
     )
-    dr_ineq_matrix = AinequalitiesCSC * Dx
+    dr_ineq_matrix = a_inequalities_csc * d_x
 
-    if useXorMoves:
+    if use_xor_moves:
 
         # adding xor moves
         # XorDx=
         xormoves = []
-        xorid_to_moves_interval = np.zeros(LP2.Ainequalities.shape[0])
-        for xorsintervals in xors:
-            for r in range(xorsintervals["start"], xorsintervals["end"] + 1):
-                ids = LP2.Ainequalities[r, :].indices
-                # data = LP2.Ainequalities[r, :].data
+        xor_id_to_moves_interval = np.zeros(lp2.a_inequalities.shape[0])
+        for xor_intervals in xors:
+            for r in range(xor_intervals["start"], xor_intervals["end"] + 1):
+                ids = lp2.a_inequalities[r, :].indices
+                # data = LP2.a_inequalities[r, :].data
                 assert len(ids) == 4
 
                 vec = -xr[ids]
-                xorid_to_moves_interval[r] = len(xormoves)
+                xor_id_to_moves_interval[r] = len(xormoves)
                 for i, _id in enumerate(ids):  # _id not used , is that a bug ?
                     vec2 = vec.copy()
                     vec2[i] += 1
@@ -411,48 +411,48 @@ def greedy_fix(x, LP, nbmaxiter=1000, callback_func=None, useXorMoves=False):
         for i, move in enumerate(xormoves):
             for j, idv in enumerate(move[0]):
                 new_r_ineq = r_ineq[idv] + move[1][j]
-                new_r_ineq_threholded = np.maximum(new_r_ineq, 0)
+                new_r_ineq_thresholded = np.maximum(new_r_ineq, 0)
                 xor_score_decrease[i] += (
-                    new_r_ineq_threholded - r_ineq_threholded[idv]
+                    new_r_ineq_thresholded - r_ineq_thresholded[idv]
                 ) * constraints_costs[idv]
 
-    for _niter in range(nbmaxiter):
+    for _niter in range(nb_max_iter):
         if check:
-            r_ineq = LP2.Ainequalities * xr - LP2.B_upper
-            r_ineq_threholded = np.maximum(r_ineq, 0)
-            score_ineq = np.sum(r_ineq_threholded * constraints_costs)
+            r_ineq = lp2.a_inequalities * xr - lp2.b_upper
+            r_ineq_thresholded = np.maximum(r_ineq, 0)
+            score_ineq = np.sum(r_ineq_thresholded * constraints_costs)
 
-        dr_ineq_matrix = AinequalitiesCSC * Dx[:, tocheck]
+        dr_ineq_matrix = a_inequalities_csc * d_x[:, to_check]
 
-        for j, i in enumerate(tocheck):
+        for j, i in enumerate(to_check):
 
             # dxi=1-2*xr[i]
-            # dr_ineq=AinequalitiesCSC[:,i]*dxi
+            # dr_ineq=a_inequalities_csc[:,i]*dxi
             # dx=scipy.sparse.csc.csc_matrix(([1-2*xr[i]],([i],[0])),(xr.size,1))
-            # dr_ineq=AinequalitiesCSC*dx
+            # dr_ineq=a_inequalities_csc*dx
             score_decrease[i] = 0
             dr_ineq = dr_ineq_matrix[:, j]
             assert dr_ineq.format == "csc"
 
             for j, idv in enumerate(dr_ineq.indices):
                 new_r_ineq = r_ineq[idv] + dr_ineq.data[j]
-                new_r_ineq_threholded = np.maximum(new_r_ineq, 0)
+                new_r_ineq_thresholded = np.maximum(new_r_ineq, 0)
                 score_decrease[i] += (
-                    new_r_ineq_threholded - r_ineq_threholded[idv]
+                    new_r_ineq_thresholded - r_ineq_thresholded[idv]
                 ) * constraints_costs[idv]
 
             if check:
 
                 xr2 = xr.copy()
                 xr2[i] = 1 - xr2[i]
-                r_ineq2 = LP2.Ainequalities * xr2 - LP2.B_upper
+                r_ineq2 = lp2.a_inequalities * xr2 - lp2.b_upper
 
                 # r_ineq2b=dr_ineq.toarray().flatten()+r_ineq
-                # np.max(np.abs(new_r_ineq_threholded-r_ineq_threholded2))
+                # np.max(np.abs(new_r_ineq_thresholded-r_ineq_thresholded2))
                 # np.max(np.abs(new_r_ineq-r_ineq2))
                 # np.max(np.abs(r_ineq2b-r_ineq2))
-                r_ineq_threholded2 = np.maximum(r_ineq2, 0)
-                score_ineq2 = np.sum(r_ineq_threholded2 * constraints_costs)
+                r_ineq_thresholded2 = np.maximum(r_ineq2, 0)
+                score_ineq2 = np.sum(r_ineq_thresholded2 * constraints_costs)
                 score_decrease2 = score_ineq2 - score_ineq
                 assert score_decrease2 == score_decrease[i]
 
@@ -466,49 +466,49 @@ def greedy_fix(x, LP, nbmaxiter=1000, callback_func=None, useXorMoves=False):
             if callback_func is not None:
                 callback_func(0, xr, 0, 0, 0, 0, 0)
 
-            r_ineq = LP2.Ainequalities * xr - LP2.B_upper
-            r_ineq_threholded = np.maximum(r_ineq, 0)
-            tocheck = np.nonzero(r_ineq_threholded * R != 0)[0]
-            tocheck = np.arange(xr.size)
-            score_ineq2 = np.sum(r_ineq_threholded * constraints_costs)
+            r_ineq = lp2.a_inequalities * xr - lp2.b_upper
+            r_ineq_thresholded = np.maximum(r_ineq, 0)
+            to_check = np.nonzero(r_ineq_thresholded * a_ineq != 0)[0]
+            to_check = np.arange(xr.size)
+            score_ineq2 = np.sum(r_ineq_thresholded * constraints_costs)
             assert score_ineq2 == score_ineq
             return xr
 
-        ibest = np.argmin(score_decrease)
+        i_best = np.argmin(score_decrease)
         # idbestxormove=np.argmin(xor_score_decrease)
         #
 
         # r_ineq=
-        i = ibest
+        i = i_best
         # dxi=1-2*xr[i]
 
-        # dr_ineq=AinequalitiesCSC[:,i]*dxi
-        dr_ineq = AinequalitiesCSC * Dx[:, i]
+        # dr_ineq=a_inequalities_csc[:,i]*dxi
+        dr_ineq = a_inequalities_csc * d_x[:, i]
 
         score_decrease_best = 0
         for j, idv in enumerate(dr_ineq.indices):
             r_ineq[idv] = r_ineq[idv] + dr_ineq.data[j]
-            new_r_ineq_threholded = np.maximum(r_ineq[idv], 0)
+            new_r_ineq_thresholded = np.maximum(r_ineq[idv], 0)
             score_decrease_best += (
-                new_r_ineq_threholded - r_ineq_threholded[idv]
+                new_r_ineq_thresholded - r_ineq_thresholded[idv]
             ) * constraints_costs[idv]
-            r_ineq_threholded[idv] = new_r_ineq_threholded
+            r_ineq_thresholded[idv] = new_r_ineq_thresholded
 
-        assert np.abs(score_decrease_best - score_decrease[ibest]) < 1e-8
+        assert np.abs(score_decrease_best - score_decrease[i_best]) < 1e-8
 
         score_ineq += score_decrease_best
         print(score_ineq)
         # xr[ibest]=1-xr[ibest]
-        dx = Dx[:, ibest]
+        dx = d_x[:, i_best]
         xr[dx.indices] += dx.data
         if callback_func is not None:
             callback_func(0, xr, 0, 0, 0, 0, 0)
 
         # update switching score of variables that may have changed
         # tocheck=np.nonzero(dr_ineq.T*R!=0)[1]
-        movetochange = (dx.T * Dx).indices
-        Dx[:, movetochange] = scipy.sparse.csc.csc_matrix(
-            (1 - 2 * xr[movetochange], (movetochange, np.arange(movetochange.size))),
-            (xr.size, movetochange.size),
+        move_to_change = (dx.T * d_x).indices
+        d_x[:, move_to_change] = scipy.sparse.csc.csc_matrix(
+            (1 - 2 * xr[move_to_change], (move_to_change, np.arange(move_to_change.size))),
+            (xr.size, move_to_change.size),
         )
-        tocheck = np.nonzero(dr_ineq.T * R * Dx != 0)[1]
+        to_check = np.nonzero(dr_ineq.T * a_ineq * d_x != 0)[1]

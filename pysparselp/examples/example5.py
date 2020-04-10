@@ -12,57 +12,57 @@ import numpy as np
 from pysparselp.SparseLP import SparseLP
 
 
-def kmedians_contraint(LP, indices):
-    cols = indices
-    vals = np.ones(cols.shape)
-    LP.add_linear_constraint_rows(cols, vals, lowerbounds=1, upperbounds=1)
-    cols = indices.T
-    vals = np.ones(cols.shape)
-    LP.add_linear_constraint_rows(cols, vals, lowerbounds=-np.inf, upperbounds=1)
+def k_medians_contraint(lp, indices):
+    columns = indices
+    values = np.ones(columns.shape)
+    lp.add_linear_constraint_rows(columns, values, lower_bounds=1, upper_bounds=1)
+    columns = indices.T
+    values = np.ones(columns.shape)
+    lp.add_linear_constraint_rows(columns, values, lower_bounds=-np.inf, upper_bounds=1)
 
 
-def clusterize(points, k, nCenterCandidates):
+def clustering(points, k, n_center_candidates):
 
     n = points.shape[0]
-    centerCandidates = points[np.random.choice(n, nCenterCandidates), :]
+    center_candidates = points[np.random.choice(n, n_center_candidates), :]
 
     pairdistances = np.sqrt(
-        np.sum((points[:, None, :] - centerCandidates[None, :, :]) ** 2, axis=2)
+        np.sum((points[:, None, :] - center_candidates[None, :, :]) ** 2, axis=2)
     )
 
-    LP = SparseLP()
-    labeling = LP.add_variables_array(pairdistances.shape, 0, 1, pairdistances)
+    lp = SparseLP()
+    labeling = lp.add_variables_array(pairdistances.shape, 0, 1, pairdistances)
 
-    usedAsCenter = LP.add_variables_array(nCenterCandidates, 0, 1, 0)
-    LP.add_linear_constraint_row(
-        usedAsCenter, np.ones((nCenterCandidates)), lowerbound=0, upperbound=k
+    used_as_center = lp.add_variables_array(n_center_candidates, 0, 1, 0)
+    lp.add_linear_constraint_row(
+        used_as_center, np.ones((n_center_candidates)), lowerbound=0, upperbound=k
     )
-    LP.add_linear_constraint_rows(
-        labeling, np.ones((n, nCenterCandidates)), lowerbounds=1, upperbounds=1
+    lp.add_linear_constraint_rows(
+        labeling, np.ones((n, n_center_candidates)), lower_bounds=1, upper_bounds=1
     )
-    # max(labeling,axis=0)<usedAsCenter
+    # max(labeling,axis=0)<used_as_center
     # the binary variable associated to each  column should be greater than all binary variables on that row
-    id_cols = np.ones((n, 1)).dot(usedAsCenter[None, :])
-    cols = np.column_stack((labeling.reshape(-1, 1), id_cols.reshape(-1, 1)))
-    vals = np.column_stack(
-        (np.ones((n * nCenterCandidates)), -np.ones((n * nCenterCandidates)))
+    id_columns = np.ones((n, 1)).dot(used_as_center[None, :])
+    columns = np.column_stack((labeling.reshape(-1, 1), id_columns.reshape(-1, 1)))
+    values = np.column_stack(
+        (np.ones((n * n_center_candidates)), -np.ones((n * n_center_candidates)))
     )
-    LP.add_linear_constraint_rows(cols, vals, lowerbounds=None, upperbounds=0)
+    lp.add_linear_constraint_rows(columns, values, lower_bounds=None, upper_bounds=0)
 
-    s = LP.solve(method="ADMM", nb_iter=1000, max_time=np.inf, nb_iter_plot=500)[0]
+    s = lp.solve(method="admm", nb_iter=1000, max_time=np.inf, nb_iter_plot=500)[0]
 
-    print(LP.costsvector.dot(s))
+    print(lp.costsvector.dot(s))
     x = s[labeling]
     print(np.round(x * 1000) / 1000)
 
-    LP.max_constraint_violation(s)
+    lp.max_constraint_violation(s)
 
     label = np.argmax(x, axis=1)
     if not (len(np.unique(label)) == k):
         print("failed")
 
     cost = 0
-    for l in range(nCenterCandidates):
+    for l in range(n_center_candidates):
         group = np.nonzero(label == l)
         center_id = np.argmin(np.sum(pairdistances[group, :], axis=1))
         cost += np.sum(pairdistances[group, center_id])
@@ -77,16 +77,16 @@ def run(display=False):
 
     prng = np.random.RandomState(0)
     centers = prng.randn(k, 2)
-    gtlabel = np.floor(prng.rand(n) * 5).astype(np.int)
-    points = 0.4 * prng.randn(n, 2) + centers[gtlabel, :]
+    gt_labels = np.floor(prng.rand(n) * 5).astype(np.int)
+    points = 0.4 * prng.randn(n, 2) + centers[gt_labels, :]
     if display:
         plt.ion()
         plt.plot(points[:, 0], points[:, 1], ".")
         plt.draw()
         plt.show()
-    nCenterCandidates = 50
+    n_center_candidates = 50
 
-    label, cost = clusterize(points, k, nCenterCandidates)
+    label, cost = clustering(points, k, n_center_candidates)
     if display:
         for i in np.arange(n):
             if any(label == i):

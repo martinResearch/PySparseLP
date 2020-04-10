@@ -1,4 +1,4 @@
-"""Simple pseudo-random generator base on the xorshift algorithm."""
+"""Simple pseudo-random generator base on the XorShift algorithm."""
 # cython: profile=True
 # cython: boundscheck=False
 # cython: wraparound=False
@@ -15,8 +15,8 @@ import numpy
 # cython#cdef\
 
 
-class xorshift:
-    """Simple pseudo-random generator base on the xorshift algorithm.
+class XorShift:
+    """Simple pseudo-random generator base on the XorShift algorithm.
 
     the goal is to get a random generator that can easily be re-implemented in various languages(matlab for example) in order to be able to generate
     the same random number sequences in various languages

@@ -46,11 +46,11 @@ ctypedef np.double_t cDOUBLE
 def propagate_constraints(list_changed_var,\
 			np.ndarray[cDOUBLE, ndim=1] x_l,\
 			np.ndarray[cDOUBLE, ndim=1] x_u,\
-			np.ndarray[cINT32, ndim=1] Acsc_indices,\
-			np.ndarray[cINT32, ndim=1] Acsr_indices,\
-			np.ndarray[cINT32, ndim=1] Acsr_indptr,\
-			np.ndarray[cINT32, ndim=1] Acsc_indptr,\
-			np.ndarray[cDOUBLE, ndim=1] Acsr_data,
+			np.ndarray[cINT32, ndim=1] a_csc_indices,\
+			np.ndarray[cINT32, ndim=1] a_csr_indices,\
+			np.ndarray[cINT32, ndim=1] a_csr_indptr,\
+			np.ndarray[cINT32, ndim=1] a_csc_indptr,\
+			np.ndarray[cDOUBLE, ndim=1] a_csr_data,
 			np.ndarray[cDOUBLE, ndim=1] b_lower,
 			np.ndarray[cDOUBLE, ndim=1] b_upper,
 			list back_ops,\
@@ -64,18 +64,18 @@ def propagate_constraints(list_changed_var,\
 	cdef set[int]  list_constraints_to_check_cpp
 	#cdef vector[int]  list_constraints_to_check_cpp
 	
-	#cdef np.ndarray[cINT32, ndim=1] Acsc_indices	
-	#cdef np.ndarray[cINT32, ndim=1] Acsr_indices
-	#cdef np.ndarray[cINT32, ndim=1] Acsr_indptr
-	#cdef np.ndarray[cINT32, ndim=1] Acsc_indptr
-	#cdef np.ndarray[cDOUBLE, ndim=1] Acsr_data
+	#cdef np.ndarray[cINT32, ndim=1] a_csc_indices	
+	#cdef np.ndarray[cINT32, ndim=1] a_csr_indices
+	#cdef np.ndarray[cINT32, ndim=1] a_csr_indptr
+	#cdef np.ndarray[cINT32, ndim=1] a_csc_indptr
+	#cdef np.ndarray[cDOUBLE, ndim=1] a_csr_data
 	
-	#Acsc_indices=Acsc.indices.astype(np.int32)
-	#Acsr_indices=Acsr.indices.astype(np.int32)
-	#Acsr_indices=Acsr.indices.astype(np.int32)
-	#Acsr_indptr =Acsr.indptr
-	#Acsc_indptr =Acsc.indptr
-	#Acsr_data=Acsr.data.astype(np.float)
+	#a_csc_indices=a_csc.indices.astype(np.int32)
+	#a_csr_indices=a_csr.indices.astype(np.int32)
+	#a_csr_indices=a_csr.indices.astype(np.int32)
+	#a_csr_indptr =a_csr.indptr
+	#a_csc_indptr =a_csc.indptr
+	#a_csr_data=a_csr.data.astype(np.float)
 	
 
 
@@ -89,31 +89,31 @@ def propagate_constraints(list_changed_var,\
 		
 		#list_constraints_to_check=[]
 		#for i in list_changed_var_cpp:
-			##to_add=np.nonzero(Acsc[:,i])[0]
-			#to_add2=Acsc.indices[Acsc.indptr[i]:Acsc.indptr[i+1]]
+			##to_add=np.nonzero(a_csc[:,i])[0]
+			#to_add2=a_csc.indices[a_csc.indptr[i]:a_csc.indptr[i+1]]
 			##assert(np.all(to_add==to_add2))
 			#list_constraints_to_check.append(to_add2)
 		#list_constraints_to_check_cpp=np.unique(np.hstack(list_constraints_to_check))
 		list_constraints_to_check_cpp.clear()
 		for i in list_changed_var_cpp:
-			for j in range(Acsc_indptr[i],Acsc_indptr[i+1]):
-				list_constraints_to_check_cpp.insert(Acsc_indices[j])
-				#list_constraints_to_check_cpp.push_back(Acsc_indices[j])
+			for j in range(a_csc_indptr[i],a_csc_indptr[i+1]):
+				list_constraints_to_check_cpp.insert(a_csc_indices[j])
+				#list_constraints_to_check_cpp.push_back(a_csc_indices[j])
 			
 		
 		
 		#list_changed_var=[]
 		#list_changed_var_cpp=[]
 		list_changed_var_cpp.clear()
-		#list_constraints_to_check=np.arange(Acsr.shape[0])
+		#list_constraints_to_check=np.arange(a_csr.shape[0])
 		for j in list_constraints_to_check_cpp:
-			#line=Acsr[j,:]# very slow...
+			#line=a_csr[j,:]# very slow...
 			#indices=line.indices
 			#data=line.data
-			indptr_j=Acsr_indptr[j]
-			nb_var=Acsr_indptr[j+1]-Acsr_indptr[j]
-			#indices=Acsr.indices[Acsr.indptr[j]:Acsr.indptr[j+1]]
-			#data=Acsr.data[Acsr.indptr[j]:Acsr.indptr[j+1]]
+			indptr_j=a_csr_indptr[j]
+			nb_var=a_csr_indptr[j+1]-a_csr_indptr[j]
+			#indices=a_csr.indices[a_csr.indptr[j]:a_csr.indptr[j+1]]
+			#data=a_csr.data[a_csr.indptr[j]:a_csr.indptr[j+1]]
 
 			
 			interval_l=0
@@ -121,8 +121,8 @@ def propagate_constraints(list_changed_var,\
 			for k in range(nb_var):
 				#i=indices[k]
 				#v=data[k]
-				i=Acsr_indices[k+indptr_j]
-				v=Acsr_data[k+indptr_j]
+				i=a_csr_indices[k+indptr_j]
+				v=a_csr_data[k+indptr_j]
 				if v>0:
 					interval_u+=v*x_u[i]
 					interval_l+=v*x_l[i]
@@ -136,8 +136,8 @@ def propagate_constraints(list_changed_var,\
 			for k in range(nb_var):
 				#i=indices[k]
 				#v=data[k]
-				i=Acsr_indices[k+indptr_j]
-				v=Acsr_data[k+indptr_j]
+				i=a_csr_indices[k+indptr_j]
+				v=a_csr_data[k+indptr_j]
 				if v>0:
 					
 					n_u=floor(tol+(b_upper[j]-interval_l+v*x_l[i])/v)					

@@ -34,7 +34,7 @@ from .conjugateGradientLinearSolver import conjgrad
 from .gaussSiedel import GaussSeidel
 from .gaussSiedel import boundedGaussSeidelClass
 from .tools import (
-    chrono,
+    Chrono,
     convert_to_py_sparse_format,
     convert_to_standard_form_with_bounds,
     precondition_constraints,
@@ -46,9 +46,9 @@ from .tools import (
 
 def lp_admm(
     c,
-    Aeq,
+    a_eq,
     beq,
-    Aineq,
+    a_ineq,
     b_lower,
     b_upper,
     lb,
@@ -62,94 +62,94 @@ def lp_admm(
     use_preconditioning=True,
     nb_iter_plot=10,
 ):
-    # simple ADMM method with an approximate resolution of a quadratic subproblem using conjugate gradient
-    useLU = False
-    useCholesky = False
-    useAMG = False
-    useCG = False
-    useBoundedGaussSiedel = True
-    useUnboundedGaussSiedel = False
+    # simple ADMM method with an approximaae resolutioa of a quadratic subproblem using conjagate gradil_matnt
+    use_lu = False
+    use_cholesky = False
+    use_amg = False
+    use_cg = False
+    use_bounded_gauss_siedel = True
+    use_unbounded_gauss_siedel = False
 
     n = c.size
     if x0 is None:
         x0 = np.zeros(c.size)
-    if Aeq is not None:
-        Aeq, beq = precondition_constraints(Aeq, beq, alpha=2)
+    if a_eq is not None:
+        a_eq, beq = precondition_constraints(a_eq, beq, alpha=2)
     if (
-        Aineq is not None
+        a_ineq is not None
     ):  # it seem important to do this preconditioning before converting to standard form
-        Aineq, b_lower, b_upper = precondition_constraints(
-            Aineq, b_lower, b_upper, alpha=2
+        a_ineq, b_lower, b_upper = precondition_constraints(
+            a_ineq, b_lower, b_upper, alpha=2
         )
-    c, Aeq, beq, lb, ub, x0 = convert_to_standard_form_with_bounds(
-        c, Aeq, beq, Aineq, b_lower, b_upper, lb, ub, x0
+    c, a_eq, beq, lb, ub, x0 = convert_to_standard_form_with_bounds(
+        c, a_eq, beq, a_ineq, b_lower, b_upper, lb, ub, x0
     )
     x = x0
 
     # trying some preconditioning
     if use_preconditioning:
-        Aeq, beq = precondition_constraints(Aeq, beq, alpha=2)
+        a_eq, beq = precondition_constraints(a_eq, beq, alpha=2)
 
-    AtA = Aeq.T * Aeq
-    # AAt=Aeq*Aeq.T
-    Atb = Aeq.T * beq
-    Id = scipy.sparse.eye(x.size, x.size)
+    a_t_a = a_eq.T * a_eq
+    # AAt=a_eq*a_eq.T
+    a_t_b = a_eq.T * beq
+    identity = scipy.sparse.eye(x.size, x.size)
 
     xp = np.maximum(x, 0)
 
-    M = gamma_eq * AtA + gamma_ineq * Id
-    M = M.tocsr()
-    lambda_eq = np.zeros(Aeq.shape[0])
+    m = gamma_eq * a_t_a + gamma_ineq * identity
+    m = m.tocsr()
+    lambda_eq = np.zeros(a_eq.shape[0])
     lambda_ineq = np.zeros(x.shape)
-    if useLU:
-        luM = scipy.sparse.linalg.splu(M)
+    if use_lu:
+        lu_m = scipy.sparse.linalg.splu(m)
         # luM = scipy.sparse.linalg.spilu(M,drop_tol=0.01)
-    elif useCholesky:
+    elif use_cholesky:
         import scikits.sparse
-        ch = chrono()
+        ch = Chrono()
         ch.tic()
-        Chol = scikits.sparse.cholmod.cholesky(M.tocsc())
+        chol = scikits.sparse.cholmod.cholesky(m.tocsc())
         print("cholesky factorization took " + str(ch.toc()) + " seconds")
         print(
             "the sparsity ratio between the cholesky decomposition of M and M is "
-            + str(Chol.L().nnz / float(M.nnz))
+            + str(chol.L().nnz / float(m.nnz))
         )
 
-    elif useAMG:
+    elif use_amg:
         import pyamg
-        Mamg = pyamg.ruge_stuben_solver(M)
+        m_amg = pyamg.ruge_stuben_solver(m)
 
-    def L(x, xp, lambda_eq, lambda_ineq):
-        E = (
+    def energy(x, xp, lambda_eq, lambda_ineq):
+        en = (
             c.dot(x)
-            + 0.5 * gamma_eq * np.sum((Aeq * x - beq) ** 2)
+            + 0.5 * gamma_eq * np.sum((a_eq * x - beq) ** 2)
             + 0.5 * gamma_ineq * np.sum((x - xp) ** 2)
-            + lambda_eq.dot(Aeq * x - beq)
+            + lambda_eq.dot(a_eq * x - beq)
             + lambda_ineq.dot(x - xp)
         )
-        return E
+        return en
 
     i = 0
     nb_cg_iter = 1
     speed = np.zeros(x.shape)
 
     order = np.arange(x.size).astype(np.uint32)
-    bs = boundedGaussSeidelClass(M)
+    bs = boundedGaussSeidelClass(m)
     alpha = 1.4
     start = time.clock()
     elapsed = start
     while i <= nb_iter / nb_cg_iter:
         # solve the penalized problem with respect to x
-        # c +gamma_eq*(AtA x-Atb) + gamma_ineq*(x -xp)+lambda_eq*Aeq+lambda_ineq
-        # M*x=-c+Atb+gamma_ineq*xp-lambdas-lambda_eq*Aeq
+        # c +gamma_eq*(a_t_a x-a_t_b) + gamma_ineq*(x -xp)+lambda_eq*a_eq+lambda_ineq
+        # M*x=-c+a_t_b+gamma_ineq*xp-lambdas-lambda_eq*a_eq
 
-        y = -c + gamma_eq * Atb + gamma_ineq * xp - lambda_eq * Aeq - lambda_ineq
+        y = -c + gamma_eq * a_t_b + gamma_ineq * xp - lambda_eq * a_eq - lambda_ineq
         # print 'iter'+str(i)+' '+str(L(x, xp,lambda_eq,lambda_ineq))
-        if useLU:
-            x = luM.solve(y)
-        elif useCholesky:
-            x = Chol.solve_A(y)
-        elif useBoundedGaussSiedel:
+        if use_lu:
+            x = lu_m.solve(y)
+        elif use_cholesky:
+            x = chol.solve_A(y)
+        elif use_bounded_gauss_siedel:
             xprev = x.copy()
 
             # x=xprev+1*speed	# maybe could do a line search along that direction ?
@@ -159,25 +159,25 @@ def lp_admm(
             # order=np.arange(x.size-1,-1,-1).astype(np.uint32)
             bs.solve(y, lb, ub, x, maxiter=nb_cg_iter, w=1, order=order)
             speed = x - xprev
-        elif useUnboundedGaussSiedel:
+        elif use_unbounded_gauss_siedel:
             xprev = x.copy()
             # x=xprev+1*speed	# predict the minimum , can yield to some speedup
             if (
                 False
             ):  # optimal sep along the direction given by the last two iterates, does not seem to imrove much speed
                 direction = speed
-                t = -direction.dot(M * xprev - y)
+                t = -direction.dot(m * xprev - y)
                 print(t)
                 if abs(t) > 0:
-                    step_lenght = t / (direction.dot(M * direction))
+                    step_lenght = t / (direction.dot(m * direction))
                     x = xprev + step_lenght * direction
             else:
                 pass
                 # x=xprev+0.8*speed
-            GaussSeidel(M, y, x, maxiter=nb_cg_iter, w=1.0)
+            GaussSeidel(m, y, x, maxiter=nb_cg_iter, w=1.0)
             speed = x - xprev
             x = alpha * x + (1 - alpha) * xp
-        elif useCG:
+        elif use_cg:
             # x1,r=scipy.sparse.linalg.cgs(M, y,  maxiter=2,x0=x)
             xprev = x.copy()
 
@@ -186,21 +186,21 @@ def lp_admm(
             ):  # optimal sep along the direction given by the last two iterates, doe not seem to improve things in term of numbe rof iteration , and slow down iterations...
                 # maybe use next step as a conguate step would help ?
                 direction = speed
-                t = -direction.dot(M * x - y)
+                t = -direction.dot(m * x - y)
                 if abs(t) > 0:
-                    step_lenght = t / (direction.dot(M * direction))
+                    step_lenght = t / (direction.dot(m * direction))
                     x = x + step_lenght * direction
             else:
                 # x=xprev+1*speed			# does not work with cg, explode
                 pass
             # start conjugate gradient from there (could use previous direction ? )
-            x = conjgrad(M, y, maxiter=nb_cg_iter, x0=x)
+            x = conjgrad(m, y, maxiter=nb_cg_iter, x0=x)
             speed = x - xprev
             x = alpha * x + (1 - alpha) * xp
-        elif useAMG:
+        elif use_amg:
             # xprev=x.copy()
             # x=xprev+1*speed
-            x = Mamg.solve(y, x0=x, tol=1e-3)
+            x = m_amg.solve(y, x0=x, tol=1e-3)
             # speed=x-xprev
             x = alpha * x + (1 - alpha) * xp  # over relaxation
 
@@ -213,9 +213,9 @@ def lp_admm(
             elapsed = time.clock() - start
             if elapsed > max_time:
                 break
-            energy1 = L(x, xp, lambda_eq, lambda_ineq)
+            energy1 = energy(x, xp, lambda_eq, lambda_ineq)
             energy2 = energy1
-            r = Aeq * x - beq
+            r = a_eq * x - beq
             max_violated_equality = np.max(np.abs(r))
             max_violated_inequality = max(0, -np.min(x))
 
@@ -247,7 +247,7 @@ def lp_admm(
 
         # solve the penalized problem with respect to xp
         # -gamma_ineq*(x-xp)-lambda_ineq=0
-        if not (useBoundedGaussSiedel):
+        if not (use_bounded_gauss_siedel):
             xp = x.copy() + lambda_ineq / gamma_ineq
             xp = np.maximum(xp, lb)
             xp = np.minimum(xp, ub)
@@ -257,21 +257,21 @@ def lp_admm(
             xp = x
         # print 'iter'+str(i)+' '+str(L(x, xp,lambda_eq,lambda_ineq))
         lambda_eq = lambda_eq + gamma_eq * (
-            Aeq * x - beq
+            a_eq * x - beq
         )  # could use heavy ball instead of gradient step ?
 
         # could try to update the penality ?
         # gamma_ineq=gamma_ineq+
-        # M=gamma_eq*AtA+gamma_ineq*Id
+        # M=gamma_eq*a_t_a+gamma_ineq*Id
         i += 1
     return x[0:n]
 
 
 def lp_admm2(
     c,
-    Aeq,
+    a_eq,
     beq,
-    Aineq,
+    a_ineq,
     b_lower,
     b_upper,
     lb,
@@ -287,12 +287,12 @@ def lp_admm2(
     # simple ADMM method with an approximate resolution of a quadratic subproblem using conjugate gradient
     # inspired by Boyd's paper on ADMM
     # Distributed Optimization and Statistical Learning via the Alternating Direction Method of Multipliers
-    # the difference with admm_solver is that the linear equality constraints Aeq*x=beq are enforced during the resolution
+    # the difference with admm_solver is that the linear equality constraints a_eq*x=beq are enforced during the resolution
     # of the subproblem instead of beeing enforced through multipliers
-    useLU = True
-    useAMG = False
-    useCholesky = False
-    useCholesky2 = False
+    use_lu = True
+    use_amg = False
+    use_cholesky = False
+    use_cholesky2 = False
 
     # relaxation parameter should be in [0,2] , 1.95 seems to be often a good choice
     alpha = 1.95
@@ -304,96 +304,96 @@ def lp_admm2(
         x0 = np.zeros(c.size)
 
     if use_preconditioning:
-        if Aeq is not None:
-            Aeq, beq = precondition_constraints(Aeq, beq, alpha=2)
+        if a_eq is not None:
+            a_eq, beq = precondition_constraints(a_eq, beq, alpha=2)
         if (
-            Aineq is not None
+            a_ineq is not None
         ):  # it seem important to do this preconditionning before converting to standard form
-            Aineq, b_lower, b_upper = precondition_constraints(
-                Aineq, b_lower, b_upper, alpha=2
+            a_ineq, b_lower, b_upper = precondition_constraints(
+                a_ineq, b_lower, b_upper, alpha=2
             )
 
-    c, Aeq, beq, lb, ub, x0 = convert_to_standard_form_with_bounds(
-        c, Aeq, beq, Aineq, b_lower, b_upper, lb, ub, x0
+    c, a_eq, beq, lb, ub, x0 = convert_to_standard_form_with_bounds(
+        c, a_eq, beq, a_ineq, b_lower, b_upper, lb, ub, x0
     )
     x = x0
 
     xp = x.copy()
     xp = np.maximum(xp, lb)
     xp = np.minimum(xp, ub)
-    ch = chrono()
+    ch = Chrono()
     # trying some preconditioning
     if use_preconditioning:
-        Aeq, beq = precondition_constraints(Aeq, beq, alpha=2)
+        a_eq, beq = precondition_constraints(a_eq, beq, alpha=2)
 
-    M = scipy.sparse.vstack(
+    m = scipy.sparse.vstack(
         (
             scipy.sparse.hstack(
-                (gamma_ineq * scipy.sparse.eye(Aeq.shape[1], Aeq.shape[1]), Aeq.T)
+                (gamma_ineq * scipy.sparse.eye(a_eq.shape[1], a_eq.shape[1]), a_eq.T)
             ),
             scipy.sparse.hstack(
-                (Aeq, scipy.sparse.csc_matrix((Aeq.shape[0], Aeq.shape[0])))
+                (a_eq, scipy.sparse.csc_matrix((a_eq.shape[0], a_eq.shape[0])))
             ),
         )
     ).tocsr()
-    if useLU:
-        luM = scipy.sparse.linalg.splu(M.tocsc())
+    if use_lu:
+        lu_m = scipy.sparse.linalg.splu(m.tocsc())
         nb_cg_iter = 1
-    elif useCholesky:
+    elif use_cholesky:
         import scikits.sparse
         ch.tic()
         # not that it will work only if M is positive definite which nto garantied the way it is constructed
         # unfortunaletly i'm not able to atch the error to fall back on LU decomposition if
         # chelesky fails because the matric is not positive definite
-        Chol = scikits.sparse.cholmod.cholesky(
-            M.tocsc(), mode="simplicial"
+        chol = scikits.sparse.cholmod.cholesky(
+            m.tocsc(), mode="simplicial"
         )  # pip install scikit-sparse, but difficult to compile in windows
 
         print("cholesky factorization took " + str(ch.toc()) + " seconds")
         print(
             "the sparsity ratio between the cholesky decomposition of M and M is "
-            + str(Chol.L().nnz / float(M.nnz))
+            + str(chol.L().nnz / float(m.nnz))
         )
         nb_cg_iter = 1
-    elif useCholesky2:
+    elif use_cholesky2:
         import scikits.umfpack  # pipinstall scikit-umfpack
         print("using UMFPACK_STRATEGY_SYMMETRIC through PySparse")
         ch.tic()
-        M2 = convert_to_py_sparse_format(M)
+        m2 = convert_to_py_sparse_format(m)
         print("conversion :" + str(ch.toc()))
         ch.tic()
-        LU_umfpack = scikits.umfpack.factorize(
-            M2, strategy="UMFPACK_STRATEGY_SYMMETRIC")
-        print("nnz per line :" + str(LU_umfpack.nnz / float(M2.shape[0])))
+        lu_umfpack = scikits.umfpack.factorize(
+            m2, strategy="UMFPACK_STRATEGY_SYMMETRIC")
+        print("nnz per line :" + str(lu_umfpack.nnz / float(m2.shape[0])))
         print("factorization :" + str(ch.toc()))
         nb_cg_iter = 1
 
-    elif useAMG:
+    elif use_amg:
         # Mamg=pyamg.smoothed_aggregation_solver(M.tocsc())
         # Mamg=pyamg.rootnode_solver(M.tocsc())
         # Mamg=pyamg.
         import pyamg  # pip install pyamg
-        Mamg = pyamg.ruge_stuben_solver(
-            M.tocsc(), strength=None
+        m_amg = pyamg.ruge_stuben_solver(
+            m.tocsc(), strength=None
         )  # sometimes seems to yield infinte values
         # I=scipy.sparse.eye(1000)
         # Mamg=pyamg.ruge_stuben_solver(I.tocsc())
 
-        for l in range(len(Mamg.levels)):
+        for l in range(len(m_amg.levels)):
             print("checking level " + str(l))
-            assert np.isfinite(Mamg.levels[l].A.data).all()
+            assert np.isfinite(m_amg.levels[l].A.data).all()
         nb_cg_iter = 1
     else:
         nb_cg_iter = 100
     lambda_ineq = np.zeros(x.shape)
 
-    def L(x, xp, lambda_ineq):
-        E = (
+    def energy(x, xp, lambda_ineq):
+        en = (
             c.dot(x)
             + 0.5 * gamma_ineq * np.sum((x - xp) ** 2)
             + lambda_ineq.dot(x - xp)
         )
-        return E
+        return en
 
     i = 0
     xv = np.hstack((x, np.zeros(beq.shape)))
@@ -403,21 +403,21 @@ def lp_admm2(
         # print 'iter'+str(i)+' '+str(L(x, xp,lambda_ineq))
 
         y = np.hstack((-c + gamma_ineq * xp - lambda_ineq, beq))
-        if useLU:
-            xv = luM.solve(y)
-        elif useCholesky:
-            xv = Chol.solve_A(y)
-        elif useCholesky2:
+        if use_lu:
+            xv = lu_m.solve(y)
+        elif use_cholesky:
+            xv = chol.solve_A(y)
+        elif use_cholesky2:
 
-            LU_umfpack.solve(y, xv)
+            lu_umfpack.solve(y, xv)
 
-        elif useAMG:
-            xv = Mamg.solve(y, x0=xv, tol=1e-12)
-            if np.linalg.norm(M * xv - y) > 1e-5:
+        elif use_amg:
+            xv = m_amg.solve(y, x0=xv, tol=1e-12)
+            if np.linalg.norm(m * xv - y) > 1e-5:
                 raise
 
         else:
-            xv = conjgrad(M, y, maxiter=nb_cg_iter, x0=xv)
+            xv = conjgrad(m, y, maxiter=nb_cg_iter, x0=xv)
         x = xv[: x.shape[0]]
         x = alpha * x + (1 - alpha) * xp
 
@@ -431,7 +431,7 @@ def lp_admm2(
             elapsed = time.clock() - start
             if not (max_time is None) and elapsed > max_time:
                 break
-            energy1 = L(x, xp, lambda_ineq)
+            energy1 = energy(x, xp, lambda_ineq)
             energy2 = energy1
 
             max_violated_equality = 0
@@ -443,7 +443,7 @@ def lp_admm2(
                 + str(energy1)
                 + " energy2="
                 + str(energy2)
-                + " elaspsed "
+                + " elapsed "
                 + str(elapsed)
                 + " second"
                 + " max violated inequality:"

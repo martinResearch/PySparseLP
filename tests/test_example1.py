@@ -7,7 +7,6 @@ import os
 import numpy as np
 import numpy.testing
 
-import pysparselp
 from pysparselp.examples.example1 import run
 
 
@@ -21,18 +20,18 @@ def trim_length(a, b):
 
 def test_example1(update_results=False):
 
-    distanceToGroundTruthCurves = run(display=False)
+    distance_to_ground_truth_curves = run(display=False)
 
     curves_json_file = os.path.join(__folder__, "example1_curves.json")
     if update_results:
         with open(curves_json_file, "w") as f:
-            json.dump(distanceToGroundTruthCurves, f, indent=4)
+            json.dump(distance_to_ground_truth_curves, f, indent=4)
 
     with open(curves_json_file, "r") as f:
-        distanceToGroundTruthCurves_expected = json.load(f)
+        distance_to_ground_truth_curves_expected = json.load(f)
 
-    for k, v1 in distanceToGroundTruthCurves.items():
-        v2 = distanceToGroundTruthCurves_expected[k]
+    for k, v1 in distance_to_ground_truth_curves.items():
+        v2 = distance_to_ground_truth_curves_expected[k]
         tv1, tv2 = trim_length(v1, v2)
         max_diff = np.max(np.abs(np.array(tv1) - np.array(tv2)))
         print(f"max diff {k} = {max_diff}")

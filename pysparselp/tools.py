@@ -31,7 +31,7 @@ import numpy as np
 import scipy.sparse
 
 
-class chrono:
+class Chrono:
     """Small class to compute durations."""
 
     def __init__(self):
@@ -44,7 +44,7 @@ class chrono:
         return time.clock() - self.start
 
 
-class check_decrease:
+class CheckDecrease:
     """Class to help checking decrease of a value."""
 
     def __init__(self, val=None, tol=1e-10):
@@ -59,94 +59,94 @@ class check_decrease:
         self.val = val
 
 
-def convert_to_py_sparse_format(A):
+def convert_to_py_sparse_format(a):
     # check symmetric
     import spmatrix
-    assert (A - A.T).nnz == 0
-    L = spmatrix.ll_mat_sym(A.shape[0], A.nnz)
-    Acoo = scipy.sparse.triu(A).tocoo()
-    L.put(Acoo.data, Acoo.row.astype(int), Acoo.col.astype(int))
+    assert (a - a.T).nnz == 0
+    l_mat = spmatrix.ll_mat_sym(a.shape[0], a.nnz)
+    a_coo = scipy.sparse.triu(a).tocoo()
+    l_mat.put(a_coo.data, a_coo.row.astype(int), a_coo.col.astype(int))
 
-    return L
+    return l_mat
 
 
 class CholeskyOrLu:
     """Class to wrap linear solvers."""
 
-    def __init__(self, M, method):
+    def __init__(self, m, method):
         if method == "scipySparseLu":
-            self.LU = scipy.sparse.linalg.splu(M.tocsc())
+            self.LU = scipy.sparse.linalg.splu(m.tocsc())
             self.solve = self.LU.solve
         elif method == "scikitsCholesky":
             import scikits.sparse
-            self.LU = scikits.sparse.cholmod.cholesky(M.tocsc())
+            self.LU = scikits.sparse.cholmod.cholesky(m.tocsc())
             self.solve = self.LU.solve_A
 
 
-def convert_to_standard_form_with_bounds(c, Aeq, beq, Aineq, b_lower, b_upper, lb, ub, x0):
+def convert_to_standard_form_with_bounds(c, a_eq, beq, a_ineq, b_lower, b_upper, lb, ub, x0):
 
-    if Aineq is not None:
-        ni = Aineq.shape[0]
+    if a_ineq is not None:
+        ni = a_ineq.shape[0]
         # need to convert in standard form by adding an auxiliary variables for each inequality
-        if Aeq is not None:
-            Aeq2 = scipy.sparse.vstack(
+        if a_eq is not None:
+            a_eq2 = scipy.sparse.vstack(
                 (
                     scipy.sparse.hstack(
-                        (Aeq, scipy.sparse.csc_matrix((Aeq.shape[0], ni)))
+                        (a_eq, scipy.sparse.csc_matrix((a_eq.shape[0], ni)))
                     ),
-                    scipy.sparse.hstack((Aineq, -scipy.sparse.eye(ni, ni))),
+                    scipy.sparse.hstack((a_ineq, -scipy.sparse.eye(ni, ni))),
                 )
             ).tocsr()
-            Aeq2.__dict__["blocks"] = Aeq.blocks + [
-                (b[0] + Aeq.shape[0], b[1] + Aeq.shape[0]) for b in Aineq.blocks
+            a_eq2.__dict__["blocks"] = a_eq.blocks + [
+                (b[0] + a_eq.shape[0], b[1] + a_eq.shape[0]) for b in a_ineq.blocks
             ]
-            beq2 = np.hstack((beq, np.zeros((ni))))
+            b_eq2 = np.hstack((beq, np.zeros((ni))))
         else:
 
-            Aeq2 = scipy.sparse.hstack((Aineq, -scipy.sparse.eye(ni, ni))).tocsr()
-            Aeq2.__dict__["blocks"] = Aineq.blocks
-            beq2 = np.zeros((ni))
+            a_eq2 = scipy.sparse.hstack((a_ineq, -scipy.sparse.eye(ni, ni))).tocsr()
+            a_eq2.__dict__["blocks"] = a_ineq.blocks
+            b_eq2 = np.zeros((ni))
 
         if b_lower is None:
-            b_lower = np.empty(Aineq.shape[0])
+            b_lower = np.empty(a_ineq.shape[0])
             b_lower.fill(-np.inf)
 
         if b_upper is None:
-            b_upper = np.empty(Aineq.shape[0])
+            b_upper = np.empty(a_ineq.shape[0])
             b_upper.fill(np.inf)
 
         lb = np.hstack((lb, b_lower))
         ub = np.hstack((ub, b_upper))
-        epsilon0 = Aineq * x0
+        epsilon0 = a_ineq * x0
         x0 = np.hstack((x0, epsilon0))
         c = np.hstack((c, np.zeros(ni)))
-    return c, Aeq2, beq2, lb, ub, x0
+    return c, a_eq2, b_eq2, lb, ub, x0
 
 
-def convert_to_one_sided_inequality_system(Aineq, b_lower, b_upper):
-    if (Aineq is not None) and (b_lower is not None):
+def convert_to_one_sided_inequality_system(a_ineq, b_lower, b_upper):
+    if (a_ineq is not None) and (b_lower is not None):
 
         idskeep_upper = np.nonzero(b_upper != np.inf)[0]
         idskeep_lower = np.nonzero(b_lower != -np.inf)[0]
         if len(idskeep_lower) > 0 and len(idskeep_upper) > 0:
-            Aineq = scipy.sparse.vstack(
-                (Aineq[idskeep_upper, :], -Aineq[idskeep_lower, :])
+            a_ineq = scipy.sparse.vstack(
+                (a_ineq[idskeep_upper, :], -a_ineq[idskeep_lower, :])
             ).tocsr()
         elif len(idskeep_lower) > 0:
-            Aineq = -Aineq
+            a_ineq = -a_ineq
         else:
-            Aineq = Aineq
-        bineq = np.hstack((b_upper[idskeep_upper], -b_lower[idskeep_lower]))
+            a_ineq = a_ineq
+        b_ineq = np.hstack((b_upper[idskeep_upper], -b_lower[idskeep_lower]))
     else:
-        bineq = b_upper
-    return Aineq, bineq
+        b_ineq = b_upper
+    return a_ineq, b_ineq
 
 
-def check_constraints(i, x_r, mask, Acsr, Acsc, b_lower, b_upper):
+def check_constraints(i, x_r, mask, a_csr, a_csc, b_lower, b_upper):
     violated = False
-    constraints_to_check = np.nonzero(Acsc[:, i])[0]
+    constraints_to_check = np.nonzero(a_csc[:, i])[0]
     for j in constraints_to_check:
-        line = Acsr[j, :]
+        line = a_csr[j, :]
         interval_d = 0
         interval_u = 0
         for k in range(line.indices.size):
@@ -166,15 +166,15 @@ def check_constraints(i, x_r, mask, Acsr, Acsc, b_lower, b_upper):
     return violated
 
 
-class solutionStat:
+class SolutionStat:
     """Class that compute statistics of solution of an LP problem."""
 
-    def __init__(self, c, AeqCSC, beq, AineqCSC, bineq, callback_func):
+    def __init__(self, c, a_eq_csc, beq, a_ineq_csc, b_ineq, callback_func):
         self.c = c
-        self.Aeq = AeqCSC
+        self.a_eq = a_eq_csc
         self.beq = beq
-        self.Aineq = AineqCSC
-        self.bineq = bineq
+        self.a_ineq = a_ineq_csc
+        self.b_ineq = b_ineq
         self.best_integer_solution_energy = np.inf
         self.best_integer_solution = None
         self.iprev = 0
@@ -195,18 +195,18 @@ class solutionStat:
         energy1 = self.c.dot(x)
         max_violated_equality = 0
         max_violated_inequality = 0
-        r_eq = (self.Aeq * x) - self.beq
-        r_ineq = (self.Aineq * x) - self.bineq
-        if self.Aeq is not None:
+        r_eq = (self.a_eq * x) - self.beq
+        r_ineq = (self.a_ineq * x) - self.b_ineq
+        if self.a_eq is not None:
             max_violated_equality = np.max(np.abs(r_eq))
-        if self.Aineq is not None:
+        if self.a_ineq is not None:
             max_violated_inequality = np.max(r_ineq)
 
-        xrounded = np.round(x)
-        energy_rounded = self.c.dot(xrounded)
-        nb_violated_equality_rounded = np.sum(np.abs(self.Aeq * xrounded - self.beq))
+        x_rounded = np.round(x)
+        energy_rounded = self.c.dot(x_rounded)
+        nb_violated_equality_rounded = np.sum(np.abs(self.a_eq * x_rounded - self.beq))
         nb_violated_inequality_rounded = np.sum(
-            np.maximum(self.Aineq * xrounded - self.bineq, 0))
+            np.maximum(self.a_ineq * x_rounded - self.b_ineq, 0))
 
         if nb_violated_equality_rounded == 0 and nb_violated_inequality_rounded == 0:
             print(
@@ -214,7 +214,7 @@ class solutionStat:
             )
             if energy_rounded < self.best_integer_solution_energy:
                 self.best_integer_solution_energy = energy_rounded
-                self.best_integer_solution = xrounded
+                self.best_integer_solution = x_rounded
 
         print(
             "iter"
@@ -246,58 +246,57 @@ def save_arguments(filename):
     from inspect import getargvalues, stack
     import inspect
 
-    posname, kwname, args = getargvalues(stack()[1][0])[-3:]
-    posargs = args.pop(posname, [])
-    args.update(args.pop(kwname, []))
+    pos_name, kw_name, args = getargvalues(stack()[1][0])[-3:]
+    pos_args = args.pop(pos_name, [])
+    args.update(args.pop(kw_name, []))
     caller = inspect.currentframe().f_back
     func_name = caller.f_code.co_name
 
     module = caller.f_globals["__name__"]
     import pickle
 
-    d = {"module": module, "function_name": func_name, "args": args, "posargs": posargs}
+    d = {"module": module, "function_name": func_name, "args": args, "posargs": pos_args}
     with open(filename, "wb") as f:
         pickle.dump(d, f)
 
 
-def precondition_constraints(A, b, b2=None, alpha=2):
+def precondition_constraints(a, b, b2=None, alpha=2):
     # alpha=2
-    ACopy = A.copy()
-    ACopy.data = np.abs(ACopy.data) ** (alpha)
-    SumA = ACopy * np.ones((ACopy.shape[1]))
-    tmp = (SumA) ** (1.0 / alpha)
+    a_copy = a.copy()
+    a_copy.data = np.abs(a_copy.data) ** (alpha)
+    sum_a = a_copy * np.ones((a_copy.shape[1]))
+    tmp = (sum_a) ** (1.0 / alpha)
     tmp[tmp == 0] = 1
-    diagSigmA = 1 / tmp
-    Sigma = scipy.sparse.diags([diagSigmA], [0]).tocsr()
-    Ap = Sigma * A
-    Ap.__dict__["blocks"] = A.blocks
+    diag_sigm_a = 1 / tmp
+    sigma = scipy.sparse.diags([diag_sigm_a], [0]).tocsr()
+    a_p = sigma * a
+    a_p.__dict__["blocks"] = a.blocks
     if b is not None:
-        bp = Sigma * b
+        bp = sigma * b
     else:
         bp = None
     if b2 is None:
-
-        return Ap, bp
+        return a_p, bp
     else:
-        return Ap, bp, Sigma * b2
+        return a_p, bp, sigma * b2
 
 
-def precondition_lp_right(c, Aeq, beq, lb, ub, x0, alpha=2):
+def precondition_lp_right(c, a_eq, beq, lb, ub, x0, alpha=2):
     # alpha=2
-    AeqCopy = Aeq.copy()
-    AeqCopy.data = np.abs(AeqCopy.data) ** (alpha)
-    SumA = np.ones((AeqCopy.shape[0])) * AeqCopy
-    tmp = (SumA) ** (1.0 / alpha)
+    a_eq_copy = a_eq.copy()
+    a_eq_copy.data = np.abs(a_eq_copy.data) ** (alpha)
+    sum_a = np.ones((a_eq_copy.shape[0])) * a_eq_copy
+    tmp = (sum_a) ** (1.0 / alpha)
     tmp[tmp == 0] = 1
-    diagR = 1 / tmp
-    R = scipy.sparse.diags([diagR], [0]).tocsr()
+    diag_r = 1 / tmp
+    r = scipy.sparse.diags([diag_r], [0]).tocsr()
 
-    Aeq2 = Aeq * R
-    beq2 = beq
+    a_eq2 = a_eq * r
+    b_eq2 = beq
     lb2 = tmp * lb
     ub2 = tmp * ub
     x02 = tmp * x0
-    c2 = c * R
-    Aeq2.__dict__["blocks"] = Aeq.blocks
+    c2 = c * r
+    a_eq2.__dict__["blocks"] = a_eq.blocks
 
-    return R, c2, Aeq2, beq2, lb2, ub2, x02
+    return r, c2, a_eq2, b_eq2, lb2, ub2, x02

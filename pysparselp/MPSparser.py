@@ -19,15 +19,15 @@ def mps_parser(f, fsol=None):
     nb_ineq = 0
     nb_eq = 0
     nb_var = 0
-    B_lower = dict()
-    B_upper = dict()
-    Beq = dict()
+    b_lower = dict()
+    b_upper = dict()
+    b_eq = dict()
     rows = dict()
     variables = dict()
-    AineqList = []
-    AeqList = []
-    vidtovar = dict()
-    partparsing = None
+    a_ineq_list = []
+    a_eq_list = []
+    v_id_to_var = dict()
+    part_parsing = None
     while True:
 
         line = f.readline()
@@ -55,23 +55,23 @@ def mps_parser(f, fsol=None):
             problem_name = t[1]
             continue
         if line.startswith("ROWS"):
-            partparsing = "ROWS"
+            part_parsing = "ROWS"
             continue
         if line.startswith("COLUMNS"):
-            partparsing = "COLUMNS"
+            part_parsing = "COLUMNS"
             continue
         if line.startswith("RHS"):
-            partparsing = "RHS"
+            part_parsing = "RHS"
             continue
         if line.startswith("BOUNDS"):
-            partparsing = "BOUNDS"
+            part_parsing = "BOUNDS"
             continue
 
         if line.startswith("RANGES"):
             print("not coded yet")
             raise
 
-        if partparsing == "ROWS":
+        if part_parsing == "ROWS":
             if t[0] == "N":
                 costname = t[1]
 
@@ -82,23 +82,23 @@ def mps_parser(f, fsol=None):
             r["type"] = t[0]
             if t[0] == "G":
                 r["id"] = nb_ineq
-                B_lower[nb_ineq] = 0
-                B_upper[nb_ineq] = np.inf
+                b_lower[nb_ineq] = 0
+                b_upper[nb_ineq] = np.inf
                 nb_ineq += 1
 
             if t[0] == "L":
                 r["id"] = nb_ineq
-                B_lower[nb_ineq] = -np.inf
-                B_upper[nb_ineq] = 0
+                b_lower[nb_ineq] = -np.inf
+                b_upper[nb_ineq] = 0
                 nb_ineq += 1
             elif t[0] == "E":
                 r["id"] = nb_eq
-                Beq[nb_eq] = 0  # set default value
+                b_eq[nb_eq] = 0  # set default value
                 nb_eq += 1
 
             continue
 
-        if partparsing == "COLUMNS":
+        if part_parsing == "COLUMNS":
 
             if t[1] in variables:
 
@@ -112,7 +112,7 @@ def mps_parser(f, fsol=None):
                     "LO"
                 ] = 0  # Variables not mentioned in a given BOUNDS set are taken to be non-negative (lower bound zero, no upper bound)
                 var["cost"] = 0
-                vidtovar[nb_var] = var
+                v_id_to_var[nb_var] = var
                 nb_var += 1
 
             j = var["id"]
@@ -128,14 +128,14 @@ def mps_parser(f, fsol=None):
                 i = r["id"]
 
                 if r["type"] == "L":
-                    AineqList.append((i, j, v))
+                    a_ineq_list.append((i, j, v))
                 elif r["type"] == "G":
-                    AineqList.append((i, j, v))
+                    a_ineq_list.append((i, j, v))
                 elif r["type"] == "E":
-                    AeqList.append((i, j, v))
+                    a_eq_list.append((i, j, v))
             continue
 
-        if partparsing == "RHS":
+        if part_parsing == "RHS":
 
             for k in range(int((len(t) - 2) / 2)):
                 if t[2 * k + 2] == "":
@@ -147,15 +147,15 @@ def mps_parser(f, fsol=None):
                     raise
                 elif r["type"] == "L":
 
-                    B_upper[i] = v
+                    b_upper[i] = v
                 elif r["type"] == "G":
-                    B_lower[i] = v
+                    b_lower[i] = v
 
                 elif r["type"] == "E":
-                    Beq[i] = v
+                    b_eq[i] = v
             continue
 
-        if partparsing == "BOUNDS":
+        if part_parsing == "BOUNDS":
             var = variables[t[2]]
             var["name"] = t[2]
             if t[0] == "UP" or t[0] == "LO":
@@ -174,32 +174,32 @@ def mps_parser(f, fsol=None):
                 print("integer constraints ignored")
                 raise
 
-    costVector = np.array([vidtovar[i]["cost"] for i in range(nb_var)])
-    upperbounds = np.array([vidtovar[i]["UP"] for i in range(nb_var)])
-    lowerbounds = np.array([vidtovar[i]["LO"] for i in range(nb_var)])
+    cost_vector = np.array([v_id_to_var[i]["cost"] for i in range(nb_var)])
+    upper_bounds = np.array([v_id_to_var[i]["UP"] for i in range(nb_var)])
+    lower_bounds = np.array([v_id_to_var[i]["LO"] for i in range(nb_var)])
 
-    Aineq = sparse.dok_matrix((nb_ineq, nb_var))
-    for i, j, v in AineqList:
-        Aineq[i, j] = v
+    a_ineq = sparse.dok_matrix((nb_ineq, nb_var))
+    for i, j, v in a_ineq_list:
+        a_ineq[i, j] = v
 
-    Aeq = sparse.dok_matrix((nb_eq, nb_var))
-    for i, j, v in AeqList:
-        Aeq[i, j] = v
+    a_eq = sparse.dok_matrix((nb_eq, nb_var))
+    for i, j, v in a_eq_list:
+        a_eq[i, j] = v
 
-    Beq = np.array([Beq[i] for i in range(nb_eq)])
-    B_lower = np.array([B_lower[i] for i in range(nb_ineq)])
-    B_upper = np.array([B_upper[i] for i in range(nb_ineq)])
+    b_eq = np.array([b_eq[i] for i in range(nb_eq)])
+    b_lower = np.array([b_lower[i] for i in range(nb_ineq)])
+    b_upper = np.array([b_upper[i] for i in range(nb_ineq)])
 
-    # print Aeq
+    # print a_eq
     r = {
-        "costVector": costVector,
-        "upperbounds": upperbounds,
-        "lowerbounds": lowerbounds,
-        "Aeq": Aeq,
-        "Beq": Beq,
-        "Aineq": Aineq,
-        "B_lower": B_lower,
-        "B_upper": B_upper,
+        "cost_vector": cost_vector,
+        "upper_bounds": upper_bounds,
+        "lower_bounds": lower_bounds,
+        "a_eq": a_eq,
+        "b_eq": b_eq,
+        "a_ineq": a_ineq,
+        "b_lower": b_lower,
+        "b_upper": b_upper,
         "problem_name": problem_name,
         "costname": costname
     }
@@ -225,14 +225,14 @@ def mps_parser(f, fsol=None):
                 # objvalue = 4
                 continue
             if line.startswith("- Variables"):
-                partparsing = "Variables"
+                part_parsing = "Variables"
                 continue
 
             if line.startswith("- Constraints"):
-                partparsing = "Constraints"
+                part_parsing = "Constraints"
                 continue
 
-            if partparsing == "Variables":
+            if part_parsing == "Variables":
                 if line.startswith("V Name"):
                     name = line.split(": ")[1].ljust(8)
                     var = variables[name]
@@ -264,7 +264,7 @@ def mps_parser(f, fsol=None):
                     var["sol"] = var["UP"]
                     continue
 
-        solution = np.array([vidtovar[i]["sol"] for i in range(nb_var)])
+        solution = np.array([v_id_to_var[i]["sol"] for i in range(nb_var)])
 
         r["solution"] = solution
 
@@ -273,8 +273,8 @@ def mps_parser(f, fsol=None):
 
 if __name__ == "__main__":
 
-    filenameLP = "./data/netlib/AFIRO.SIF"
-    filenameSol = "./data/perPlex/afiro.txt.gz"
-    fLP = open(filenameLP, "r")
-    fsol = gzip.open(filenameSol, "r")
-    LP = mps_parser(fLP, fsol)
+    filename_lp = "./data/netlib/AFIRO.SIF"
+    filename_sol = "./data/perPlex/afiro.txt.gz"
+    file_lp = open(filename_lp, "r")
+    fsol = gzip.open(filename_sol, "r")
+    LP = mps_parser(file_lp, fsol)

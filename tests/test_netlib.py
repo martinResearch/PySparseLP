@@ -96,9 +96,8 @@ def trim_length(a, b):
     return a[:min_len], b[:min_len]
 
 
-def test_netlib(update_results=False, display=False):
-    max_time_seconds = 10
-    pb_names = ["SC105"]
+def test_netlib(pb_names, max_time_seconds: int = 10, update_results: bool = False, display: bool = False):
+
     for pb_name in pb_names:
         distanceToGroundTruthCurves = solve_netlib(
             pb_name, display=False, max_time_seconds=max_time_seconds
@@ -126,7 +125,7 @@ if __name__ == "__main__":
     # test_netlib('SC50B')
     # test_netlib('SC50A')
     # test_netlib('KB2')
-    test_netlib("SC105", display=False)
+    test_netlib(["SC105"], display=False)
     # test_netlib('ADLITTLE')# seems like the solution is not unique
     # test_netlib('SCAGR7')
     # test_netlib('PEROLD')# seems like there is a loading this problem

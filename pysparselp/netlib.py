@@ -35,8 +35,12 @@ from .MPSparser import mps_parser
 def get_problem(pbname):
     thisfilepath = os.path.dirname(os.path.abspath(__file__))
 
-    filename_lp = os.path.join(thisfilepath, "data", "netlib", pbname.upper() + ".SIF")
-    filename_sol = os.path.join(thisfilepath, "data", "perPlex", pbname.lower() + ".txt")
+    netlib_folder = os.path.join(thisfilepath, "data", "netlib")
+    sol_folder = os.path.join(thisfilepath, "data", "perPlex")
+    os.makedirs(netlib_folder, exist_ok=True)
+    os.makedirs(sol_folder, exist_ok=True)
+    filename_lp = os.path.join(netlib_folder, pbname.upper() + ".SIF")
+    filename_sol = os.path.join(sol_folder, pbname.lower() + ".txt")
 
     if not os.path.isfile(filename_lp):
         urllib.request.urlretrieve(

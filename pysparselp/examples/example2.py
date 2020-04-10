@@ -72,7 +72,7 @@ def run(display=True):
         np.eye(emp_cov.shape[0]).flatten() + lamb,
     )
     lp.add_abs_penalization(ids, 1)
-    x = lp.solve(method="mehrotra", nb_iter=60000, max_time=20)[0]
+    x = lp.solve(method="mehrotra", nb_iter=6000, max_time=np.inf)[0]
     # x=LP.solve(method='chambolle_pock_ppd')[0]
     lp_prec_ = x[ids]
     lp_prec_ = 0.5 * (lp_prec_ + lp_prec_.T)

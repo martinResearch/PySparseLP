@@ -157,9 +157,9 @@ This can be reformulated as an integer program:
  
  
 We relax it into a continuous variables LP using 
-
 ![latex: $$ L_{ij}\in[0,1]$$](./images/kmedians2_relax.svg)
  
+ 
 	from pysparselp.example5 import run
 	run()
 

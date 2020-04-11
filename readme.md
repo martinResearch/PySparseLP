@@ -31,8 +31,6 @@ This project also provides:
 
 # Installation
 
-## Compiling from source
-
 using pip
 
 	sudo pip install git+git://github.com/martinResearch/PySparseLP.git
@@ -41,7 +39,7 @@ otherwise you can dowload it, decompress it and compile it locally using
 
 	python setup.py build_ext --inplace
 
-If you want to be able to run exernal solvers using mps files in windows then download the following executables and copy them in the solvers\windows subfolder
+If you want to be able to run external solvers using mps files in windows then download the following executables and copy them in the solvers\windows subfolder
 
 * [clp.exe](https://www.coin-or.org/download/binary/Clp/) 
 * [cbc.exe](https://www.coin-or.org/download/binary/Cbc/) 
@@ -51,7 +49,7 @@ If you want to be able to run exernal solvers using mps files in windows then do
 
 # LP problem modeling
 
-This library provides a python class *SparseLP* (in SparseLP.py) that aims at making it easier to build linear programs from python. It is easy to derive a specialize class from it and add specialized constraints creations methods (see pott penalization in example 1). 
+This library provides a python class *SparseLP* (in SparseLP.py) that aims at making it easier to build linear programs from python. It is easy to derive a specialize class from it and add specialized constraints creations methods (see potts penalization in example 1). 
 SparseLP is written in python and relies on scipy sparse matrices and numpy matrices to represent constraint internally and for its interface. There is no variables class binding to c++ objects. This makes it potentially easier to interface with the python scientific stack. 
 
 ## Debuging
@@ -61,7 +59,7 @@ Constructing a LP problem is often error prone. If we can generate a valid solut
 ## Other modeling tools
 Other libraries provide linear program modeling tools, but they have some limitations:
 
-* [CyLP](https://github.com/coin-or/CyLP): use operator oveloading so that we can use notation that are close to mathetmatical notations. But variables are defined as 1D vectors
+* [CyLP](https://github.com/coin-or/CyLP): use operator overloading so that we can use notation that are close to mathematical notations. But variables are defined as 1D vectors
 * [GLOP](https://developers.google.com/optimization/lp/glop): tha variables are defined one by one as scalars which make the creation of large LPs very slow in python.
 * [PuLP](https://github.com/coin-or/pulp). Variables are added as scalars, one at a time, instead of using arrays, which make the creation of large LPs very slow in python.
 * [Pyomo](http://www.pyomo.org/)
@@ -71,22 +69,22 @@ The approach taken here is lower level than this tools (no *variable* class and 
 # Examples
 
 ## Image segmentation
-We consider the image segmentation problem with Potts regularisation:
+We consider the image segmentation problem with Potts regularization:
 
 ![latex: \large $min_s c^ts + \sum_{(i,j)\in E} |s_i-s_j| ~s.t. ~0 \leq s\leq 1$](https://rawgithub.com/martinResearch/PySparseLP/master/images/segmentation.svg)
 
 with *E* the list of indices of pairs of neighbouring pixels and *c* a cost vector that is obtain from color distribution models of the two regions.
-This problem can be rewritten as a linear progam by adding an auxiliary variable *d_ij* for each edge with the constraints
+This problem can be rewritten as a linear program by adding an auxiliary variable *d_ij* for each edge with the constraints
 
 ![latex: \large $min_s c^ts + \sum_{(i,j)\in E} d_{ij} ~s.t. ~0 \leq s\leq 1, ~d_{ij}\geq s_j-s_j, ~d_{ij}\geq s_i-s_i $](https://rawgithub.com/martinResearch/PySparseLP/master/images/segmentation_lp.svg)
- 
+ 
 This problem can be more efficiently solved using graph-cuts than with a generic linear program solver but it is still interesting to compare the different generic LP solvers on this problem. 
 
 
 	from pysparselp.example1 import run
 	run()
 
-Here are the resulting segmentations obtain with the various LP solvers, with the same random data term with the optimisations limited to 15 seconds for each solver.
+Here are the resulting segmentations obtain with the various LP solvers, with the same random data term with the optimizations limited to 15 seconds for each solver.
 ![curves](https://rawgithub.com/martinResearch/PySparseLP/master/images/potts_results.png)
 convergence curves
 ![curves](./images/potts_curves.png)
@@ -131,7 +129,6 @@ The example can be executed using the following line in python
 	from pysparselp.example3 import run
 	run()
 
-
 The support vectors are represented by black circles.
 
 ![classification result with support points](https://rawgithub.com/martinResearch/PySparseLP/master/images/l1svmClassification.svg)
@@ -147,8 +144,6 @@ We relax it into an continuous variables LP.
 	from pysparselp.example4 import run
 	run()
 
-
-
 ## K-medians
 
 Given *n* points we want to cluster them into *k* set by minimizing
@@ -158,16 +153,15 @@ with *d_ij* the distance between point *i* and point *j*
 This can be reformulated as an integer program:
 
 ![latex: $$ min \sum_{ij\in \{1,\dots,n\}^2} L_{ij} d_{ij} ~ s.t~ L_{ij}\in\{0,1\}, \sum_j L_{ij}=1 \forall i, L_{ij}<u_i \forall (i,j),\sum_i u_i\leq k $$](./images/kmedians2.svg)
- 
-We relax it into a continuous variabels LP using 
+ 
+We relax it into a continuous variables LP using 
 
 ![latex: $$ L_{ij}\in[0,1]$$](./images/kmedians2_relax.svg)
- 
+ 
 	from pysparselp.example5 import run
 	run()
 
 ![kmedians result](./images/kmedians.svg)
-
 
 ## Netlib LP problems 
 
@@ -189,44 +183,45 @@ Random sparse LP problem can be generate using code in *randomLP.py*. The approa
 
 * improve the API by removing redundant functions
 * add OSQP[11] as an available solver
-* translate from Matlab ot pyton the ADMM methods from [https://github.com/nmchaves/admm-for-lp](https://github.com/nmchaves/admm-for-lp)
-* add automatic constraint checking if we provide a feasible solution from the begining. It will help debugging constraints.
+* translate from Matlab ot python the ADMM methods from [https://github.com/nmchaves/admm-for-lp](https://github.com/nmchaves/admm-for-lp)
+* add automatic constraint checking if we provide a feasible solution from the beginning. It will help debugging constraints.
 * convert to python the matlab implementation of the LP solver based on improved version of champolle-pock called [Adaptive Primal-Dual Hybrid Gradient Methods](https://arxiv.org/abs/1305.0546) available [here](https://www.cs.umd.edu/~tomg/projects/pdhg/)
 * create a cython binding for LPsparse [1] using scipy.sparse matrices for the interface and adding the possibility to compute the convergence curve by providing the problem known solution to the solver or by adding the possibility to define a callback to a python function.
 * implement method [4]
 * implement method in [5]
 * add interface to [8] once the code is online.
-* try to get more meaningfull convergence curves for scipy.linprog, or maybe those are the expected curves ? 
-* we provide an implementation of Mehrotra's Predictor-Corrector Pimal-Dual Interior Point method translated to python from  [Yiming yan's matlab code](https://github.com/YimingYAN/mpc). We could add other interior point methods by translating into python the code 
+* try to get more meaningful convergence curves for scipy.linprog, or maybe those are the expected curves ? 
+* we provide an implementation of Mehrotra's Predictor-Corrector Pimal-Dual Interior Point method translated to python from  [Yiming yan's matlab code](https://github.com/YimingYAN/mpc). We could add other interior point methods by translating into python the code 
 	* https://github.com/YimingYAN/pathfollow (matlab)
 	* https://github.com/YimingYAN/pipm-lp (matlab)
 	* http://www.cs.ubc.ca/~pcarbo/convexprog.html
 	* https://github.com/YimingYAN/cppipm (c++)
 	* https://github.com/pkhuong/cholesky-is-magic (lisp) described here https://www.pvk.ca/Blog/2013/12/19/so-you-want-to-write-an-lp-solver/	
 * implement some presolve methods to avoid singular matrices in the interior point methods (for example http://www.davi.ws/doc/gondzio94presolve.pdf). For example detect constraints on singletons, duplicated rows etc.
-* add basis pursuite example using [9] .
+* add basis pursuit example using [9] .
 * add non negative matrix factorization example using [10]
 
 # Alternatives
 
 ## Linear Program solvers with a python interface
-* Scipy's [linprog](http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html). It provides three different solvers (Simplex, revised Simplex and an interior point method). it is possible to call this solvers from within our code using *method="scipy_simplex"* or *method=""scipy_interior_point"* when callign the *solve* method. The simplex method is implemented in python with many loops and is very slow for problems that involve more than a hundred variables. 
+* Scipy's [linprog](http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html). It provides three different solvers (simplex, revised simplex and an interior-point method). It is possible to call this solvers from within our code using *method="scipy_simplex"* or *method=""scipy_interior_point"* when calling the *solve* method. The simplex method is implemented in python with many loops and is very slow for problems that involve more than a hundred variables. 
 * OSQP. Operator Splitting Quadratic programming [11]. It support support linear programming (with all zeros hessian matrix)
-  [python interface](https://github.com/oxfordcontrol/osqp-python)
+  [python interface](https://github.com/oxfordcontrol/osqp-python)
 * GPU implementation of OSQP (can be 2 order of magnitude faster)[here](https://github.com/oxfordcontrol/cuosqp)
-* Python bindings for GLPK [here](https://en.wikibooks.org/wiki/GLPK/Python) . Might not be adapted to very large sparse problems as it use simplex or interior point methods. The installation is a bit tedious. The licence is GPL which makes it unsuited for use in commercial products.
+* Python bindings for GLPK [here](https://en.wikibooks.org/wiki/GLPK/Python) . It might not be adapted to very large sparse problems as it uses simplex or interior point methods. The installation is a bit tedious. The licence is GPL which makes it unsuited for use in commercial products.
 * [GLOP](https://developers.google.com/optimization/lp/glop), Google's linear programming system has a python interface [pywraplp](https://developers.google.com/optimization/introduction/using#python). 
-* [CyLP](http://mpy.github.io/CyLPdoc/index.html) . Python interface to Coin-Or solvers CLP, CBC, and CGL. We can use the first two solvers using mps files using my code. Isntalling CyLP involves quite a few steps. CyLP also provide LP modeling tools.
-* [CVXOPT](http://cvxopt.org/), provides linear program cone program solvers and also provides interfaces to GLPK,Mosek,DSPD. 
-* [CVXPY](http://www.cvxpy.org/en/latest/) Python-embedded modeling language for convex optimization problems. It provide interface to cvxopt solvers and to SCS
-* [SCS](https://pypi.python.org/pypi/scs), [github](https://github.com/cvxgrp/scs) Solves convex cone programs via operator splitting. Can solve in particular linear programs. 
-## No python interface
+* [CyLP](http://mpy.github.io/CyLPdoc/index.html) . Python interface to Coin-Or solvers CLP, CBC, and CGL. We can use the first two solvers using mps files using my code. Installing CyLP involves quite a few steps. CyLP also provide LP modeling tools.
+* [CVXOPT](http://cvxopt.org/). It provides a linear program cone program solvers and also provides interfaces to GLPK,Mosek,DSPD. 
+* [CVXPY](http://www.cvxpy.org/en/latest/). Python-embedded modeling language for convex optimization problems. It provide interface to cvxopt solvers and to SCS
+* [SCS](https://pypi.python.org/pypi/scs), [github](https://github.com/cvxgrp/scs) Solves convex cone programs via operator splitting. Can solve in particular linear programs.  
 
-* [LIPSOL](http://www.caam.rice.edu/~zhang/lipsol/). matlab code. Seems to be adequate for sparse problems. Part of the code in fortran. licence GPL
-* [LPsolve](https://sourceforge.net/projects/lpsolve/) licence LGPL. Python wrapper [here](http://lpsolve.sourceforge.net/5.5/,Python.htm#Install_the_lpsolve_driver). I cannot find  in the windows installer the command line executable mentioned in the documentation that could be executed with mps files.
+## Linear Program solvers without python interface
+
+* [LIPSOL](http://www.caam.rice.edu/~zhang/lipsol/). Matlab code. Seems to be adequate for sparse problems. Part of the code in Fortran. license GPL
+* [LPsolve](https://sourceforge.net/projects/lpsolve/) license LGPL. Python wrapper [here](http://lpsolve.sourceforge.net/5.5/,Python.htm#Install_the_lpsolve_driver). I cannot find  in the windows installer the command line executable mentioned in the documentation that could be executed with mps files.
 * [Joptimize](http://www.joptimizer.com/linearProgramming.html) implemented in Java. Appache licence
 * [PCx](http://pages.cs.wisc.edu/~swright/PCx/) PCx is an interior-point predictor-corrector linear programming package. Code available here https://github.com/lpoo/PCx. Free but to public domain. Binaries provided for Linux only.
-* [DSDP](http://www.mcs.anl.gov/hs/software/DSDP/) solve semidefinite programs, which are more general than linear programs. It uses the sparsity of the problem and might still be competitive to solve sparse linear programs. Can be called from python through [cvxopt](http://cvxopt.org/)
+* [DSDP](http://www.mcs.anl.gov/hs/software/DSDP/) solve semi-definite programs, which are more general than linear programs. It uses the sparsity of the problem and might still be competitive to solve sparse linear programs. Can be called from python through [cvxopt](http://cvxopt.org/)ms. 
 
 # References
 

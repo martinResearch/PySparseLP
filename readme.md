@@ -4,7 +4,7 @@ This project provides several algorithms implemented in python to solve linear p
 
 ![latex:\large $\mathbf{x}^*=argmin_\mathbf{x} \mathbf{c}^t\mathbf{x} ~  s.t.~  A_e\mathbf{x}=\mathbf{b_e},A_i\mathbf{x}\leq\mathbf{ b_i}, \mathbf{l}\leq \mathbf{x}\leq \mathbf{u}$ ](https://rawgithub.com/martinResearch/PySparseLP/master/images/LPproblem.svg)
 
-where Ae and Ai are sparse matrices
+where *A<sub>e</sub>* and *A<sub>i</sub>* are sparse matrices
 
 The different algorithms that are implemented here are documented in the [pdf](./latex/SparseLinearProgramming.pdf): 
 
@@ -74,10 +74,11 @@ We consider the image segmentation problem with Potts regularization:
 ![latex: \large $min_s c^ts + \sum_{(i,j)\in E} |s_i-s_j| ~s.t. ~0 \leq s\leq 1$](https://rawgithub.com/martinResearch/PySparseLP/master/images/segmentation.svg)
 
 with *E* the list of indices of pairs of neighbouring pixels and *c* a cost vector that is obtain from color distribution models of the two regions.
-This problem can be rewritten as a linear program by adding an auxiliary variable *d_ij* for each edge with the constraints
+This problem can be rewritten as a linear program by adding an auxiliary variable *d<sub>ij</sub>* for each edge with the constraints
 
 ![latex: \large $min_s c^ts + \sum_{(i,j)\in E} d_{ij} ~s.t. ~0 \leq s\leq 1, ~d_{ij}\geq s_j-s_j, ~d_{ij}\geq s_i-s_i $](https://rawgithub.com/martinResearch/PySparseLP/master/images/segmentation_lp.svg)
  
+ 
 This problem can be more efficiently solved using graph-cuts than with a generic linear program solver but it is still interesting to compare the different generic LP solvers on this problem. 
 
 
@@ -98,7 +99,7 @@ The Sparse Inverse Covariance Estimation problem aims to find a sparse matrix B 
 ![latex:\large $B^*=argmin_B \|B\|_1~ s.t.~ \|A B-I_d\|_\infty\leq \lambda$](https://rawgithub.com/martinResearch/PySparseLP/master/images/sparse_inv_covariance.svg)
 
 Let denote *f* the fonction that take a matrix as an input an yield the vector of coefficient of the matrix in row-major order.
-Let *b=f(B)* we have *f(AB)=Mb* with *M=kron(A,I_d)*
+Let *b=f(B)* we have *f(AB)=Mb* with *M=kron(A, I<sub>d</sub>)*
 The problem rewrites
 
 ![latex: \large $ min_{b,c} \sum_i c_i ~s.t.~ -b\leq c,~b\leq c,~-\lambda\leq M b-f(I_d)\leq \lambda$](https://rawgithub.com/martinResearch/PySparseLP/master/images/lp_sparse_inv_covariance.svg)
@@ -112,7 +113,7 @@ We take inspiration from this scikit-learn example [here](http://scikit-learn.or
 
 ## L1 regularised multi-class SVM
 
-Given *n* examples of vector-class pairs *(x_i,y_i)*, with *x_i* a vector of size m and *y_i* an integer representing the class, we aim at estimating a matrix *W* of size *k* by *m* that allows to discriminate the right class, with *k* the number of classes. We assume that the last component of *x_i* is a one in order to represent the offset constants in *W*. we denote *W_k* the *k*th line of the matrix *W*
+Given *n* examples of vector-class pairs *(x<sub>i</sub>,y<sub>i</sub>)*, with *x<sub>i</sub>* a vector of size m and *y<sub>i</sub>* an integer representing the class, we aim at estimating a matrix *W* of size *k* by *m* that allows to discriminate the right class, with *k* the number of classes. We assume that the last component of *x<sub>i</sub>* is a one in order to represent the offset constants in *W*. we denote *W<sub>k</sub>* the *k<sup>th</sup>* line of the matrix *W*
 
 ![latex:\large $W^*=argmin_W min_{\epsilon}\|W\|_1+\sum_{i=1}^n \epsilon_i\\ s.t.~ W_{y_i}x_i-W_kx_i>1-\epsilon_i \forall\{(i,k)|k\neq y_i\}$](https://rawgithub.com/martinResearch/PySparseLP/master/images/l1svm.svg)
 
@@ -149,11 +150,12 @@ We relax it into an continuous variables LP.
 Given *n* points we want to cluster them into *k* set by minimizing
 
 ![latex: $min_ {C \subset \{1,\dots,n\}} \sum_i min_{j\in C}d_{ij}~ s.t~ card(C)\leq k$](./images/kmedians1.svg)
-with *d_ij* the distance between point *i* and point *j*
+with *d<sub>ij</sub>* the distance between point *i* and point *j*
 This can be reformulated as an integer program:
 
 ![latex: $$ min \sum_{ij\in \{1,\dots,n\}^2} L_{ij} d_{ij} ~ s.t~ L_{ij}\in\{0,1\}, \sum_j L_{ij}=1 \forall i, L_{ij}<u_i \forall (i,j),\sum_i u_i\leq k $$](./images/kmedians2.svg)
  
+ 
 We relax it into a continuous variables LP using 
 
 ![latex: $$ L_{ij}\in[0,1]$$](./images/kmedians2_relax.svg)

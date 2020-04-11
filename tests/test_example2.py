@@ -14,7 +14,7 @@ def test_example2(update_results=False):
 
     assert sum_abs_diff < 14.02
     print(nb_zeros_lp)
-    assert nb_zeros_lp > 232
+    assert nb_zeros_lp >= 232
 
 
 if __name__ == "__main__":

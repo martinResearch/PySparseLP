@@ -2,9 +2,6 @@
 
 import os
 
-import numpy as np
-import numpy.testing
-
 from pysparselp.examples.example2 import run
 
 

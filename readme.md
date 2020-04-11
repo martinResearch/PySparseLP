@@ -66,39 +66,9 @@ If you want to be able to run exernal solvers using mps files in windows then do
 This library provides a python class *SparseLP* (in SparseLP.py) that aims at making it easier to build linear programs from python. It is easy to derive a specialize class from it and add specialized constraints creations methods (see pott penalization in example 1). 
 SparseLP is written in python and relies on scipy sparse matrices and numpy matrices to represent constraint internally and for its interface. There is no variables class binding to c++ objects. This makes it potentially easier to interface with the python scientific stack. 
 
-Creating variables
-
- * *add_variables_array(self,shape,lower_bounds,upper_bounds,costs=0,name=None,is_integer=False)*
-
-Various method to add constraints:
-
- * *add_linear_constraint_row*. Add a single row at the bottom of the constraints matrix. cols and vals should be vector of same size (flatten internaly if arrays)
- * *add_linear_constraint_rows(self,cols,vals,lower_bounds=None,upper_bounds=0)*. Add a set of rows that all have the same number of non zero values at the bottom of the constraints matrix. cols and vals should be 2D arrays of same size with each row cols[i,:] with vals[i,:] defines a different a sparse constraint to add.
-
- * *add_linear_constraints_with_broadcasting*
- * *add_inequalities*. Take a list of tuples (indices,coefs) that are tiled if needed to get the right size. More flexible than add_soft_linear_constraint_rows as coefs can heterogenous across tuples (scalar or vector)
- * *add_constraints_sparse*. Just append the sparse matrix under the existing constraints matrix and add bound and costs in 
-  bound vectors.
- * *addSoftConstraints*. same as add_linear_constraint_rows but constraints are soft constraints. This is done by adding slack variables that are penalized.  
- 
-other main methods 
-
- * *set_costs_variables*. Overwrite the cost associated with the 
- * *get_variables_indices(self,name)*. Returns the set of indices corresponding to the variables that have have been added with the given *name* when using *add_variables_array*.
- * *solve(method,get_timing,nb\_iter,max\_time,ground_truth,ground_truth_indices,plot_solution)*. Solve the linear program and return the vector of all the variables values.
- * *save_mps*
-
-We can check the feasibility of a solution using
-
-* max_constraint_violation
-* check_solution
-
-Often the sparse constraints matrix can naturally be decomposed vertically into blocks. The ADMM Block method aims to exploiting that decomposition. Blocks are defined using the methods *start_constraint_name* and *end_constraint_name*. This allow to inform the ADMM block method where to split the constraints matrix.
- 
 ## Debuging
 
-Building a LP problem is often error prone. If we can generate a valid solution before constructing the LP we can check constraints are not violated as we add them to the LP using check_solution. This make it easier to pin down which constraint is causing problem. We could add a debug flag so that this check is automatic done as we add constraints.
-
+Building a LP problem is often error prone. If we can generate a valid solution before constructing the LP we can check yhat the constraints are not violated as we add them to the LP using the method *check_solution*. This make it easier to pin down which constraint is causing problem. We could add a debug flag so that this check is automatic done as we add constraints.
 
 ## Other modeling tools
 Other libraries provide modeling tools ([CyLP](http://mpy.github.io/CyLPdoc/index.html) , [GLOP](https://developers.google.com/optimization/lp/glop))
@@ -109,7 +79,7 @@ But they have some limitations:
 * [PuLP](https://github.com/coin-or/pulp). Variables are added as scalars, one at a time, instead of usigbn arrays, which make the creation of large LPs very slow.
 * [Pyomo](http://www.pyomo.org/)
 
-the approach I have taken is lower level than this tools but provide more control and flexibility on how to define the constraints and the objective function. It is made easy by using numpy arrays to store variables indices.
+The approach I have taken is lower level than this tools but provide more control and flexibility on how to define the constraints and the objective function. It is made easy by using numpy arrays to store variables indices.
 
 # Examples
 
@@ -196,7 +166,7 @@ we relax it into an LP.
 
 ## K-medians
 
-Given n point we want to cluster them into k set by minimizing
+Given n points we want to cluster them into k set by minimizing
 
 ![latex: $min_ {C \subset \{1,\dots,n\}} \sum_i min_{j\in C}d_{ij}~ s.t~ card(C)\leq k$](./images/kmedians1.svg)
 with d_ij the distance between point i and point j
@@ -228,49 +198,32 @@ Note: since august 2017, numpy files containing the netlib examples are provided
 
 ## Random problems 
 
-random sparse LP problem can be generate using code in *randomLP.py*. The approach used to generate random problem is very simple and could be improved
-to generate harder sparse LPs. We could implement the approach used in section 6.2.1 in https://arxiv.org/pdf/1404.6770v3.pdf to 
-generate random problems with the matlab code available [here](https://github.com/YimingYAN/pipm-lp/tree/master/Tests/Ultilities)
+Random sparse LP problem can be generate using code in *randomLP.py*. The approach used to generate random problem is very simple and could be improved in order to generate harder sparse LPs. We could implement the approach used in section 6.2.1 in https://arxiv.org/pdf/1404.6770v3.pdf to  generate random problems with the matlab code available [here](https://github.com/YimingYAN/pipm-lp/tree/master/Tests/Ultilities)
 
-# TODO
+# To Do
 
 * improve the API by removing redundant functions
-
+* add OSQP[11] as a available solver
 * translate from Matlab ot pyton the ADMM methods from [https://github.com/nmchaves/admm-for-lp](https://github.com/nmchaves/admm-for-lp)
-
 * add automatic constraint checking if we provide a feasible solution from the begining. It will help debugging constraints.
-
 * document the active-set *hack* for the chambole pock method (in chambolle_pock_ppdas.py).
-
 * finish coding the method by Conda (CondatPrimalDual.py)
-
 * convert to python the matlab implementation of the LP solver based on improved version of champolle-pock called [Adaptive Primal-Dual Hybrid Gradient Methods](https://arxiv.org/abs/1305.0546) available [here](https://www.cs.umd.edu/~tomg/projects/pdhg/)
-
 * create a cython binding for LPsparse [1] using scipy.sparse matrices for the interface and adding the possibility to compute the convergence curve by providing the problem known solution to the solver or by adding the possibility to define a callback to a python function.
-
 * implement method [4]
-
 * implement method in [5]
-
 * add interface to [8] once the code is online.
-
 * add simplex methods written in python, could get code from here https://bitbucket.org/jbolinge/lp or speedup scipy code 
  [here](https://github.com/scipy/scipy/blob/master/scipy/optimize/_linprog.py) by getting rid of slow loops and using cython.
-
 * try to get more meaningfull convergence curves for scipy.linprog, or maybe those are the expected curves ? 
-
 * we provide an implementation of Mehrotra's Predictor-Corrector Pimal-Dual Interior Point method translated to python from  [Yiming yan's matlab code](https://github.com/YimingYAN/mpc). We could add other interior point methods by translating into python the code 
 	* https://github.com/YimingYAN/pathfollow (matlab)
 	* https://github.com/YimingYAN/pipm-lp (matlab)
 	* http://www.cs.ubc.ca/~pcarbo/convexprog.html
 	* https://github.com/YimingYAN/cppipm (c++)
-	* https://github.com/pkhuong/cholesky-is-magic (lisp) described here https://www.pvk.ca/Blog/2013/12/19/so-you-want-to-write-an-lp-solver/
-	
-	
+	* https://github.com/pkhuong/cholesky-is-magic (lisp) described here https://www.pvk.ca/Blog/2013/12/19/so-you-want-to-write-an-lp-solver/	
 * implement some presolve methods to avoid singular matrices in the interior point methods	 (for example http://www.davi.ws/doc/gondzio94presolve.pdf). For example detect constraints on singletons, duplicated rows etc.
-
 * add basis pursuite example using [9] .
-
 * add non negative matrix factorization example using [10]
 
 # Alternatives
@@ -296,7 +249,7 @@ generate random problems with the matlab code available [here](https://github.co
 
 # References
 
-[1] *Sparse Linear Programming via Primal and Dual Augmented Coordinate Descent* Ian En-Hsu Yen, Kai Zhong, Cho-Jui Hsieh, Pradeep K Ravikumar, Inderjit S Dhillon , NIPS 2015
+[1] *Sparse Linear Programming via Primal and Dual Augmented Coordinate Descent* Ian En-Hsu Yen, Kai Zhong, Cho-Jui Hsieh, Pradeep K Ravikumar, Inderjit S Dhillon , NIPS 2015. [code](http://ianyen.site/LPsparse/)
 
 [2] *Diagonal preconditioning for first order primal-dual algorithms in convex optimization* T. Pock and A.Chambolle  ICCV 2011
 

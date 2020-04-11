@@ -28,6 +28,7 @@ This project also provides:
 # Build and test status
 
 [![Build status](https://ci.appveyor.com/api/projects/status/wcasscudbjr40ql3?svg=true)](https://ci.appveyor.com/project/martinResearch/pysparselp)
+![Python package](https://github.com/martinResearch/PySparseLP/workflows/Python%20package/badge.svg)
 
 # Installation
 
@@ -203,7 +204,7 @@ Random sparse LP problem can be generate using code in *randomLP.py*. The approa
 # To Do
 
 * improve the API by removing redundant functions
-* add OSQP[11] as a available solver
+* add OSQP[11] as an available solver
 * translate from Matlab ot pyton the ADMM methods from [https://github.com/nmchaves/admm-for-lp](https://github.com/nmchaves/admm-for-lp)
 * add automatic constraint checking if we provide a feasible solution from the begining. It will help debugging constraints.
 * document the active-set *hack* for the chambole pock method (in chambolle_pock_ppdas.py).

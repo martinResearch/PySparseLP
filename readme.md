@@ -1,6 +1,6 @@
 # Goal
 
-This project provides several python codes to solve linear programs of the form
+This project provides several algorithms implemented in python to solve linear programs of the form
 
 ![latex:\large $\mathbf{x}^*=argmin_\mathbf{x} \mathbf{c}^t\mathbf{x} ~  s.t.~  A_e\mathbf{x}=\mathbf{b_e},A_i\mathbf{x}\leq\mathbf{ b_i}, \mathbf{l}\leq \mathbf{x}\leq \mathbf{u}$ ](https://rawgithub.com/martinResearch/PySparseLP/master/images/LPproblem.svg)
 
@@ -23,7 +23,7 @@ This project also provides:
 * methods to import and export the linear program from and to standard file formats (MPS), It is used here to run [netlib](http://www.netlib.org/lp/data/) LP problems. Using mps file one can upload and solve LP on the [neos](https://neos-server.org/neos/) servers.
 * a simple constraint propagation method with back-tracking to find feasible integer values solutions (for integer programs)
 * interfaces to other solvers (SCS, ECOS, CVXOPT) through CVXPY
-* interfaces to other LP and MILP solvers ([CLP](https://www.coin-or.org/download/binary/Clp/),[CBC](https://www.coin-or.org/download/binary/Cbc/), [MIPLC](http://mipcl-cpp.appspot.com/), [GLPSOL](https://sourceforge.net/projects/winglpk/), [QSOPT](http://www.math.uwaterloo.ca/~bico/qsopt/downloads/downloads.htm)) using mps text files
+* interfaces to other LP and MILP solvers ([CLP](https://www.coin-or.org/download/binary/Clp/), [CBC](https://www.coin-or.org/download/binary/Cbc/), [MIPLC](http://mipcl-cpp.appspot.com/), [GLPSOL](https://sourceforge.net/projects/winglpk/), [QSOPT](http://www.math.uwaterloo.ca/~bico/qsopt/downloads/downloads.htm)) using mps text files
 
 # Build and test status
 
@@ -56,23 +56,22 @@ SparseLP is written in python and relies on scipy sparse matrices and numpy matr
 
 ## Debuging
 
-Building a LP problem is often error prone. If we can generate a valid solution before constructing the LP we can check yhat the constraints are not violated as we add them to the LP using the method *check_solution*. This make it easier to pin down which constraint is causing problem. We could add a debug flag so that this check is automatic done as we add constraints.
+Constructing a LP problem is often error prone. If we can generate a valid solution before constructing the LP we can check that the constraints are not violated as we add them to the LP using the method *check_solution*. This make it easier to pin down which constraint is causing problem. We could add a debug flag so that this check is automatic done as we add constraints.
 
 ## Other modeling tools
-Other libraries provide modeling tools ([CyLP](http://mpy.github.io/CyLPdoc/index.html) , [GLOP](https://developers.google.com/optimization/lp/glop))
-But they have some limitations:
+Other libraries provide linear program modeling tools, but they have some limitations:
 
-* CyLP: use operator oveloading so that we can use notation that are close to mathetmatical notations. But variables are defined as 1D vectors
-* GLOP
-* [PuLP](https://github.com/coin-or/pulp). Variables are added as scalars, one at a time, instead of usigbn arrays, which make the creation of large LPs very slow.
+* [CyLP](https://github.com/coin-or/CyLP): use operator oveloading so that we can use notation that are close to mathetmatical notations. But variables are defined as 1D vectors
+* [GLOP](https://developers.google.com/optimization/lp/glop): tha variables are defined one by one as scalars which make the creation of large LPs very slow in python.
+* [PuLP](https://github.com/coin-or/pulp). Variables are added as scalars, one at a time, instead of using arrays, which make the creation of large LPs very slow in python.
 * [Pyomo](http://www.pyomo.org/)
 
-The approach I have taken is lower level than this tools but provide more control and flexibility on how to define the constraints and the objective function. It is made easy by using numpy arrays to store variables indices.
+The approach taken here is lower level than this tools (no *variable* class and no operator overloading to define the constraints) but provide more control and flexibility on how to define the constraints and the objective function. It is made easy by using numpy arrays to store variables indices.
 
 # Examples
 
 ## Image segmentation
-we can use it to solve a binary image segmentation problem with Potts regularisation.
+We consider the image segmentation problem with Potts regularisation:
 
 ![latex: \large $min_s c^ts + \sum_{(i,j)\in E} |s_i-s_j| ~s.t. ~0 \leq s\leq 1$](https://rawgithub.com/martinResearch/PySparseLP/master/images/segmentation.svg)
 
@@ -81,34 +80,32 @@ This problem can be rewritten as a linear progam by adding an auxiliary variable
 
 ![latex: \large $min_s c^ts + \sum_{(i,j)\in E} d_{ij} ~s.t. ~0 \leq s\leq 1, ~d_{ij}\geq s_j-s_j, ~d_{ij}\geq s_i-s_i $](https://rawgithub.com/martinResearch/PySparseLP/master/images/segmentation_lp.svg)
  
-This problem can be more efficiently solved using graph-cuts but it is still interesting to compare the different generic LP solvers on this problem. 
+This problem can be more efficiently solved using graph-cuts than with a generic linear program solver but it is still interesting to compare the different generic LP solvers on this problem. 
 
 
 	from pysparselp.example1 import run
 	run()
 
-segmentation with the same random data term with the optimisations limited to 15 seconds for each method
+Here are the resulting segmentations obtain with the various LP solvers, with the same random data term with the optimisations limited to 15 seconds for each solver.
 ![curves](https://rawgithub.com/martinResearch/PySparseLP/master/images/potts_results.png)
 convergence curves
 ![curves](./images/potts_curves.png)
 
-Instead of using a simple Potts model we could try to solve the LP from [5]
+Note that instead of using a simple Potts model we could try to solve the LP from [5]
 
 ## Sparse inverse convariance matrix 
  
-The Sparse Inverse Covariance Estimation aims to find
-a sparse matrix B that approximate the inverse of Covariance matrix A.
+The Sparse Inverse Covariance Estimation problem aims to find a sparse matrix B that approximate the inverse of Covariance matrix A.
 
 ![latex:\large $B^*=argmin_B \|B\|_1~ s.t.~ \|A B-I_d\|_\infty\leq \lambda$](https://rawgithub.com/martinResearch/PySparseLP/master/images/sparse_inv_covariance.svg)
 
-let denote f the fonction that take a matrix as an input an yield the vector of coefficient of the matrix in row-major order.
-let b=f(B) we have f(AB)=Mb with M=kron(A,I_d)
-the problem rewrites
+Let denote *f* the fonction that take a matrix as an input an yield the vector of coefficient of the matrix in row-major order.
+Let *b=f(B)* we have *f(AB)=Mb* with *M=kron(A,I_d)*
+The problem rewrites
 
 ![latex: \large $ min_{b,c} \sum_i c_i ~s.t.~ -b\leq c,~b\leq c,~-\lambda\leq M b-f(I_d)\leq \lambda$](https://rawgithub.com/martinResearch/PySparseLP/master/images/lp_sparse_inv_covariance.svg)
 
-we take inspiration from this scikit-learn example [here](http://scikit-learn.org/stable/auto_examples/covariance/plot_sparse_cov.html) to generate 
-samples of a gaussian with a sparse inverse covariance (precision) matrix. From the sample we compute the empirical covariance A and the we estimate a sparse inverse covariance (precision) matrix B from that empirical covariance using the LP formulation above.
+We take inspiration from this scikit-learn example [here](http://scikit-learn.org/stable/auto_examples/covariance/plot_sparse_cov.html) to generate samples of a gaussian with a sparse inverse covariance (precision) matrix. From the sample we compute the empirical covariance A and the we estimate a sparse inverse covariance (precision) matrix B from that empirical covariance using the LP formulation above.
 
 	from pysparselp.example2 import run
 	run()
@@ -117,35 +114,35 @@ samples of a gaussian with a sparse inverse covariance (precision) matrix. From 
 
 ## L1 regularised multi-class SVM
 
-Given n examples of vector-class pairs *(x_i,y_i)*, with *x_i* a vector of size m and *y_i* an integer representing the class, we aim at estimating a matrix W of size k by m that allows to discriminate the right class, with k the number of classes. We assume that the last component of *x_i* is a one in order to represent the offset constants in W. we denote *W_k* the kth line of the matrix *W*
+Given *n* examples of vector-class pairs *(x_i,y_i)*, with *x_i* a vector of size m and *y_i* an integer representing the class, we aim at estimating a matrix *W* of size *k* by *m* that allows to discriminate the right class, with *k* the number of classes. We assume that the last component of *x_i* is a one in order to represent the offset constants in *W*. we denote *W_k* the *k*th line of the matrix *W*
 
 ![latex:\large $W^*=argmin_W min_{\epsilon}\|W\|_1+\sum_{i=1}^n \epsilon_i\\ s.t.~ W_{y_i}x_i-W_kx_i>1-\epsilon_i \forall\{(i,k)|k\neq y_i\}$](https://rawgithub.com/martinResearch/PySparseLP/master/images/l1svm.svg)
 
-by adding auxiliary variables in a matrix S of the same size as the matrix W we can rewrite the absolute value as follow:
+By adding auxiliary variables in a matrix *S* of the same size as the matrix *W* we can rewrite the absolute value as follow:
 ![latex:\large $\|W\|_1=min_S \sum_{ij}S_{ij} \\ s.t.~ W_{ij}<S_{ij}, -W_{ij}<S_{ij} \forall(ij)$](https://rawgithub.com/martinResearch/PySparseLP/master/images/abstolp.svg)
 
-we obtain the LP formulation:
+We obtain the LP formulation:
 
 ![latex:\large $W^*=argmin_{W} min_{\epsilon,S} \sum_{ij}S_{ij} +\sum_{i=1}^n \epsilon_i\\s.t.~W_{y_i}x_i-W_kx_i>1-\epsilon_i \forall\{(i,k)|k\neq y_i\},W_{ij}<S_{ij}, -W_{ij}<S_{ij} \forall(ij)$](https://rawgithub.com/martinResearch/PySparseLP/master/images/l1svmLP.svg)
 
 
-you can run the example using the following line in python
+The example can be executed using the following line in python
 
 	from pysparselp.example3 import run
 	run()
 
 
-the support vectors are represented by black circles.
+The support vectors are represented by black circles.
 
 ![classification result with support points](https://rawgithub.com/martinResearch/PySparseLP/master/images/l1svmClassification.svg)
 
 ## Bipartite matching 
 
-Bipartite matching can be reformulated as an integer program
+Bipartite matching can be reformulated as an integer linear program:
 
 ![latex: $$ max \sum_{ij\in \{1,\dots,n\}^2} M_{ij} C_{i,j} ~ s.t~ M_{ij}\in\{0,1\}, \sum_j M_{ij}\leq 1 \sum_i M_{ij}\leq 1 $$](./images/bipartite.svg)
 
-we relax it into an LP.
+We relax it into an continuous variables LP.
 
 	from pysparselp.example4 import run
 	run()
@@ -154,15 +151,15 @@ we relax it into an LP.
 
 ## K-medians
 
-Given n points we want to cluster them into k set by minimizing
+Given *n* points we want to cluster them into *k* set by minimizing
 
 ![latex: $min_ {C \subset \{1,\dots,n\}} \sum_i min_{j\in C}d_{ij}~ s.t~ card(C)\leq k$](./images/kmedians1.svg)
-with d_ij the distance between point i and point j
-The can be reformulated as an integer program
+with *d_ij* the distance between point *i* and point *j*
+This can be reformulated as an integer program:
 
 ![latex: $$ min \sum_{ij\in \{1,\dots,n\}^2} L_{ij} d_{ij} ~ s.t~ L_{ij}\in\{0,1\}, \sum_j L_{ij}=1 \forall i, L_{ij}<u_i \forall (i,j),\sum_i u_i\leq k $$](./images/kmedians2.svg)
  
-we relax it into using 
+We relax it into a continuous variabels LP using 
 
 ![latex: $$ L_{ij}\in[0,1]$$](./images/kmedians2_relax.svg)
  
@@ -174,7 +171,7 @@ we relax it into using
 
 ## Netlib LP problems 
 
-We have an interface to easily test the solvers on netlib problems from [netlib](http://www.netlib.org/lp/data/). 
+We have an interface to easily test the various solvers on netlib problems from [netlib](http://www.netlib.org/lp/data/). 
 The uncompressed files are downloaded from [here](ftp://ftp.numerical.rl.ac.uk/pub/cuter/netlib). 
 In order to monitor convergence rates, the exact solutions of these problems are found [here](http://www.zib.de/koch/perplex/data/netlib/txt/)
 
@@ -194,15 +191,11 @@ Random sparse LP problem can be generate using code in *randomLP.py*. The approa
 * add OSQP[11] as an available solver
 * translate from Matlab ot pyton the ADMM methods from [https://github.com/nmchaves/admm-for-lp](https://github.com/nmchaves/admm-for-lp)
 * add automatic constraint checking if we provide a feasible solution from the begining. It will help debugging constraints.
-* document the active-set *hack* for the chambole pock method (in chambolle_pock_ppdas.py).
-* finish coding the method by Conda (CondatPrimalDual.py)
 * convert to python the matlab implementation of the LP solver based on improved version of champolle-pock called [Adaptive Primal-Dual Hybrid Gradient Methods](https://arxiv.org/abs/1305.0546) available [here](https://www.cs.umd.edu/~tomg/projects/pdhg/)
 * create a cython binding for LPsparse [1] using scipy.sparse matrices for the interface and adding the possibility to compute the convergence curve by providing the problem known solution to the solver or by adding the possibility to define a callback to a python function.
 * implement method [4]
 * implement method in [5]
 * add interface to [8] once the code is online.
-* add simplex methods written in python, could get code from here https://bitbucket.org/jbolinge/lp or speedup scipy code 
- [here](https://github.com/scipy/scipy/blob/master/scipy/optimize/_linprog.py) by getting rid of slow loops and using cython.
 * try to get more meaningfull convergence curves for scipy.linprog, or maybe those are the expected curves ? 
 * we provide an implementation of Mehrotra's Predictor-Corrector Pimal-Dual Interior Point method translated to python from  [Yiming yan's matlab code](https://github.com/YimingYAN/mpc). We could add other interior point methods by translating into python the code 
 	* https://github.com/YimingYAN/pathfollow (matlab)
@@ -210,14 +203,14 @@ Random sparse LP problem can be generate using code in *randomLP.py*. The approa
 	* http://www.cs.ubc.ca/~pcarbo/convexprog.html
 	* https://github.com/YimingYAN/cppipm (c++)
 	* https://github.com/pkhuong/cholesky-is-magic (lisp) described here https://www.pvk.ca/Blog/2013/12/19/so-you-want-to-write-an-lp-solver/	
-* implement some presolve methods to avoid singular matrices in the interior point methods	 (for example http://www.davi.ws/doc/gondzio94presolve.pdf). For example detect constraints on singletons, duplicated rows etc.
+* implement some presolve methods to avoid singular matrices in the interior point methods (for example http://www.davi.ws/doc/gondzio94presolve.pdf). For example detect constraints on singletons, duplicated rows etc.
 * add basis pursuite example using [9] .
 * add non negative matrix factorization example using [10]
 
 # Alternatives
 
 ## Linear Program solvers with a python interface
-* Scipy's [linprog](http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html). Only the simplex is implemented in october 2016 (Note: an [interior point method](http://scipy.github.io/devdocs/optimize.linprog-interior-point.html) has been added in august 2017). Note that it is possible to call this solver from within our code using *method='ScipyLinProg'* when callign the *solve* method. The simplex method is implemented in python with many loops and is very slow for problems that involve more than a hundred variables. The interior point method has not been tested here.
+* Scipy's [linprog](http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html). It provides three different solvers (Simplex, revised Simplex and an interior point method). it is possible to call this solvers from within our code using *method="scipy_simplex"* or *method=""scipy_interior_point"* when callign the *solve* method. The simplex method is implemented in python with many loops and is very slow for problems that involve more than a hundred variables. 
 * OSQP. Operator Splitting Quadratic programming [11]. It support support linear programming (with all zeros hessian matrix)
   [python interface](https://github.com/oxfordcontrol/osqp-python)
 * GPU implementation of OSQP (can be 2 order of magnitude faster)[here](https://github.com/oxfordcontrol/cuosqp)

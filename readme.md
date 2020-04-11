@@ -31,25 +31,13 @@ This project also provides:
 
 # Installation
 
-## Windows
-
-If you have python 3.6 64 bits you can install it using the precompiled python wheel 
-
-* download the wheel [here](https://ci.appveyor.com/project/martinResearch/pysparselp/build/artifacts)
-* move in the download folder
-* execute the pip command: 
-	
-		pip install pysparselp-0.1-cp36-cp36m-win_amd64.whl
- 
-Otherwise compile from source
-
 ## Compiling from source
 
 using pip
 
 	sudo pip install git+git://github.com/martinResearch/PySparseLP.git
 	
-otherwise you can dowload it, decompressit it and compile it locally using 
+otherwise you can dowload it, decompress it and compile it locally using 
 
 	python setup.py build_ext --inplace
 

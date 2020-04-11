@@ -27,7 +27,6 @@ This project also provides:
 
 # Build and test status
 
-[![Build status](https://ci.appveyor.com/api/projects/status/wcasscudbjr40ql3?svg=true)](https://ci.appveyor.com/project/martinResearch/pysparselp)
 ![Python package](https://github.com/martinResearch/PySparseLP/workflows/Python%20package/badge.svg)
 
 # Installation

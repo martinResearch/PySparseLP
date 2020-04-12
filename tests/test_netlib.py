@@ -63,7 +63,7 @@ def solve_netlib(problem_name, display=False, max_time_seconds=30):
 
     # testing our methods
 
-    solving_methods2 =solving_methods
+    solving_methods2 = solving_methods
     # solving_methods2=['mehrotra']
     distance_to_ground_truth = {}
     for method in solving_methods2:

@@ -22,6 +22,7 @@ This project also provides:
 * methods to convert between the different common forms of linear programs (slack form, standard form etc), 
 * methods to import and export the linear program from and to standard file formats (MPS), It is used here to run [netlib](http://www.netlib.org/lp/data/) LP problems. Using mps file one can upload and solve LP on the [neos](https://neos-server.org/neos/) servers.
 * a simple constraint propagation method with back-tracking to find feasible integer values solutions (for integer programs)
+* interface to OSQP solver [11]
 * interfaces to other solvers (SCS, ECOS, CVXOPT) through CVXPY
 * interfaces to other LP and MILP solvers ([CLP](https://www.coin-or.org/download/binary/Clp/),[CBC](https://www.coin-or.org/download/binary/Cbc/), [MIPLC](http://mipcl-cpp.appspot.com/), [GLPSOL](https://sourceforge.net/projects/winglpk/), [QSOPT](http://www.math.uwaterloo.ca/~bico/qsopt/downloads/downloads.htm)) using mps text files
 
@@ -277,7 +278,7 @@ generate random problems with the matlab code available [here](https://github.co
 
 ## Linear Program solvers with a python interface
 * Scipy's [linprog](http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html). Only the simplex is implemented in october 2016 (Note: an [interior point method](http://scipy.github.io/devdocs/optimize.linprog-interior-point.html) has been added in august 2017). Note that it is possible to call this solver from within our code using *method='ScipyLinProg'* when callign the *solve* method. The simplex method is implemented in python with many loops and is very slow for problems that involve more than a hundred variables. The interior point method has not been tested here.
-* OSQP. Operator Splitting Quadratic programming [11]. It support support linear programming (with all zeros hessian matrix)
+* OSQP. Operator Splitting Quadratic programming [11]. It support support linear programming (with all zeros hessian matrix). OSQP has can be executde on GPU with [cuosqp](https://github.com/oxfordcontrol/cuosqp)and to solve mixted integer quadratic progams using [miosqp](https://github.com/oxfordcontrol/miosqp)
   [python interface](https://github.com/oxfordcontrol/osqp-python)
 * GPU implementation of OSQP (can be 2 order of magnitude faster)[here](https://github.com/oxfordcontrol/cuosqp)
 * Python bindings for GLPK [here](https://en.wikibooks.org/wiki/GLPK/Python) . Might not be adapted to very large sparse problems as it use simplex or interior point methods. The installation is a bit tedious. The licence is GPL which makes it unsuited for use in commercial products.

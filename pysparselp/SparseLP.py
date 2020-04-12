@@ -58,6 +58,7 @@ solving_methods = [
 
 try:
     import cvxpy
+
     solving_methods.append("ECOS")
     solving_methods.append("SCS")
 except Exception:
@@ -65,9 +66,11 @@ except Exception:
 
 try:
     import osqp
+
     solving_methods.append("osqp")
 except Exception:
     print("could not import osqp. The osqp solver will not be available")
+
 
 def csr_matrix_append_row(a, n, cols, vals):
     a.blocks.append((a.shape[0], a.shape[0]))
@@ -859,8 +862,8 @@ class SparseLP:
             if self.b_lower is None:
                 self.b_lower = np.full((self.a_inequalities.shape[0]), -np.inf)
             if self.b_upper is None:
-                self.b_upper = np.full((self.a_inequalities.shape[0]), np.inf)  
-                
+                self.b_upper = np.full((self.a_inequalities.shape[0]), np.inf)
+
             new_inequality_constraint_names = []
             for d in self.equalityConstraintNames:
                 new_inequality_constraint_names.append(d)
@@ -878,27 +881,28 @@ class SparseLP:
             self.a_inequalities = scipy.sparse.vstack(
                 (self.a_equalities, self.a_inequalities)
             )
-           
+
             self.b_lower = np.hstack((self.b_equalities, self.b_lower))
             self.b_upper = np.hstack((self.b_equalities, self.b_upper))
             self.a_equalities = None
             self.b_equalities = None
-    
+
     def convert_to_all_inequalities_without_bounds(self):
         """Convert to the form min c.t b_lower<=a_ineq*x<=b_upper by augmenting the size of a_ineq."""
         self.convert_to_all_inequalities()
-        non_free_ids = np.nonzero(~(np.isinf(self.lower_bounds) & np.isinf(self.upper_bounds)))[0]
-        nb_non_free_ids=len(non_free_ids)
-        eye_reduced=scipy.sparse.coo_matrix((np.ones(nb_non_free_ids),(np.arange(nb_non_free_ids),non_free_ids)),(nb_non_free_ids,self.nb_variables))
-        self.a_inequalities = scipy.sparse.vstack(
-            ( self.a_inequalities, eye_reduced)
-        )        
+        non_free_ids = np.nonzero(
+            ~(np.isinf(self.lower_bounds) & np.isinf(self.upper_bounds))
+        )[0]
+        nb_non_free_ids = len(non_free_ids)
+        eye_reduced = scipy.sparse.coo_matrix(
+            (np.ones(nb_non_free_ids), (np.arange(nb_non_free_ids), non_free_ids)),
+            (nb_non_free_ids, self.nb_variables),
+        )
+        self.a_inequalities = scipy.sparse.vstack((self.a_inequalities, eye_reduced))
         self.b_lower = np.hstack((self.b_lower, self.lower_bounds[non_free_ids]))
         self.b_upper = np.hstack((self.b_upper, self.upper_bounds[non_free_ids]))
         self.lower_bounds.fill(-np.inf)
         self.upper_bounds.fill(np.inf)
-        
-
 
     def convert_to_cvxpy(self):
 
@@ -1007,7 +1011,9 @@ class SparseLP:
                 )
                 self.distanceToGroundTruthAfterRounding.append(
                     np.mean(
-                        np.abs(ground_truth - np.round(solution["x"][ground_truth_indices]))
+                        np.abs(
+                            ground_truth - np.round(solution["x"][ground_truth_indices])
+                        )
                     )
                 )
             duration = time.clock() - start
@@ -1256,7 +1262,7 @@ class SparseLP:
                 nb_iter_plot=nb_iter_plot,
             )
             x = m_change1 * x - shift1
-            
+
         elif method == "chambolle_pock_ppdas":
             lp_reduced = copy.deepcopy(self)
             (
@@ -1347,32 +1353,41 @@ class SparseLP:
                 nb_iter_plot=nb_iter_plot,
             )
             x = m_change1 * x - shift1
-            
-        elif method=='osqp':
+
+        elif method == "osqp":
             lp_osqp_form = copy.deepcopy(self)
-            lp_osqp_form.convert_to_all_inequalities_without_bounds()           
+            lp_osqp_form.convert_to_all_inequalities_without_bounds()
             b_lower = lp_osqp_form.b_lower
-            b_lower = np.maximum(-1000,b_lower)
-            b_upper= lp_osqp_form.b_upper
-            b_upper = np.minimum(1000,b_upper)
-            P= scipy.sparse.csc_matrix((self.nb_variables,self.nb_variables))
-            
-            opts = {'verbose': True,
-                         'eps_abs': 1e-09,
-                         'eps_rel': 1e-09,
-                         'max_iter': nb_iter,
-                         'rho': 0.1,
-                         'adaptive_rho': False,
-                         'polish': True,
-                         'check_termination': 1,
-                         'warm_start': False}
-            
+            b_lower = np.maximum(-1000, b_lower)
+            b_upper = lp_osqp_form.b_upper
+            b_upper = np.minimum(1000, b_upper)
+            p = scipy.sparse.csc_matrix((self.nb_variables, self.nb_variables))
+
+            opts = {
+                "verbose": True,
+                "eps_abs": 1e-09,
+                "eps_rel": 1e-09,
+                "max_iter": nb_iter,
+                "rho": 0.1,
+                "adaptive_rho": False,
+                "polish": True,
+                "check_termination": 1,
+                "warm_start": False,
+            }
+
             model = osqp.OSQP()
-            model.setup(P=P,  q=lp_osqp_form.costsvector, A=lp_osqp_form.a_inequalities.tocsc(), l=b_lower, u=b_upper,  **opts)
-            res = model.solve()   
-            x= res.x
+            model.setup(
+                p,
+                lp_osqp_form.costsvector,
+                lp_osqp_form.a_inequalities.tocsc(),
+                b_lower,
+                b_upper,
+                **opts
+            )
+            res = model.solve()
+            x = res.x
             simplex_call_back(x)
-          
+
         else:
             print("unkown LP solver method " + method)
             raise

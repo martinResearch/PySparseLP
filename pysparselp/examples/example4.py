@@ -26,21 +26,19 @@ def run():
 
     s = lp.solve(method="mehrotra", nb_iter=7, max_time=np.inf)[0]
     print(f"mehrotra final cost:{lp.costsvector.dot(s)}")
-    
 
     s = lp.solve(method="osqp", nb_iter=1000, max_time=np.inf)[0]
-    print(f" osqp final cost:{lp.costsvector.dot(s)}") 
+    print(f" osqp final cost:{lp.costsvector.dot(s)}")
 
     s = lp.solve(
         method="dual_coordinate_ascent", nb_iter=2000, max_time=40, nb_iter_plot=500
     )[0]
-    print(f"dual_coordinate_ascent final cost:{lp.costsvector.dot(s)}") 
-  
+    print(f"dual_coordinate_ascent final cost:{lp.costsvector.dot(s)}")
 
     s = lp.solve(
         method="chambolle_pock_ppd", nb_iter=2000, max_time=10, nb_iter_plot=500
     )[0]
-    print(f"chambolle_pock_ppd final cost:{lp.costsvector.dot(s)}") 
+    print(f"chambolle_pock_ppd final cost:{lp.costsvector.dot(s)}")
 
     x = s[indices]
     print(np.round(x * 1000) / 1000)

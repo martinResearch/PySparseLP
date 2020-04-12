@@ -143,7 +143,7 @@ def run(display=True):
         for m in solving_methods
         if (m not in ["scipy_simplex", "scipy_interior_point"])
     ]  # remove scipy_linprog because it is too slow
-
+   
     distance_to_ground_truth_curves = {}
 
     for i, method in enumerate(solving_methods2):
@@ -163,12 +163,13 @@ def run(display=True):
             nb_iter_plot=500,
         )
         if display:
-            ax_curves1.semilogy(
-                lp.itrn_curve, lp.distance_to_ground_truth, label=method
-            )
-            ax_curves2.semilogy(
-                lp.opttime_curve, lp.distance_to_ground_truth, label=method
-            )
+            if  len(lp.distance_to_ground_truth)>0:
+                ax_curves1.semilogy(
+                    lp.itrn_curve, lp.distance_to_ground_truth, label=method
+                )
+                ax_curves2.semilogy(
+                    lp.opttime_curve, lp.distance_to_ground_truth, label=method
+                )
             ax_curves1.legend()
             ax_curves2.legend()
             ax = fig.add_subplot(2, 5, i + 2, title=method)

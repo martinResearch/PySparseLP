@@ -63,7 +63,7 @@ def solve_netlib(problem_name, display=False, max_time_seconds=30):
 
     # testing our methods
 
-    solving_methods2 = [m for m in solving_methods if (m not in ["scipy_linprog"])]
+    solving_methods2 =solving_methods
     # solving_methods2=['mehrotra']
     distance_to_ground_truth = {}
     for method in solving_methods2:
@@ -77,6 +77,7 @@ def solve_netlib(problem_name, display=False, max_time_seconds=30):
             nb_iter=1000000,
             max_time=max_time_seconds,
             ground_truth=ground_truth,
+            ground_truth_indices=np.arange(len(ground_truth)),
             plot_solution=None,
             nb_iter_plot=500,
         )
@@ -120,8 +121,8 @@ def test_netlib(
         with open(curves_json_file, "r") as f:
             distance_to_ground_truth_curves_expected = json.load(f)
 
-        for k, v1 in distance_to_ground_truth_curves.items():
-            v2 = distance_to_ground_truth_curves_expected[k]
+        for k, v1 in distance_to_ground_truth_curves_expected.items():
+            v2 = distance_to_ground_truth_curves[k]
             tv1, tv2 = trim_length(v1, v2)
             max_diff = np.max(np.abs(np.array(tv1) - np.array(tv2)))
             print(f"{pb_name} max diff {k} = {max_diff}")

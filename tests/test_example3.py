@@ -19,9 +19,9 @@ def test_example3(update_results=False):
             json.dump(percent_valid, f)
 
     with open(curves_json_file, "r") as f:
-        percent_valid = json.load(f)
+        percent_valid_expected = json.load(f)
 
-    for k, v1 in percent_valid.items():
+    for k, v1 in percent_valid_expected.items():
         v2 = percent_valid[k]
         assert v1 == v2
 

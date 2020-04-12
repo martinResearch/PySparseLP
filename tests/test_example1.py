@@ -29,8 +29,8 @@ def test_example1(update_results=False):
     with open(curves_json_file, "r") as f:
         distance_to_ground_truth_curves_expected = json.load(f)
 
-    for k, v1 in distance_to_ground_truth_curves.items():
-        v2 = distance_to_ground_truth_curves_expected[k]
+    for k, v1 in distance_to_ground_truth_curves_expected.items():
+        v2 = distance_to_ground_truth_curves[k]
         tv1, tv2 = trim_length(v1, v2)
         max_diff = np.max(np.abs(np.array(tv1) - np.array(tv2)))
         print(f"max diff {k} = {max_diff}")

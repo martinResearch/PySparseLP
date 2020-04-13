@@ -58,12 +58,13 @@ SparseLP is written in python and relies on scipy sparse matrices and numpy matr
 Constructing a LP problem is often error prone. If we can generate a valid solution before constructing the LP we can check that the constraints are not violated as we add them to the LP using the method *check_solution*. This make it easier to pin down which constraint is causing problem. We could add a debug flag so that this check is automatic done as we add constraints.
 
 ## Other modeling tools
-Other libraries provide linear program modeling tools, but they have some limitations:
+Other libraries provide linear program modeling tools:
 
 * [CyLP](https://github.com/coin-or/CyLP): use operator overloading so that we can use notation that are close to mathematical notations. But variables are defined as 1D vectors
 * [GLOP](https://developers.google.com/optimization/lp/glop): tha variables are defined one by one as scalars which make the creation of large LPs very slow in python.
 * [PuLP](https://github.com/coin-or/pulp). Variables are added as scalars, one at a time, instead of using arrays, which make the creation of large LPs very slow in python.
 * [Pyomo](http://www.pyomo.org/)
+* [CVXPY](https://www.cvxpy.org/)
 
 The approach taken here is lower level than this tools (no *variable* class and no operator overloading to define the constraints) but provide more control and flexibility on how to define the constraints and the objective function. It is made easy by using numpy arrays to store variables indices.
 
@@ -185,7 +186,6 @@ Random sparse LP problem can be generate using code in *randomLP.py*. The approa
 # To Do
 
 * improve the API by removing redundant functions
-* add OSQP[11] as an available solver
 * translate from Matlab ot python the ADMM methods from [https://github.com/nmchaves/admm-for-lp](https://github.com/nmchaves/admm-for-lp)
 * add automatic constraint checking if we provide a feasible solution from the beginning. It will help debugging constraints.
 * convert to python the matlab implementation of the LP solver based on improved version of champolle-pock called [Adaptive Primal-Dual Hybrid Gradient Methods](https://arxiv.org/abs/1305.0546) available [here](https://www.cs.umd.edu/~tomg/projects/pdhg/)

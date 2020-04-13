@@ -144,7 +144,8 @@ def dual_gradient_ascent(
         print("initial dual point not feasible, you could bound all variables")
         c_bar, x = get_optim_x(y_eq, y_ineq)
         return x, y_eq, y_ineq
-    for niter in range(nb_max_iter):
+    niter = 0
+    while niter < nb_max_iter:
         c_bar, x = get_optim_x(y_eq, y_ineq)
         if lp2.a_inequalities is not None:
             y_ineq_prev = y_ineq.copy()
@@ -238,6 +239,7 @@ def dual_gradient_ascent(
 
         if (max_time is not None) and elapsed > max_time:
             break
+        niter += 1
 
     print("done")
     return x, y_eq, y_ineq

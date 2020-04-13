@@ -92,11 +92,8 @@ def build_linear_program(image_size, coef_potts, coef_mul):
     return lp, ground_truth, ground_truth_indices, unary_terms
 
 
-def run(display=True):
+def run(display=True, image_size=50, coef_mul=500, coef_potts=0.5, max_time=15):
 
-    image_size = 50
-    coef_mul = 500
-    coef_potts = 0.5
     lp, ground_truth, ground_truth_indices, unary_terms = build_linear_program(
         image_size, coef_potts, coef_mul
     )
@@ -104,18 +101,21 @@ def run(display=True):
     print("solving")
 
     if display:
-        im = plt.imshow(
+        fig = plt.figure()
+        ax_image = fig.add_subplot(111)
+        im = ax_image.imshow(
             unary_terms[:, :, 0] / coef_mul,
             cmap=plt.cm.Greys_r,
             interpolation="nearest",
             vmin=0,
             vmax=1,
         )
-
-        ax_curves1 = plt.gca()
+        fig_curves1 = plt.figure()
+        ax_curves1 = fig_curves1.add_subplot(111)
         ax_curves1.set_xlabel("nb of iteration")
         ax_curves1.set_ylabel("distance_to_ground_truth")
-        ax_curves2 = plt.gca()
+        fig_curves2 = plt.figure()
+        ax_curves2 = fig_curves2.add_subplot(111)
         ax_curves2.set_xlabel("duration")
         ax_curves2.set_ylabel("distance_to_ground_truth")
 
@@ -155,8 +155,8 @@ def run(display=True):
         sol1, elapsed = lp.solve(
             method=method,
             get_timing=True,
-            nb_iter=1000000,
-            max_time=15,
+            nb_iter=100000,
+            max_time=max_time,
             ground_truth=ground_truth,
             ground_truth_indices=ground_truth_indices,
             plot_solution=None,
@@ -171,6 +171,7 @@ def run(display=True):
                     lp.opttime_curve, lp.distance_to_ground_truth, label=method
                 )
             ax_curves1.legend()
+            plt.gca().invert_yaxis()
             ax_curves2.legend()
             ax = fig.add_subplot(2, 5, i + 2, title=method)
             ax.imshow(

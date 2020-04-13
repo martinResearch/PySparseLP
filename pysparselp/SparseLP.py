@@ -37,7 +37,6 @@ import scipy.sparse
 from .ADMM import lp_admm, lp_admm2
 from .ADMMBlocks import lp_admm_block_decomposition
 from .ChambollePockPPD import chambolle_pock_ppd
-from .ChambollePockPPDAS import chambolle_pock_ppdas
 from .DualCoordinateAscent import dual_coordinate_ascent
 from .DualGradientAscent import dual_gradient_ascent
 from .MehrotraPDIP import mpc_sol
@@ -50,7 +49,6 @@ solving_methods = [
     "dual_coordinate_ascent",
     "dual_gradient_ascent",
     "chambolle_pock_ppd",
-    "chambolle_pock_ppdas",
     "admm",
     "admm2",
     "admm_blocks",
@@ -651,7 +649,7 @@ class SparseLP:
         return m_change, shift
 
     def convert_to_slack_form(self):
-        """Convert to the form min_y c.t Ay=b y>=0 by adding slack variables and shift on x
+        """Convert to the form min_y c.ty Ay=b y>=0 by adding slack variables and shift on x
         the solution of the original problem is obtained using x = m_change*y+ shift with
         y the solution of the new problem
         have a look at https://ocw.mit.edu/courses/sloan-school-of-management/15-053-optimization-methods-in-management-science-spring-2013/tutorials/MIT15_053S13_tut06.pdf
@@ -810,7 +808,7 @@ class SparseLP:
             self.a_inequalities = None
 
     def convert_to_one_sided_inequality_system(self):
-        """Convert to the form min c.t a_ineq x<=b_ineq Ax=b lb<=x<=ub by augmenting the size of a_ineq."""
+        """Convert to the form min c.t a_ineq*x<=b_ineq a_eq*x=b lb<=x<=ub by augmenting the size of a_ineq."""
         if (self.a_inequalities is not None) and (self.b_lower is not None):
             idskeep_upper = np.nonzero(self.b_upper != np.inf)[0]
             mapping_upper = np.hstack(([0], np.cumsum(self.b_upper != np.inf)))
@@ -1255,52 +1253,11 @@ class SparseLP:
                 x0=None,
                 alpha=1,
                 theta=1,
-                nb_iter=nb_iter,
+                nb_max_iter=nb_iter,
                 callback_func=this_back,
                 max_time=max_time,
                 save_problem=False,
                 nb_iter_plot=nb_iter_plot,
-            )
-            x = m_change1 * x - shift1
-
-        elif method == "chambolle_pock_ppdas":
-            lp_reduced = copy.deepcopy(self)
-            (
-                m_change1,
-                shift1,
-            ) = lp_reduced.remove_fixed_variables()  # removed fixed variables
-
-            def this_back(
-                niter,
-                solution,
-                energy1,
-                energy2,
-                duration,
-                max_violated_equality,
-                max_violated_inequality,
-                is_active_variable,
-            ):
-                solution = m_change1 * solution - shift1
-                callback_func(
-                    niter,
-                    solution,
-                    energy1,
-                    energy2,
-                    duration,
-                    max_violated_equality,
-                    max_violated_inequality,
-                )
-
-            x, best_integer_x = chambolle_pock_ppdas(
-                lp_reduced,
-                x0=x0,
-                alpha=1,
-                theta=1,
-                nb_iter=nb_iter,
-                nb_iter_plot=nb_iter_plot,
-                frequency_update_active_set=20,
-                callback_func=this_back,
-                max_time=max_time,
             )
             x = m_change1 * x - shift1
 
@@ -1387,6 +1344,7 @@ class SparseLP:
             res = model.solve()
             x = res.x
             simplex_call_back(x)
+            self.itrn_curve.append(res.info.iter)
 
         else:
             print("unkown LP solver method " + method)

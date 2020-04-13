@@ -45,7 +45,7 @@ def chambolle_pock_ppd(
     x0=None,
     alpha=1,
     theta=1,
-    nb_iter=100,
+    nb_max_iter=100,
     callback_func=None,
     max_time=None,
     save_problem=False,
@@ -191,7 +191,8 @@ def chambolle_pock_ppd(
 
     best_integer_solution_energy = np.inf
     best_integer_solution = None
-    for i in range(nb_iter):
+    niter = 0
+    while niter < nb_max_iter:
 
         # Update he primal variables
         d = c
@@ -238,7 +239,7 @@ def chambolle_pock_ppd(
             else:
                 r_ineq = (a_ineq * x3) - b_ineq
 
-        if i % nb_iter_plot == 0:
+        if niter % nb_iter_plot == 0:
             prev_elapsed = elapsed
             elapsed = time.clock() - start
             mean_iter_period = (elapsed - prev_elapsed) / 10
@@ -291,7 +292,7 @@ def chambolle_pock_ppd(
 
             print(
                 "iter"
-                + str(i)
+                + str(niter)
                 + ": energy1= "
                 + str(energy1)
                 + " energy2="
@@ -318,7 +319,7 @@ def chambolle_pock_ppd(
             if callback_func is not None:
 
                 callback_func(
-                    i,
+                    niter,
                     x,
                     energy1,
                     energy2,
@@ -339,7 +340,7 @@ def chambolle_pock_ppd(
             # y_ineq+=diag_sigma_ineq*r_ineq
             np.maximum(y_ineq, 0, y_ineq)
             # y_ineq=np.maximum(y_ineq, 0)
-
+        niter += 1
     if best_integer_solution is not None:
         best_integer_solution = best_integer_solution[:n]
     return x[:n], best_integer_solution

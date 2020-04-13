@@ -80,38 +80,43 @@ def dual_coordinate_ascent(
         assert np.min(y_ineq) >= 0
     # assert (LP2.b_lower is None)
 
-    def get_optim_x(y_eq, y_ineq, tiemethod="round"):
+    def get_optim_x(y_eq, y_ineq, tiemethod="round", x0=None, upate_x_cbar_zero=True):
         c_bar = lp2.costsvector.copy()
         if lp2.a_equalities is not None:
             c_bar += y_eq * lp2.a_equalities
         if lp2.a_inequalities is not None:
             c_bar += y_ineq * lp2.a_inequalities
-        x = np.zeros(lp2.costsvector.size)
+        if x0 is None:
+            x = np.zeros(lp2.costsvector.size)
+        else:
+            x = x0
         x[c_bar > 0] = lp2.lower_bounds[c_bar > 0]
         x[c_bar < 0] = lp2.upper_bounds[c_bar < 0]
         #
-        if tiemethod == "round":
-            x[c_bar == 0] = (
-                lp2.lower_bounds
-                + np.random.rand(len(lp2.upper_bounds))
-                * (lp2.upper_bounds - lp2.lower_bounds)
-            )[c_bar == 0]
-        elif tiemethod == "center":
-            x[c_bar == 0] = 0.5 * (lp2.lower_bounds + lp2.upper_bounds)[c_bar == 0]
-        else:
-            print("unkown tie method %s" % tiemethod)
-            raise
-        x[(c_bar == 0) & np.isinf(lp2.lower_bounds)] = lp2.upper_bounds[
-            (c_bar == 0) & np.isinf(lp2.lower_bounds)
-        ]
-        x[(c_bar == 0) & np.isinf(lp2.upper_bounds)] = lp2.lower_bounds[
-            (c_bar == 0) & np.isinf(lp2.upper_bounds)
-        ]
-        x[
-            (c_bar == 0) & np.isinf(lp2.upper_bounds) & np.isinf(lp2.lower_bounds)
-        ] = 0  # could take any arbitrary value
-        # x[(c_bar==0) & (LP2.costsvector>0)]=LP2.lower_bounds[(c_bar==0) & (LP2.costsvector>0)]
-        # x[(c_bar==0) & (LP2.costsvector<0)]=LP2.upper_bounds[(c_bar==0) & (LP2.costsvector<0)]
+
+        if upate_x_cbar_zero:
+            if tiemethod == "round":
+                x[c_bar == 0] = (
+                    lp2.lower_bounds
+                    + np.random.rand(len(lp2.upper_bounds))
+                    * (lp2.upper_bounds - lp2.lower_bounds)
+                )[c_bar == 0]
+            elif tiemethod == "center":
+                x[c_bar == 0] = 0.5 * (lp2.lower_bounds + lp2.upper_bounds)[c_bar == 0]
+            else:
+                print("unkown tie method %s" % tiemethod)
+                raise
+            x[(c_bar == 0) & np.isinf(lp2.lower_bounds)] = lp2.upper_bounds[
+                (c_bar == 0) & np.isinf(lp2.lower_bounds)
+            ]
+            x[(c_bar == 0) & np.isinf(lp2.upper_bounds)] = lp2.lower_bounds[
+                (c_bar == 0) & np.isinf(lp2.upper_bounds)
+            ]
+            x[
+                (c_bar == 0) & np.isinf(lp2.upper_bounds) & np.isinf(lp2.lower_bounds)
+            ] = 0  # could take any arbitrary value
+            # x[(c_bar==0) & (LP2.costsvector>0)]=LP2.lower_bounds[(c_bar==0) & (LP2.costsvector>0)]
+            # x[(c_bar==0) & (LP2.costsvector<0)]=LP2.upper_bounds[(c_bar==0) & (LP2.costsvector<0)]
         return c_bar, x
 
     def evaluate(y_eq, y_ineq):
@@ -171,14 +176,16 @@ def dual_coordinate_ascent(
     direction = np.zeros(y_ineq.shape)
 
     timeout = False
-    for niter in range(nb_max_iter):
+    niter = 0
+    while niter < nb_max_iter:
         if timeout:
             break
         y_ineq_prev = y_ineq.copy()
         c_bar = lp2.costsvector + y_eq * lp2.a_equalities + y_ineq * lp2.a_inequalities
 
         grad_y_eq = lp2.a_equalities * x - lp2.b_equalities
-        for i in np.nonzero(grad_y_eq)[0]:
+        list_i = np.nonzero(grad_y_eq)[0]
+        for i in list_i:
             if i % 100 == 0:
                 elapsed = time.clock() - start
                 if (max_time is not None) and elapsed > max_time:
@@ -200,15 +207,15 @@ def dual_coordinate_ascent(
                 deriv = np.diff(vals) / np.diff(alphas_grid)
                 plt.plot(alphas_grid[:-1], deriv, ".")
 
-            a_ineq_col_i = lp2.a_equalities[i, :]
+            a_eq_col_i = lp2.a_equalities[i, :]
             # c_bar=LP2.costsvector+y_eq*LP2.a_equalities+y_ineq*LP2.a_inequalities
             alpha_optim = exact_coordinate_line_search(
-                a_ineq_col_i, lp2.b_equalities[i], c_bar
+                a_eq_col_i, lp2.b_equalities[i], c_bar
             )
             prev_y_eq = y_eq[i]
             y_eq[i] += alpha_optim
             diff_y_eq = y_eq[i] - prev_y_eq
-            c_bar[a_ineq_col_i.indices] += diff_y_eq * a_ineq_col_i.data
+            c_bar[a_eq_col_i.indices] += diff_y_eq * a_eq_col_i.data
 
         if timeout:
             break
@@ -221,7 +228,7 @@ def dual_coordinate_ascent(
 
         energy = new_energy
 
-        c_bar, x = get_optim_x(y_eq, y_ineq)
+        c_bar, x = get_optim_x(y_eq, y_ineq, x0=x, upate_x_cbar_zero=False)
         grad_y_ineq = lp2.a_inequalities * x - lp2.b_upper
         grad_y_ineq[y_ineq <= 0] = np.maximum(grad_y_ineq[y_ineq <= 0], 0)  #
 
@@ -264,16 +271,19 @@ def dual_coordinate_ascent(
             # new_energy=evaluate(y_eq,y_ineq)
             # assert(new_energy>=prev_energy-1e-5)
             # assert(np.max(y_ineq)<=0)
+
         if timeout:
             break
         new_energy = evaluate(y_eq, y_ineq)
         if new_energy + eps < energy:
             print("not expected")
 
-        c_bar, x = get_optim_x(y_eq, y_ineq, tiemethod="center")
+        c_bar, x = get_optim_x(
+            y_eq, y_ineq, tiemethod="center", x0=x, upate_x_cbar_zero=False
+        )
         x[c_bar == 0] = 0.5 * (lp2.lower_bounds + lp2.upper_bounds)[
             c_bar == 0
-        ] + 0.1 * np.sign(lp2.costsvector[c_bar == 0])
+         ] + 0.1 * np.sign(lp2.costsvector[c_bar == 0])
         if new_energy < energy + 1e-10:
             order = np.argsort(np.abs(x - 0.5))
             fixed = c_bar != 0
@@ -342,6 +352,7 @@ def dual_coordinate_ascent(
         if (max_time is not None) and elapsed > max_time:
             timeout = True
             break
+        niter += 1
     max_violation = max(
         np.max(lp2.a_inequalities * x - lp2.b_upper),
         np.max(np.sum(np.abs(lp2.a_equalities * x - lp2.b_equalities))),

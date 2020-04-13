@@ -401,10 +401,10 @@ def lp_admm2(
         )
         return en
 
-    i = 0
+    niter = 0
     xv = np.hstack((x, np.zeros(beq.shape)))
 
-    while i <= nb_iter / nb_cg_iter:
+    while niter <= nb_iter / nb_cg_iter:
         # solve the penalized problem with respect to x
         # print 'iter'+str(i)+' '+str(L(x, xp,lambda_ineq))
 
@@ -433,7 +433,7 @@ def lp_admm2(
         xp = x.copy() + lambda_ineq / gamma_ineq
         xp = np.maximum(xp, lb)
         xp = np.minimum(xp, ub)
-        if i % nb_iter_plot == 0:
+        if niter % nb_iter_plot == 0:
             elapsed = time.clock() - start
             if not (max_time is None) and elapsed > max_time:
                 break
@@ -444,7 +444,7 @@ def lp_admm2(
             max_violated_inequality = 0
             print(
                 "iter"
-                + str(i)
+                + str(niter)
                 + ": energy1= "
                 + str(energy1)
                 + " energy2="
@@ -459,7 +459,7 @@ def lp_admm2(
             )
             if callback_func is not None:
                 callback_func(
-                    i,
+                    niter,
                     x[0:n],
                     energy1,
                     energy2,
@@ -470,5 +470,5 @@ def lp_admm2(
 
         # print 'iter'+str(i)+' '+str(L(x, xp,lambda_ineq))
         lambda_ineq = lambda_ineq + gamma_ineq * (x - xp)
-        i += 1
+        niter += 1
     return x[0:n]

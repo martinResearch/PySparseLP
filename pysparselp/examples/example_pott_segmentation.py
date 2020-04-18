@@ -32,9 +32,9 @@ class ImageLP(SparseLP):
         col_ravel = ids2.ravel()
         cols = np.column_stack((row_ravel, col_ravel, aux_ravel))
         vals = np.tile(np.array([1, -1, -1]), [ids1.size, 1])
-        self.add_linear_constraint_rows(cols, vals, lower_bounds=None, upper_bounds=0)
+        self.add_inequality_constraints(cols, vals, lower_bounds=None, upper_bounds=0)
         vals = np.tile(np.array([-1, 1, -1]), [ids1.size, 1])
-        self.add_linear_constraint_rows(cols, vals, lower_bounds=None, upper_bounds=0)
+        self.add_inequality_constraints(cols, vals, lower_bounds=None, upper_bounds=0)
 
     def add_pott_horizontal(self, indices, coef_penalization):
         self.add_penalized_differences(
@@ -138,11 +138,9 @@ def run(display=True, image_size=50, coef_mul=500, coef_potts=0.5, max_time=15):
     # LP2.convert_to_one_sided_inequality_system()
     # sol1,elapsed=LP2.solve(method='ScipyLinProg',force_integer=False,get_timing=True,nb_iter=100,max_time=10,ground_truth=ground_truth,ground_truth_indices=indices,plot_solution=None)
 
-    solving_methods2 = [
-        m
-        for m in solving_methods
-        if (m not in ["scipy_simplex", "scipy_interior_point"])
-    ]  # remove scipy_linprog because it is too slow
+    solving_methods2 = list(solving_methods)
+    for m in ["scipy_simplex", "scipy_interior_point"]:
+        solving_methods2.remove(m)
 
     distance_to_ground_truth_curves = {}
 

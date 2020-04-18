@@ -30,9 +30,9 @@ class SparseInvCov(SparseLP):
         row_ravel = ids.ravel()
         cols = np.column_stack((row_ravel, aux_ravel))
         vals = np.tile(np.array([1, -1]), [ids.size, 1])
-        self.add_linear_constraint_rows(cols, vals, lower_bounds=None, upper_bounds=0)
+        self.add_inequality_constraints(cols, vals, lower_bounds=None, upper_bounds=0)
         vals = np.tile(np.array([-1, -1]), [ids.size, 1])
-        self.add_linear_constraint_rows(cols, vals, lower_bounds=None, upper_bounds=0)
+        self.add_inequality_constraints(cols, vals, lower_bounds=None, upper_bounds=0)
 
 
 def run(display=True):
@@ -68,7 +68,7 @@ def run(display=True):
     from scipy import sparse
 
     c = sparse.kron(sparse.csr_matrix(emp_cov), sparse.eye(n_features))
-    lp.add_constraints_sparse(
+    lp.add_inequality_constraints_sparse(
         c,
         np.eye(emp_cov.shape[0]).flatten() - lamb,
         np.eye(emp_cov.shape[0]).flatten() + lamb,

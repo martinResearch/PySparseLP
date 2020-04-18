@@ -30,7 +30,9 @@ def solve_netlib(problem_name, display=False, max_time_seconds=30):
         costs=lp_dict["cost_vector"],
     )
     lp.add_equality_constraints_sparse(lp_dict["a_eq"], lp_dict["b_eq"])
-    lp.add_constraints_sparse(lp_dict["a_ineq"], lp_dict["b_lower"], lp_dict["b_upper"])
+    lp.add_inequality_constraints_sparse(
+        lp_dict["a_ineq"], lp_dict["b_lower"], lp_dict["b_upper"]
+    )
 
     print("solving")
     if display:
@@ -42,24 +44,10 @@ def solve_netlib(problem_name, display=False, max_time_seconds=30):
     lp2 = copy.deepcopy(lp)
     lp2.convert_to_one_sided_inequality_system()
 
-    # LP2.save_mps(os.path.join(thisfilepath,'data','example_reexported.mps'))
-
     lp = lp2
     assert lp.check_solution(ground_truth)
     cost_gt = lp.costsvector.dot(ground_truth.T)
     print("gt  cost :%f" % cost_gt)
-
-    # scipy_sol,elapsed=LP2.solve(method='scipy_linprog',get_timing=True,nb_iter=100000)
-
-    # method='scipy_linprog'
-    # if not scipy_sol is np.nan:
-    # sol1=scipy_sol
-    # maxv=LP.max_constraint_violation(sol1)
-    # compute the primal and dual infeasibility
-    # print ('%s found  solution with maxviolation=%2.2e and  cost %f (vs %f for ground truth) in %f seconds'%(method,maxv,LP.costsvector.dot(sol1),costGT,elapsed))
-    # print ('mean of absolute distance to gt solution =%f'%np.mean(np.abs(ground_truth-sol1)))
-    # else:
-    # print ('scipy simplex did not find a solution')
 
     # testing our methods
 

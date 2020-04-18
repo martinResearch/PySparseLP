@@ -1,14 +1,14 @@
-"""Test based on the example2."""
+"""Test based on the example_sparse_inv_covariance"""
 
 import os
 
-from pysparselp.examples.example2 import run
+from pysparselp.examples.example_sparse_inv_covariance import run
 
 
 __folder__ = os.path.dirname(__file__)
 
 
-def test_example2(update_results=False):
+def test_sparse_inv_covariance(update_results=False):
 
     sum_abs_diff, nb_zeros_lp = run(display=False)
 
@@ -18,4 +18,4 @@ def test_example2(update_results=False):
 
 
 if __name__ == "__main__":
-    test_example2()
+    test_sparse_inv_covariance()

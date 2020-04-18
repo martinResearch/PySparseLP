@@ -42,7 +42,8 @@ from .DualGradientAscent import dual_gradient_ascent
 from .MehrotraPDIP import mpc_sol
 
 
-solving_methods = [
+solving_methods = (
+    "osqp",
     "mehrotra",
     "scipy_simplex",
     "scipy_interior_point",
@@ -52,20 +53,21 @@ solving_methods = [
     "admm",
     "admm2",
     "admm_blocks",
-]
+)
 
 try:
     import cvxpy
 
-    solving_methods.append("ECOS")
-    solving_methods.append("SCS")
+    solving_methods += ("ECOS", "SCS")
+
 except Exception:
     print("could not import cvxpy, the ECOS and SCS solvers will not be available")
 
 try:
     import osqp
 
-    solving_methods.append("osqp")
+    solving_methods += ("osqp",)
+
 except Exception:
     print("could not import osqp. The osqp solver will not be available")
 
@@ -120,6 +122,41 @@ def unique_rows(data, prec=5):
     _, ia = np.unique(b, return_index=True)
     _, ic = np.unique(b, return_inverse=True)
     return np.unique(b).view(d_r.dtype).reshape(-1, d_r.shape[1]), ia, ic
+
+
+def crd_matrix(cols, vals, broadcast=True):
+    """Construct a compressed sparse row matrix with constant number of non zero value per row.
+
+    the matrix is in the form m[i,cols[i,j]]=val[i,j]
+    By default the array cols and vals are broadcasted in order to make it easier to use
+    """
+    assert np.ndim(cols) == 2
+    assert np.ndim(vals) == 2
+
+    if not (np.all(np.diff(np.sort(cols, axis=1), axis=1) > 0)):
+        unvalid = np.nonzero(
+            np.any(np.diff(np.sort(cols, axis=1), axis=1) == 0, axis=1)
+        )[0]
+        error_message = (
+            f"you have twice the same variable in {len(unvalid)} constraint"
+            + ["", "s"][len(unvalid) > 0]
+            + ":\n"
+            + str(unvalid)
+        )
+        raise (error_message)
+
+    if broadcast:
+        cols, vals = np.broadcast_arrays(cols, vals)
+    assert np.ndim(cols) == 2
+    assert np.all(vals.shape == cols.shape)
+
+    vals_flat = vals.ravel()
+    cols_flat = cols.ravel()
+    keep = ~(vals == 0)
+    vals_flat = vals_flat[keep.ravel()]
+    cols_flat = cols_flat[keep.ravel()]
+    iptr = np.hstack(([0], np.cumsum(np.sum(keep, axis=1))))
+    return scipy.sparse.csr_matrix((vals_flat, cols_flat, iptr))
 
 
 class SparseLP:
@@ -471,38 +508,13 @@ class SparseLP:
         assert np.all(costs.shape == indices.shape)
         self.costsvector[indices.ravel()] = costs.ravel()
 
-    def add_linear_constraint_row(self, ids, coefs, lowerbound=None, upperbound=None):
-        assert len(ids) == len(coefs)
-
-        if upperbound == lowerbound:
-            csr_matrix_append_row(self.a_equalities, self.nb_variables, ids, coefs)
-            self.b_equalities = np.append(self.b_equalities, lowerbound)
-
-        else:
-            csr_matrix_append_row(self.a_inequalities, self.nb_variables, ids, coefs)
-            if lowerbound is None:
-                if self.b_lower is not None:
-                    self.b_lower = np.append(self.b_lower, -np.inf)
-            else:
-                if self.b_lower is None:
-                    print("not coded yet")
-                else:
-                    self.b_lower = np.append(self.b_lower, lowerbound)
-            if upperbound is None:
-                if self.b_upper is not None:
-                    self.b_upper = np.append(self.b_upper, np.inf)
-            else:
-                if self.b_upper is None:
-                    print("not coded yet")
-                else:
-                    self.b_upper = np.append(self.b_upper, upperbound)
-
     def add_equality_constraints_sparse(self, a, b):
-
         csr_matrix_append_rows(self.a_equalities, a.tocsr())
         self.b_equalities = np.append(self.b_equalities, b)
 
-    def add_constraints_sparse(self, a, lower_bounds=None, upper_bounds=None):
+    def add_inequality_constraints_sparse(
+        self, a, lower_bounds=None, upper_bounds=None
+    ):
         # add the constraint lower_bounds<=Ax<=upper_bounds to the list of constraints
         # try to use A as a sparse matrix
         # take advantage of the snipy sparse marices to ease things
@@ -524,40 +536,61 @@ class SparseLP:
             self.b_lower = np.append(self.b_lower, lower_bounds)
             self.b_upper = np.append(self.b_upper, upper_bounds)
 
-    def add_linear_constraint_rows(
-        self, cols, vals, lower_bounds=None, upper_bounds=None
-    ):
-        if not (np.all(np.diff(np.sort(cols, axis=1), axis=1) > 0)):
-            print("you have twice the same variable in the constraint")
-            raise
-        # iptr=vals.shape[1]*np.arange(cols.shape[0]+1)
-        assert np.ndim(cols) == 2
-        if np.ndim(vals) == 1:
-            vals = np.tile(np.array(vals), (cols.shape[0], 1))
-        else:
-            assert np.ndim(vals) == 2
-        assert np.all(vals.shape == cols.shape)
+    def add_equality_constraints(self, cols, vals, b):
+        """Add a set of equalities to the problem in the form
+        y[i] = b for all i
+        with y[i]= sum_j vals[i,j]*x[cols[i,j]]
+        """
+        self.add_inequality_constraints(cols, vals, lower_bounds=b, upper_bounds=b)
 
-        vals_flat = vals.ravel()
-        cols_flat = cols.ravel()
-        keep = ~(vals == 0)
-        vals_flat = vals_flat[keep.ravel()]
-        cols_flat = cols_flat[keep.ravel()]
-        iptr = np.hstack(([0], np.cumsum(np.sum(keep, axis=1))))
-        a = scipy.sparse.csr_matrix((vals_flat, cols_flat, iptr))
-        self.add_constraints_sparse(
-            a, lower_bounds=lower_bounds, upper_bounds=upper_bounds
+    def add_soft_equality_constraints(self, cols, vals, b, coef_penalization):
+        """Add a set of soft equalities terms to the problem in the form of
+        sum_i abs(coef_penalization[i] * y[i] )
+        with y[i]= sum_j vals[i,j]*x[cols[i,j]]
+        this is done by adding auxiliary variables.
+        """
+        self.add_soft_inequality_constraints(
+            cols,
+            vals,
+            lower_bounds=b,
+            upper_bounds=b,
+            coef_penalization=coef_penalization,
         )
 
-    def add_soft_linear_constraint_rows(
-        self, cols, vals, lower_bounds=None, upper_bounds=None, coef_penalization=0
+    def add_inequality_constraints(
+        self, cols, vals, lower_bounds=None, upper_bounds=None
     ):
+        """Add a set of equalities to the problem in the form
+        lower_bounds[i] <= y[i] <= upper_bounds[i] for all i
+        with y[i]= sum_j vals[i,j]*x[cols[i,j]]
+        """
+        self.add_soft_inequality_constraints(
+            cols,
+            vals,
+            coef_penalization=np.inf,
+            lower_bounds=lower_bounds,
+            upper_bounds=upper_bounds,
+        )
+
+    def add_soft_inequality_constraints(
+        self, cols, vals, coef_penalization, lower_bounds=None, upper_bounds=None,
+    ):
+        """Add a set of "soft" inequalities terms to the problem in the form of
+        sum_i abs(coef_penalization[i] * maximum(0, lower_bounds[i] - y[i] , y[i] - upper_bound[i]) )
+        with y[i]= sum_j vals[i,j]*x[cols[i,j]]
+        this is done by adding auxiliary variables.
+        """
         if np.all(coef_penalization == np.inf):
-            self.add_linear_constraint_rows(
-                cols, vals, lower_bounds=lower_bounds, upper_bounds=upper_bounds
+            a = crd_matrix(cols, vals)
+            self.add_inequality_constraints_sparse(
+                a, lower_bounds=lower_bounds, upper_bounds=upper_bounds
             )
 
         else:
+            if any(coef_penalization == np.inf):
+                raise ("penalization with subset with np.inf not handled yet")
+            cols, vals = np.broadcast_arrays(cols, vals)
+            assert np.all(cols.shape == vals.shape)
             aux = self.add_variables_array(
                 (cols.shape[0],),
                 upper_bounds=None,
@@ -566,28 +599,20 @@ class SparseLP:
             )
 
             cols2 = np.column_stack((cols, aux))
+            assert (upper_bounds is not None) or (lower_bounds is not None)
             if upper_bounds is not None:
                 vals2 = np.column_stack((vals, -np.ones((vals.shape[0], 1))))
-                self.add_linear_constraint_rows(
+                self.add_inequality_constraints(
                     cols2, vals2, lower_bounds=None, upper_bounds=upper_bounds
                 )
             if lower_bounds is not None:
                 vals2 = np.column_stack((vals, np.ones((vals.shape[0], 1))))
-                self.add_linear_constraint_rows(
+                self.add_inequality_constraints(
                     cols2, vals2, lower_bounds, upper_bounds=None
                 )
             return aux
 
-    def add_linear_constraints_with_broadcasting(
-        self, cols, vals, lower_bounds=None, upper_bounds=None
-    ):
-        cols2 = cols.reshape(-1, cols.shape[-1])
-        vals2 = np.tile(np.array(vals), (cols2.shape[0], 1))
-        self.add_linear_constraint_rows(
-            cols2, vals2, lower_bounds=lower_bounds, upper_bounds=upper_bounds
-        )
-
-    def add_inequalities(
+    def add_inequalities_pairs(
         self, indices_and_weight_pairs, lower_bounds, upper_bounds, check=True
     ):
         cols = []
@@ -800,7 +825,7 @@ class SparseLP:
             n = self.a_inequalities.shape[1]
             self.add_variables_array(m, self.b_lower, self.b_upper)
             self.a_inequalities._shape = (self.a_inequalities.shape[0], n)
-            self.add_constraints_sparse(
+            self.add_inequality_constraints_sparse(
                 scipy.sparse.hstack((self.a_inequalities, -scipy.sparse.eye(m))), 0, 0
             )
             self.b_lower = None
@@ -1109,9 +1134,10 @@ class SparseLP:
         elif method == "mehrotra":
 
             lp_slack = copy.deepcopy(self)
-            m_change1, shift1 = (
-                lp_slack.remove_fixed_variables()
-            )  # removed fixed variables
+            (
+                m_change1,
+                shift1,
+            ) = lp_slack.remove_fixed_variables()  # removed fixed variables
             m_change2, shift2 = lp_slack.convert_to_slack_form()
 
             def mehrotra_call_back(solution, niter, **kwargs):
@@ -1339,12 +1365,12 @@ class SparseLP:
                 lp_osqp_form.a_inequalities.tocsc(),
                 b_lower,
                 b_upper,
-                **opts
+                **opts,
             )
             res = model.solve()
             x = res.x
             simplex_call_back(x)
-            self.itrn_curve.append(res.info.iter)
+            self.itrn_curve = [res.info.iter]
 
         else:
             print("unkown LP solver method " + method)

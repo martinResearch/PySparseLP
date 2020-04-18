@@ -69,7 +69,7 @@ def generate_random_lp(nbvar, n_eq, n_ineq, sparsity):
         if a_eq.indices.size > 0:
             lp.add_equality_constraints_sparse(a_eq, b_eq)
     if n_ineq > 0 and a_ineq.indices.size > 0:
-        lp.add_constraints_sparse(a_ineq, b_lower, b_upper)
+        lp.add_inequality_constraints_sparse(a_ineq, b_lower, b_upper)
 
     assert lp.check_solution(feasible_x)
     return lp, feasible_x

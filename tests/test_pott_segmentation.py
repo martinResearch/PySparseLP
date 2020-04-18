@@ -1,4 +1,4 @@
-"""Test based on the example1 (pott image model)."""
+"""Test based on the example_pott_segmentation."""
 
 import json
 import os
@@ -6,7 +6,7 @@ import os
 import numpy as np
 import numpy.testing
 
-from pysparselp.examples.example1 import run
+from pysparselp.examples.example_pott_segmentation import run
 
 
 __folder__ = os.path.dirname(__file__)
@@ -17,11 +17,11 @@ def trim_length(a, b):
     return a[:min_len], b[:min_len]
 
 
-def test_example1(update_results=False):
+def test_pott_segmentation(update_results=False):
 
     distance_to_ground_truth_curves = run(display=False)
 
-    curves_json_file = os.path.join(__folder__, "example1_curves.json")
+    curves_json_file = os.path.join(__folder__, "test_pott_segmentation_curves.json")
     if update_results:
         with open(curves_json_file, "w") as f:
             json.dump(distance_to_ground_truth_curves, f, indent=4)
@@ -38,4 +38,4 @@ def test_example1(update_results=False):
 
 
 if __name__ == "__main__":
-    test_example1(update_results=False)
+    test_pott_segmentation(update_results=False)

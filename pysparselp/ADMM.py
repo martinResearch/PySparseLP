@@ -213,7 +213,7 @@ def lp_admm(
         if i % nb_iter_plot == 0:
 
             elapsed = time.clock() - start
-            if elapsed > max_time:
+            if max_time is not None and elapsed > max_time:
                 break
             energy1 = energy(x, xp, lambda_eq, lambda_ineq)
             energy2 = energy1

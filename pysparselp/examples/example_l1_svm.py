@@ -29,9 +29,9 @@ class L1SVM(SparseLP):
         indices_ravel = indices.ravel()
         cols = np.column_stack((indices_ravel, aux_ravel))
         vals = np.tile(np.array([1, -1]), [indices.size, 1])
-        self.add_linear_constraint_rows(cols, vals, lower_bounds=None, upper_bounds=0)
+        self.add_inequality_constraints(cols, vals, lower_bounds=None, upper_bounds=0)
         vals = np.tile(np.array([-1, -1]), [indices.size, 1])
-        self.add_linear_constraint_rows(cols, vals, lower_bounds=None, upper_bounds=0)
+        self.add_inequality_constraints(cols, vals, lower_bounds=None, upper_bounds=0)
 
     def set_data(self, x, classes, nb_classes=None):
         nb_examples = x.shape[0]
@@ -63,7 +63,7 @@ class L1SVM(SparseLP):
             cols3 = self.epsilonsIndices
             vals = np.column_stack((vals1, vals2, vals3))
             cols = np.column_stack((cols1, cols2, cols3))
-            self.add_linear_constraint_rows(
+            self.add_inequality_constraints(
                 cols[keep, :], vals[keep, :], lower_bounds=e[keep, k], upper_bounds=None
             )
 
@@ -108,14 +108,14 @@ def run(display=True):
     l1svm = L1SVM()
     l1svm.set_data(x, classes)
     percent_valid = {}
+    solving_methods_list = list(solving_methods)
+    solving_methods_list.remove("mehrotra")  # too slow
+    solving_methods_list.remove("scipy_simplex")
+    solving_methods_list.remove("scipy_interior_point")
+    solving_methods_list.remove("dual_gradient_ascent")  # need to debug
+    solving_methods_list.remove("dual_coordinate_ascent")  # need to debug
 
-    solving_methods.remove("mehrotra")  # too slow
-    solving_methods.remove("scipy_simplex")
-    solving_methods.remove("scipy_interior_point")
-    solving_methods.remove("dual_gradient_ascent")  # need to debug
-    solving_methods.remove("dual_coordinate_ascent")  # need to debug
-
-    for method in solving_methods:
+    for method in solving_methods_list:
         l1svm.train(method=method)
         classes2 = l1svm.classify(x)
         percent_valid[method] = 100 * np.mean(classes == classes2)

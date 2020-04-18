@@ -9,10 +9,10 @@ from pysparselp.SparseLP import SparseLP
 def add_bipartite_constraint(lp, indices):
     columns = indices
     values = np.ones(columns.shape)
-    lp.add_linear_constraint_rows(columns, values, lower_bounds=-np.inf, upper_bounds=1)
+    lp.add_inequality_constraints(columns, values, lower_bounds=-np.inf, upper_bounds=1)
     columns = indices.T
     values = np.ones(columns.shape)
-    lp.add_linear_constraint_rows(columns, values, lower_bounds=-np.inf, upper_bounds=1)
+    lp.add_inequality_constraints(columns, values, lower_bounds=-np.inf, upper_bounds=1)
 
 
 def run():

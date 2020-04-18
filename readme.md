@@ -2,7 +2,7 @@
 
 This project provides several algorithms implemented in python to solve linear programs of the form
 
-![latex:\large $\mathbf{x}^*=argmin_\mathbf{x} \mathbf{c}^t\mathbf{x} ~  s.t.~  A_e\mathbf{x}=\mathbf{b_e},A_i\mathbf{x}\leq\mathbf{ b_i}, \mathbf{l}\leq \mathbf{x}\leq \mathbf{u}$ ](https://rawgithub.com/martinResearch/PySparseLP/master/images/LPproblem.svg)
+![latex:\large $\mathbf{x}^*=argmin_\mathbf{x} \mathbf{c}^t\mathbf{x} ~  s.t.~  A_e\mathbf{x}=\mathbf{b_e},A_i\mathbf{x}\leq\mathbf{ b_i}, \mathbf{l}\leq \mathbf{x}\leq \mathbf{u}$ ](./images/LPproblem.svg)
 
 where *A<sub>e</sub>* and *A<sub>i</sub>* are sparse matrices
 
@@ -72,12 +72,12 @@ The approach taken here is lower level than this tools (no *variable* class and 
 ## Image segmentation
 We consider the image segmentation problem with Potts regularization:
 
-![latex: \large $min_s c^ts + \sum_{(i,j)\in E} |s_i-s_j| ~s.t. ~0 \leq s\leq 1$](https://rawgithub.com/martinResearch/PySparseLP/master/images/segmentation.svg)
+![latex: \large $min_s c^ts + \sum_{(i,j)\in E} |s_i-s_j| ~s.t. ~0 \leq s\leq 1$](./images/segmentation.svg)
 
 with *E* the list of indices of pairs of neighbouring pixels and *c* a cost vector that is obtain from color distribution models of the two regions.
 This problem can be rewritten as a linear program by adding an auxiliary variable *d<sub>ij</sub>* for each edge with the constraints
 
-![latex: \large $min_s c^ts + \sum_{(i,j)\in E} d_{ij} ~s.t. ~0 \leq s\leq 1, ~d_{ij}\geq s_j-s_j, ~d_{ij}\geq s_i-s_i $](https://rawgithub.com/martinResearch/PySparseLP/master/images/segmentation_lp.svg)
+![latex: \large $min_s c^ts + \sum_{(i,j)\in E} d_{ij} ~s.t. ~0 \leq s\leq 1, ~d_{ij}\geq s_j-s_j, ~d_{ij}\geq s_i-s_i $](./images/segmentation_lp.svg)
  
  
 This problem can be more efficiently solved using graph-cuts than with a generic linear program solver but it is still interesting to compare the different generic LP solvers on this problem. 
@@ -87,7 +87,7 @@ This problem can be more efficiently solved using graph-cuts than with a generic
 	run()
 
 Here are the resulting segmentations obtain with the various LP solvers, with the same random data term with the optimizations limited to 15 seconds for each solver.
-![curves](https://rawgithub.com/martinResearch/PySparseLP/master/images/potts_results.png)
+![curves](./images/potts_results.png)
 convergence curves
 ![curves](./images/potts_curves.png)
 
@@ -97,13 +97,13 @@ Note that instead of using a simple Potts model we could try to solve the LP fro
  
 The Sparse Inverse Covariance Estimation problem aims to find a sparse matrix B that approximate the inverse of Covariance matrix A.
 
-![latex:\large $B^*=argmin_B \|B\|_1~ s.t.~ \|A B-I_d\|_\infty\leq \lambda$](https://rawgithub.com/martinResearch/PySparseLP/master/images/sparse_inv_covariance.svg)
+![latex:\large $B^*=argmin_B \|B\|_1~ s.t.~ \|A B-I_d\|_\infty\leq \lambda$](./images/sparse_inv_covariance.svg)
 
 Let denote *f* the fonction that take a matrix as an input an yield the vector of coefficient of the matrix in row-major order.
 Let *b=f(B)* we have *f(AB)=Mb* with *M=kron(A, I<sub>d</sub>)*
 The problem rewrites
 
-![latex: \large $ min_{b,c} \sum_i c_i ~s.t.~ -b\leq c,~b\leq c,~-\lambda\leq M b-f(I_d)\leq \lambda$](https://rawgithub.com/martinResearch/PySparseLP/master/images/lp_sparse_inv_covariance.svg)
+![latex: \large $ min_{b,c} \sum_i c_i ~s.t.~ -b\leq c,~b\leq c,~-\lambda\leq M b-f(I_d)\leq \lambda$](./images/lp_sparse_inv_covariance.svg)
 
 We take inspiration from this scikit-learn example [here](http://scikit-learn.org/stable/auto_examples/covariance/plot_sparse_cov.html) to generate samples of a gaussian with a sparse inverse covariance (precision) matrix. From the sample we compute the empirical covariance A and the we estimate a sparse inverse covariance (precision) matrix B from that empirical covariance using the LP formulation above.
 
@@ -116,14 +116,14 @@ We take inspiration from this scikit-learn example [here](http://scikit-learn.or
 
 Given *n* examples of vector-class pairs *(x<sub>i</sub>,y<sub>i</sub>)*, with *x<sub>i</sub>* a vector of size m and *y<sub>i</sub>* an integer representing the class, we aim at estimating a matrix *W* of size *k* by *m* that allows to discriminate the right class, with *k* the number of classes. We assume that the last component of *x<sub>i</sub>* is a one in order to represent the offset constants in *W*. we denote *W<sub>k</sub>* the *k<sup>th</sup>* line of the matrix *W*
 
-![latex:\large $W^*=argmin_W min_{\epsilon}\|W\|_1+\sum_{i=1}^n \epsilon_i\\ s.t.~ W_{y_i}x_i-W_kx_i>1-\epsilon_i \forall\{(i,k)|k\neq y_i\}$](https://rawgithub.com/martinResearch/PySparseLP/master/images/l1svm.svg)
+![latex:\large $W^*=argmin_W min_{\epsilon}\|W\|_1+\sum_{i=1}^n \epsilon_i\\ s.t.~ W_{y_i}x_i-W_kx_i>1-\epsilon_i \forall\{(i,k)|k\neq y_i\}$](./images/l1svm.svg)
 
 By adding auxiliary variables in a matrix *S* of the same size as the matrix *W* we can rewrite the absolute value as follow:
-![latex:\large $\|W\|_1=min_S \sum_{ij}S_{ij} \\ s.t.~ W_{ij}<S_{ij}, -W_{ij}<S_{ij} \forall(ij)$](https://rawgithub.com/martinResearch/PySparseLP/master/images/abstolp.svg)
+![latex:\large $\|W\|_1=min_S \sum_{ij}S_{ij} \\ s.t.~ W_{ij}<S_{ij}, -W_{ij}<S_{ij} \forall(ij)$](./images/abstolp.svg)
 
 We obtain the LP formulation:
 
-![latex:\large $W^*=argmin_{W} min_{\epsilon,S} \sum_{ij}S_{ij} +\sum_{i=1}^n \epsilon_i\\s.t.~W_{y_i}x_i-W_kx_i>1-\epsilon_i \forall\{(i,k)|k\neq y_i\},W_{ij}<S_{ij}, -W_{ij}<S_{ij} \forall(ij)$](https://rawgithub.com/martinResearch/PySparseLP/master/images/l1svmLP.svg)
+![latex:\large $W^*=argmin_{W} min_{\epsilon,S} \sum_{ij}S_{ij} +\sum_{i=1}^n \epsilon_i\\s.t.~W_{y_i}x_i-W_kx_i>1-\epsilon_i \forall\{(i,k)|k\neq y_i\},W_{ij}<S_{ij}, -W_{ij}<S_{ij} \forall(ij)$](./images/l1svmLP.svg)
 
 
 The example can be executed using the following line in python
@@ -133,7 +133,7 @@ The example can be executed using the following line in python
 
 The support vectors are represented by black circles.
 
-![classification result with support points](https://rawgithub.com/martinResearch/PySparseLP/master/images/l1svmClassification.svg)
+![classification result with support points](./images/l1svmClassification.svg)
 
 ## Bipartite matching 
 
@@ -166,6 +166,21 @@ We relax it into a continuous variables LP using
 
 ![kmedians result](./images/kmedians.svg)
 
+## Basis pursuit denoising
+
+Basis pursuit is the mathematical optimization problem of the form: 
+![latex:\large $x^*=argmin_x \|x\|_1~ s.t.~ Ax=y](./images/basis_pursuit.svg)
+where *x* is a *N × 1* solution vector (signal), *y* is a *M × 1* vector of observations (measurements), *A* is a *M × N* transform matrix (usually measurement matrix) and *M < N*. 
+Basis pursuit denoising (BPDN) refers to a mathematical optimization problem of the form: 
+![latex:\large $x^*=argmin_x \lambda\|x\|_1~ s.t.~ \frac{1}{2}\|Ax-y\|^2_2](./images/basis_pursuit_denoising.svg)
+where $λ$ is a parameter that controls the trade-off between sparsity and reconstruction fidelity. This this can be reforulated as a quadratic programming problem.
+Using a absolute difference loss insead of a squared loss i.e
+ ![latex:\large $x^*=argmin_x \lambda\|x\|_1~ s.t.~ \frac{1}{2}\|Ax-y\|_1](./images/basis_pursuit_denoising_abs.svg)
+We can reformulat the problem as a linear program:
+![latex: \large $ min_{b,c} \lambda\sum_i  c_i  + \sum_i \lambda d_i ~s.t.~ -c\leq x\leq c, ~-d\leq Ax-y\leq \d$](./images/basis_pursuit_denoising_lp.svg)
+with *c* and *b* slack variable vectors respectively of size *N* and *M*
+
+
 ## Netlib LP problems 
 
 We have an interface to easily test the various solvers on netlib problems from [netlib](http://www.netlib.org/lp/data/). 
@@ -184,8 +199,6 @@ Random sparse LP problem can be generate using code in *randomLP.py*. The approa
 
 # To Do
 
-* improve the API by removing redundant functions
-* add OSQP[11] as an available solver
 * translate from Matlab ot python the ADMM methods from [https://github.com/nmchaves/admm-for-lp](https://github.com/nmchaves/admm-for-lp)
 * add automatic constraint checking if we provide a feasible solution from the beginning. It will help debugging constraints.
 * convert to python the matlab implementation of the LP solver based on improved version of champolle-pock called [Adaptive Primal-Dual Hybrid Gradient Methods](https://arxiv.org/abs/1305.0546) available [here](https://www.cs.umd.edu/~tomg/projects/pdhg/)
@@ -201,8 +214,6 @@ Random sparse LP problem can be generate using code in *randomLP.py*. The approa
 	* https://github.com/YimingYAN/cppipm (c++)
 	* https://github.com/pkhuong/cholesky-is-magic (lisp) described here https://www.pvk.ca/Blog/2013/12/19/so-you-want-to-write-an-lp-solver/	
 * implement some presolve methods to avoid singular matrices in the interior point methods (for example http://www.davi.ws/doc/gondzio94presolve.pdf). For example detect constraints on singletons, duplicated rows etc.
-* add basis pursuit example using [9] .
-* add non negative matrix factorization example using [10]
 
 # Alternatives
 
@@ -248,10 +259,6 @@ Lagrangian method for large-scale linear programming problems* Yu G Evtushenko, 
 paper [here](http://papers.nips.cc/paper/6746-a-new-alternating-direction-method-for-linear-programming.pdf)
 
 [9] *Equivalence of Linear Programming and Basis Pursuit*. paper [here](http://onlinelibrary.wiley.com/doi/10.1002/pamm.201510351/pdf)
-
-[10] *Factoring nonnegative matrices with linear programs*
-Victor Bittorf, Benjamin Recht, Christopher Re, Joel A. Tropp. 2012 
-paper [here](https://arxiv.org/abs/1206.1270)
 
 [11] *OSQP: An Operator Splitting Solver for Quadratic Programs*. B.Stellato,  G. Banjac,  P. Goulart,   A. Bemporad and S. Boyd. ArXiv e-prints 2017 
 

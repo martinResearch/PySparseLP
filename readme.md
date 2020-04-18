@@ -84,7 +84,7 @@ This problem can be rewritten as a linear program by adding an auxiliary variabl
 This problem can be more efficiently solved using graph-cuts than with a generic linear program solver but it is still interesting to compare the different generic LP solvers on this problem. 
 
 
-	from pysparselp.example1 import run
+	from pysparselp.example_pott_segmentation import run
 	run()
 
 Here are the resulting segmentations obtain with the various LP solvers, with the same random data term with the optimizations limited to 15 seconds for each solver.
@@ -108,7 +108,7 @@ The problem rewrites
 
 We take inspiration from this scikit-learn example [here](http://scikit-learn.org/stable/auto_examples/covariance/plot_sparse_cov.html) to generate samples of a gaussian with a sparse inverse covariance (precision) matrix. From the sample we compute the empirical covariance A and the we estimate a sparse inverse covariance (precision) matrix B from that empirical covariance using the LP formulation above.
 
-	from pysparselp.example2 import run
+	from pysparselp.example_sparse_inv_covariance import run
 	run()
 
 ![curves](./images/sparse_precision_matrix.png)
@@ -129,7 +129,7 @@ We obtain the LP formulation:
 
 The example can be executed using the following line in python
 
-	from pysparselp.example3 import run
+	from pysparselp.example_sparse_l1_svm import run
 	run()
 
 The support vectors are represented by black circles.
@@ -144,7 +144,7 @@ Bipartite matching can be reformulated as an integer linear program:
 
 We relax it into an continuous variables LP.
 
-	from pysparselp.example4 import run
+	from pysparselp.example_bipartite_matching import run
 	run()
 
 ## K-medians
@@ -162,7 +162,7 @@ We relax it into a continuous variables LP using
 ![latex: $$ L_{ij}\in[0,1]$$](./images/kmedians2_relax.svg)
  
  
-	from pysparselp.example5 import run
+	from pysparselp.example_kmedians import run
 	run()
 
 ![kmedians result](./images/kmedians.svg)
@@ -170,15 +170,23 @@ We relax it into a continuous variables LP using
 ## Basis pursuit denoising
 
 Basis pursuit is the mathematical optimization problem of the form: 
-![latex:\large $x^*=argmin_x \|x\|_1~ s.t.~ Ax=y](./images/basis_pursuit.svg)
+
+![latex:\large $x^*=argmin_x \|x\|_1~ s.t.~ Ax=y$](./images/basis_pursuit.svg)
+
 where *x* is a *N × 1* solution vector (signal), *y* is a *M × 1* vector of observations (measurements), *A* is a *M × N* transform matrix (usually measurement matrix) and *M < N*. 
-Basis pursuit denoising (BPDN) refers to a mathematical optimization problem of the form: 
-![latex:\large $x^*=argmin_x \lambda\|x\|_1~ s.t.~ \frac{1}{2}\|Ax-y\|^2_2](./images/basis_pursuit_denoising.svg)
-where $λ$ is a parameter that controls the trade-off between sparsity and reconstruction fidelity. This this can be reforulated as a quadratic programming problem.
+Basis pursuit denoising (BPDN) refers to a mathematical optimization problem of the form:
+ 
+![latex:\large $x^*=argmin_x \lambda\|x\|_1~ s.t.~ \frac{1}{2}\|Ax-y\|^2_2$](./images/basis_pursuit_denoising.svg)
+
+where *λ* is a parameter that controls the trade-off between sparsity and reconstruction fidelity. This this can be reformulated as a quadratic programming problem.
 Using a absolute difference loss insead of a squared loss i.e
- ![latex:\large $x^*=argmin_x \lambda\|x\|_1~ s.t.~ \frac{1}{2}\|Ax-y\|_1](./images/basis_pursuit_denoising_abs.svg)
-We can reformulat the problem as a linear program:
-![latex: \large $ min_{b,c} \lambda\sum_i  c_i  + \sum_i \lambda d_i ~s.t.~ -c\leq x\leq c, ~-d\leq Ax-y\leq \d$](./images/basis_pursuit_denoising_lp.svg)
+
+ ![latex:\large $x^*=argmin_x \lambda\|x\|_1~ s.t.~ \frac{1}{2}\|Ax-y\|_1$](./images/basis_pursuit_denoising_abs.svg)
+
+We can reformulate the problem as a linear program:
+
+![latex: \large $ min_{b,c} \lambda\sum_i  c_i  + \sum_i d_i ~s.t.~ -c\leq x\leq c, ~-d\leq Ax-y\leq d$](./images/basis_pursuit_denoising_lp.svg)
+
 with *c* and *b* slack variable vectors respectively of size *N* and *M*
 
 

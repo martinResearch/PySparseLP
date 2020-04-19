@@ -674,7 +674,7 @@ class SparseLP:
         return m_change, shift
 
     def convert_to_slack_form(self):
-        """Convert to the form min_y c.ty Ay=b y>=0 by adding slack variables and shift on x
+        """Convert to the form min_y c.t Ay=b y>=0 by adding slack variables and shift on x
         the solution of the original problem is obtained using x = m_change*y+ shift with
         y the solution of the new problem
         have a look at https://ocw.mit.edu/courses/sloan-school-of-management/15-053-optimization-methods-in-management-science-spring-2013/tutorials/MIT15_053S13_tut06.pdf

@@ -200,7 +200,7 @@ In order to monitor convergence rates, the exact solutions of these problems are
 	test_netlib('SC50A')
 
 ![curves](./images/libnetSC50A.png)
-Note: since august 2017, numpy files containing the netlib examples are provided with scipy [here] (https://github.com/scipy/scipy/tree/master/benchmarks/benchmarks/linprog_benchmark_files)
+Note: since august 2017, numpy files containing the netlib examples are provided with scipy [here](https://github.com/scipy/scipy/tree/master/benchmarks/benchmarks/linprog_benchmark_files)
 
 ## Random problems 
 
@@ -230,7 +230,7 @@ Random sparse LP problem can be generate using code in *randomLP.py*. The approa
 ## Linear Program solvers with a python interface
 
 * Scipy's [linprog](http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html). Only the simplex is implemented in october 2016 (Note: an [interior point method](http://scipy.github.io/devdocs/optimize.linprog-interior-point.html) has been added in august 2017). Note that it is possible to call this solver from within our code using *method='ScipyLinProg'* when callign the *solve* method. The simplex method is implemented in python with many loops and is very slow for problems that involve more than a hundred variables. The interior point method has not been tested here.
-* OSQP. Operator Splitting Quadratic programming [11]. It support support linear programming (with all zeros hessian matrix). OSQP has can be executde on GPU with [cuosqp](https://github.com/oxfordcontrol/cuosqp)and to solve mixted integer quadratic progams using [miosqp](https://github.com/oxfordcontrol/miosqp)
+* OSQP. Operator Splitting Quadratic programming [11]. It support support linear programming (with all zeros hessian matrix). OSQP can be executde on GPU with [cuosqp](https://github.com/oxfordcontrol/cuosqp) and can be use a a subroutine to solve mixted integer quadratic progams using as done in [miosqp](https://github.com/oxfordcontrol/miosqp)
   [python interface](https://github.com/oxfordcontrol/osqp-python)
 * GPU implementation of OSQP (can be 2 order of magnitude faster)[here](https://github.com/oxfordcontrol/cuosqp)
 * Python bindings for GLPK [here](https://en.wikibooks.org/wiki/GLPK/Python) . It might not be adapted to very large sparse problems as it uses simplex or interior point methods. The installation is a bit tedious. The licence is GPL which makes it unsuited for use in commercial products.

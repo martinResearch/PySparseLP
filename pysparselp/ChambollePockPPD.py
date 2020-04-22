@@ -52,18 +52,19 @@ def chambolle_pock_ppd(
     force_integer=False,
     nb_iter_plot=10,
 ):
-    # method adapted from
-    # Diagonal preconditioning for first order primal-dual algorithms in convex optimization
-    # by Thomas Pack and Antonin Chambolle
-    # the adaptation makes the code able to handle a more flexible specification of the LP problem
-    # (we could transform generic LPs into the equality form , but i am note sure the convergence would be the same)
-    # minimizes c.T*x
-    # such that
-    # a_eq*x=beq
-    # b_lower<= a_ineq*x<= b_upper               assert(scipy.sparse.issparse(a_ineq))
+    """ method adapted from
+    Diagonal preconditioning for first order primal-dual algorithms in convex optimization
+    by Thomas Pack and Antonin Chambolle
+    the adaptation makes the code able to handle a more flexible specification of the LP problem
+    (we could transform generic LPs into the equality form, but i am not sure the convergence would be the same)
+    minimizes c.T*x
+    such that
+    a_eq*x=beq
+    b_lower<= a_ineq*x<= b_upper              
+    lb<=x<=ub
+    """
 
-    # lb<=x<=ub
-
+    assert scipy.sparse.issparse(a_ineq)
     start = time.clock()
     elapsed = start
 
@@ -194,7 +195,7 @@ def chambolle_pock_ppd(
     niter = 0
     while niter < nb_max_iter:
 
-        # Update he primal variables
+        # Update the primal variables
         d = c
         if a_eq is not None:
             if use_vec_sparsity:

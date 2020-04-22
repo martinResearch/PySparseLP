@@ -71,12 +71,3 @@ def get_problem(problem_name):
 
     lp_dict = mps_parser(file_lp, f_sol)
     return lp_dict
-
-
-if __name__ == "__main__":
-
-    filename_lp = "./data/netlib/AFIRO.SIF"
-    filename_sol = "./data/perPlex/afiro.txt"
-    file_lp = open(filename_lp, "r")
-    fsol = open(filename_sol, "r")
-    LP = mps_parser(file_lp, fsol)

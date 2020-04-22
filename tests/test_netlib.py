@@ -77,7 +77,7 @@ def solve_netlib(problem_name, display=False, max_time_seconds=30):
             ax_arr[1].semilogy(lp.opttime_curve, lp.max_violated_constraint)
             ax_arr[2].semilogy(lp.opttime_curve, lp.pobj_curve - cost_gt)
             ax_arr[0].legend()
-            plt.show()
+    plt.show()
     print("done")
     return distance_to_ground_truth
 
@@ -98,7 +98,7 @@ def test_netlib(
 
     for pb_name in pb_names:
         distance_to_ground_truth_curves = solve_netlib(
-            pb_name, display=False, max_time_seconds=max_time_seconds
+            pb_name, display=display, max_time_seconds=max_time_seconds
         )
 
         curves_json_file = os.path.join(__folder__, f"netlib_curves_{pb_name}.json")
@@ -119,7 +119,7 @@ def test_netlib(
 
 if __name__ == "__main__":
 
-    # test_netlib('afiro')# seems like the solution is not unique
+    test_netlib(["AFIRO"], display=True)  # seems like the solution is not unique
     # test_netlib('SC50B')
     # test_netlib('SC50A')
     # test_netlib('KB2')

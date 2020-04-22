@@ -573,7 +573,7 @@ class SparseLP:
         )
 
     def add_soft_inequality_constraints(
-        self, cols, vals, coef_penalization, lower_bounds=None, upper_bounds=None,
+        self, cols, vals, coef_penalization, lower_bounds=None, upper_bounds=None
     ):
         """Add a set of "soft" inequalities terms to the problem in the form of
         sum_i abs(coef_penalization[i] * maximum(0, lower_bounds[i] - y[i] , y[i] - upper_bound[i]) )

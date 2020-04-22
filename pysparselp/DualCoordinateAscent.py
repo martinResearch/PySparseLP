@@ -283,7 +283,7 @@ def dual_coordinate_ascent(
         )
         x[c_bar == 0] = 0.5 * (lp2.lower_bounds + lp2.upper_bounds)[
             c_bar == 0
-         ] + 0.1 * np.sign(lp2.costsvector[c_bar == 0])
+        ] + 0.1 * np.sign(lp2.costsvector[c_bar == 0])
         if new_energy < energy + 1e-10:
             order = np.argsort(np.abs(x - 0.5))
             fixed = c_bar != 0

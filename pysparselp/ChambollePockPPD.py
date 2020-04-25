@@ -60,7 +60,7 @@ def chambolle_pock_ppd(
     minimizes c.T*x
     such that
     a_eq*x=beq
-    b_lower<= a_ineq*x<= b_upper              
+    b_lower<= a_ineq*x<= b_upper
     lb<=x<=ub
     """
 

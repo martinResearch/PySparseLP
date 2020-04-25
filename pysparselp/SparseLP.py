@@ -40,9 +40,11 @@ from .ChambollePockPPD import chambolle_pock_ppd
 from .DualCoordinateAscent import dual_coordinate_ascent
 from .DualGradientAscent import dual_gradient_ascent
 from .MehrotraPDIP import mpc_sol
+from .ChambollePockLineSearch import chambolle_pock_linesearch
 
 
 solving_methods = (
+    "chambolle_pock_linesearch",
     "osqp",
     "mehrotra",
     "scipy_simplex",
@@ -1286,6 +1288,39 @@ class SparseLP:
                 nb_iter_plot=nb_iter_plot,
             )
             x = m_change1 * x - shift1
+
+        elif method == "chambolle_pock_linesearch":
+            lp_slack = copy.deepcopy(self)
+            (
+                m_change1,
+                shift1,
+            ) = lp_slack.remove_fixed_variables()  # removed fixed variables
+            m_change2, shift2 = lp_slack.convert_to_slack_form()
+
+            def this_call_back(solution, niter, **kwargs):
+                x = m_change2 * solution - shift2
+                x = m_change1 * x - shift1
+                self.itrn_curve.append(niter)
+                simplex_call_back(x)
+
+            sol = chambolle_pock_linesearch(
+                lp_slack.a_equalities,
+                lp_slack.b_equalities,
+                lp_slack.costsvector,
+                nmax=20000,
+                eps=1e-6,
+                tol=1e-6,
+                y_sol=None,
+                method="standard",
+                callback=this_call_back,
+            )
+            x = sol["x"]
+
+            lp_slack.check_solution(x)
+            x = m_change2 * x - shift2
+            x = m_change1 * x - shift1
+            self.check_solution(x)
+            self.max_constraint_violation(x)
 
         elif method == "dual_gradient_ascent":
             x, y_eq, y_ineq = dual_gradient_ascent(

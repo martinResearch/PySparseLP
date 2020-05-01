@@ -206,7 +206,7 @@ class SparseLP:
         return max_v
 
     def check_solution(self, solution, tol=1e-6):
-        assert(solution.ndim == 1)
+        assert solution.ndim == 1
         types, lb, ub = self.get_variables_bounds()
         valid = True
         if lb is not None:

@@ -59,7 +59,7 @@ def solve_netlib(problem_name, display=False, max_duration_seconds=30):
     all_method_options_list = {}
     all_method_options_list["chambolle_pock_linesearch"] = {
         method: {"method": method}
-        for method in ("standard", "activation", "xyseparate", "without_linesearch")
+        for method in ("activation", "standard", "xyseparate", "without_linesearch")
     }
 
     # solving_methods2=['mehrotra']
@@ -104,7 +104,7 @@ def solve_netlib(problem_name, display=False, max_duration_seconds=30):
                 ax_arr[1].set_xlabel("duration in seconds")
                 ax_arr[2].semilogy(lp.opttime_curve, np.abs(lp.pobj_curve - cost_gt))
                 ax_arr[2].set_xlabel("duration in seconds")
-                ax_arr[0].legend(loc='upper right')
+                ax_arr[0].legend(loc="upper right")
 
     fig.savefig(os.path.join(__folder__, f"curves_{problem_name}.svg"))
     print("done")
@@ -121,12 +121,10 @@ def generic_test_netlib(
     max_duration_seconds: int = 15,
     update_results: bool = False,
     display: bool = False,
+    tol: float = 1e-5,
 ):
     if isinstance(pb_names, str):
         raise BaseException("you should provide a list of strings")
-
-    if pb_names is None:
-        pb_names = ["SC50B"]
 
     for pb_name in pb_names:
         distance_to_ground_truth_curves = solve_netlib(
@@ -141,25 +139,34 @@ def generic_test_netlib(
         with open(curves_json_file, "r") as f:
             distance_to_ground_truth_curves_expected = json.load(f)
 
+        list_failed = []
+
         for k, v1 in distance_to_ground_truth_curves_expected.items():
             v2 = distance_to_ground_truth_curves[k]
             tv1, tv2 = trim_length(v1, v2)
             if np.all(np.isnan(v1)):
-                assert(np.all(np.isnan(v2)))
+                assert np.all(np.isnan(v2))
             max_diff = np.max(np.abs(np.array(tv1) - np.array(tv2)))
             print(f"{pb_name} max diff {k} = {max_diff}")
-            np.testing.assert_almost_equal(*trim_length(v1, v2))
+
+            if max_diff > tol:
+                list_failed.append(k)
+
+            if len(list_failed) > 0:
+                raise BaseException(
+                    f"Results changed for method(s): {', '.join(list_failed)}"
+                )
 
 
-def test_SC50B():
-    generic_test_netlib(['SC50B'], update_results=False, display=True)
+def test_sc50b():
+    generic_test_netlib(["SC50B"], update_results=False, display=True)
 
 
 if __name__ == "__main__":
 
     # problems for which mehrotra find the same solution as the provided one
-    problems = ['SC50B', 'SC50A', 'KB2', "SC105", 'SCAGR7']
-    problems = ['SC50B']
+    problems = ["SC50B", "SC50A", "KB2", "SC105", "SCAGR7"]
+    problems = ["SC50B"]
     # problem that seems to have several solutions (mehrotra find a different solution from the provided one)
     # badly conditioned ?
     # "AFIRO" 'ADLITTLE'
@@ -167,4 +174,4 @@ if __name__ == "__main__":
     # problem for which the provide solution seems to violate constraints
     # 'PEROLD','AGG2'
 
-    generic_test_netlib(problems, update_results=True, display=True)
+    generic_test_netlib(problems, update_results=False, display=True)

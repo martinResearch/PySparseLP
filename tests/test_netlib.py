@@ -59,7 +59,7 @@ def solve_netlib(problem_name, display=False, max_duration_seconds=30):
     all_method_options_list = {}
     all_method_options_list["chambolle_pock_linesearch"] = {
         method: {"method": method}
-        for method in ("activation", "standard", "xyseparate", "without_linesearch")
+        for method in ("standard", "activation", "xyseparate")
     }
 
     # solving_methods2=['mehrotra']
@@ -85,7 +85,7 @@ def solve_netlib(problem_name, display=False, max_duration_seconds=30):
             sol1, elapsed = lp.solve(
                 method=method,
                 get_timing=True,
-                nb_iter=1000000,
+                nb_iter=5000000,
                 max_duration=max_duration_seconds,
                 ground_truth=ground_truth,
                 ground_truth_indices=np.arange(len(ground_truth)),
@@ -99,7 +99,7 @@ def solve_netlib(problem_name, display=False, max_duration_seconds=30):
                     lp.opttime_curve, lp.distance_to_ground_truth, label=full_name
                 )
                 ax_arr[0].set_xlabel("duration in seconds")
-                ax_arr[0].set_xlim([0, max_duration_seconds * 2.1])
+                ax_arr[0].set_xlim([0, max_duration_seconds * 1.5])
                 ax_arr[1].semilogy(lp.opttime_curve, lp.max_violated_constraint)
                 ax_arr[1].set_xlabel("duration in seconds")
                 ax_arr[2].semilogy(lp.opttime_curve, np.abs(lp.pobj_curve - cost_gt))
@@ -174,4 +174,5 @@ if __name__ == "__main__":
     # problem for which the provide solution seems to violate constraints
     # 'PEROLD','AGG2'
 
-    generic_test_netlib(problems, update_results=False, display=True)
+    generic_test_netlib(problems, update_results=False,
+                        display=True, max_duration_seconds=20)

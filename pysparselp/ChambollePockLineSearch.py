@@ -14,7 +14,7 @@ import numpy as np
 import scipy.sparse as sparse
 
 
-methods = ("activation", "standard", "xyseparate", "without_linesearch")
+methods = ("standard", "activation", "xyseparate", "without_linesearch")
 
 
 def sparse_matrix_norm(a):

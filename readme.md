@@ -199,7 +199,7 @@ In order to monitor convergence rates, the exact solutions of these problems are
 	from pysparselp.test_netlib import test_netlib
 	test_netlib('SC50A')
 
-![curves](./images/libnetSC50A.png)
+![curves](./images/curves_SC50B.png)
 Note: since august 2017, numpy files containing the netlib examples are provided with scipy [here] (https://github.com/scipy/scipy/tree/master/benchmarks/benchmarks/linprog_benchmark_files)
 
 ## Random problems 

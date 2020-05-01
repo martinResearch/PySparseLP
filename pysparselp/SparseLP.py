@@ -1339,8 +1339,8 @@ class SparseLP:
 
             options = {
                 "method": "activation",
-                "eps": 1e-9,
-                "tol": 1e-9,
+                "eps": 1e-15,
+                "tol": 1e-15,
                 "nmax": nb_iter,
                 "y_sol": ground_truth,
             }

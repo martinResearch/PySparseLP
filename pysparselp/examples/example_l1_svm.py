@@ -73,7 +73,7 @@ class L1SVM(SparseLP):
             method=method,
             get_timing=True,
             nb_iter=2000,
-            max_time=np.inf,
+            max_duration=np.inf,
             plot_solution=None,
         )
         self.weights = sol1[self.weightsIndices]

@@ -58,7 +58,7 @@ def lp_admm(
     gamma_ineq=3,
     nb_iter=100,
     callback_func=None,
-    max_time=None,
+    max_duration=None,
     use_preconditioning=True,
     nb_iter_plot=10,
 ):
@@ -213,7 +213,7 @@ def lp_admm(
         if i % nb_iter_plot == 0:
 
             elapsed = time.clock() - start
-            if max_time is not None and elapsed > max_time:
+            if max_duration is not None and elapsed > max_duration:
                 break
             energy1 = energy(x, xp, lambda_eq, lambda_ineq)
             energy2 = energy1
@@ -222,19 +222,9 @@ def lp_admm(
             max_violated_inequality = max(0, -np.min(x))
 
             print(
-                "iter"
-                + str(i)
-                + ": energy1= "
-                + str(energy1)
-                + " energy2="
-                + str(energy2)
-                + " elapsed "
-                + str(elapsed)
-                + " second"
-                + " max violated inequality:"
-                + str(max_violated_inequality)
-                + " max violated equality:"
-                + str(max_violated_equality)
+                f"iter {i} elapsed={elapsed:1.2f}: energy1={energy1} energy2={energy2}"
+                f"max violated inequality:{max_violated_inequality:1.3e}"
+                f"max violated max_violated_equality:{max_violated_equality:1.3e}"
             )
             if callback_func is not None:
                 callback_func(
@@ -282,7 +272,7 @@ def lp_admm2(
     gamma_ineq=0.7,
     nb_iter=100,
     callback_func=None,
-    max_time=None,
+    max_duration=None,
     use_preconditioning=False,
     nb_iter_plot=10,
 ):
@@ -435,7 +425,7 @@ def lp_admm2(
         xp = np.minimum(xp, ub)
         if niter % nb_iter_plot == 0:
             elapsed = time.clock() - start
-            if not (max_time is None) and elapsed > max_time:
+            if not (max_duration is None) and elapsed > max_duration:
                 break
             energy1 = energy(x, xp, lambda_ineq)
             energy2 = energy1

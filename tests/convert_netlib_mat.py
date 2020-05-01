@@ -1,4 +1,6 @@
+"""conversion of netlib mps file to matlab mat file to be able to test matlab lp solvers"""
 from pysparselp.netlib import get_problem
+
 import scipy.io
 
 if __name__ == "__main__":

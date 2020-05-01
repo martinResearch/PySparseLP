@@ -75,7 +75,7 @@ def run(display=True):
     )
     lp.add_abs_penalization(ids, 1)
     lp.convert_to_one_sided_inequality_system()
-    x = lp.solve(method="mehrotra", nb_iter=6000, max_time=np.inf)[0]
+    x = lp.solve(method="mehrotra", nb_iter=6000, max_duration=np.inf)[0]
     print(lp.pobj_curve)
     # x=LP.solve(method='chambolle_pock_ppd')[0]
     lp_prec_ = x[ids]

@@ -97,10 +97,10 @@ if __name__ == "__main__":
     axarr[0].set_title("mean absolute distance to solution")
     axarr[1].set_title("maximum constraint violation")
     axarr[2].set_title("difference with optimum value")
-    max_time = 2
+    max_duration = 2
     for method in solving_methods2:
         sol1, elapsed = lp2.solve(
-            method=method, max_time=max_time, ground_truth=ground_truth
+            method=method, max_duration=max_duration, ground_truth=ground_truth
         )
         axarr[0].semilogy(
             lp2.opttime_curve,

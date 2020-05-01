@@ -36,25 +36,25 @@ import scipy.sparse
 
 from .ADMM import lp_admm, lp_admm2
 from .ADMMBlocks import lp_admm_block_decomposition
+from .ChambollePockLineSearch import chambolle_pock_linesearch
 from .ChambollePockPPD import chambolle_pock_ppd
 from .DualCoordinateAscent import dual_coordinate_ascent
 from .DualGradientAscent import dual_gradient_ascent
 from .MehrotraPDIP import mpc_sol
-from .ChambollePockLineSearch import chambolle_pock_linesearch
 
 
 solving_methods = (
-    "chambolle_pock_linesearch",
-    "osqp",
     "mehrotra",
+    "chambolle_pock_ppd",
+    "chambolle_pock_linesearch",
+    "admm",
+    "admm2",
+    "admm_blocks",
+    "osqp",
     "scipy_simplex",
     "scipy_interior_point",
     "dual_coordinate_ascent",
     "dual_gradient_ascent",
-    "chambolle_pock_ppd",
-    "admm",
-    "admm2",
-    "admm_blocks",
 )
 
 try:
@@ -206,6 +206,7 @@ class SparseLP:
         return max_v
 
     def check_solution(self, solution, tol=1e-6):
+        assert(solution.ndim == 1)
         types, lb, ub = self.get_variables_bounds()
         valid = True
         if lb is not None:
@@ -677,8 +678,10 @@ class SparseLP:
 
     def convert_to_slack_form(self):
         """Convert to the form min_y c.ty Ay=b y>=0 by adding slack variables and shift on x
-        the solution of the original problem is obtained using x = m_change*y+ shift with
-        y the solution of the new problem
+        the solution of the original problem is obtained using
+            x = m_change*y+ shift
+        with
+            y the solution of the new problem
         have a look at https://ocw.mit.edu/courses/sloan-school-of-management/15-053-optimization-methods-in-management-science-spring-2013/tutorials/MIT15_053S13_tut06.pdf
         """
         self.convert_to_one_sided_inequality_system()
@@ -914,6 +917,11 @@ class SparseLP:
 
     def convert_to_all_inequalities_without_bounds(self):
         """Convert to the form min c.t b_lower<=a_ineq*x<=b_upper by augmenting the size of a_ineq."""
+        if self.b_lower is None:
+            self.b_lower = np.full((self.a_inequalities.shape[0]), -np.inf)
+        if self.b_upper is None:
+            self.b_upper = np.full((self.a_inequalities.shape[0]), np.inf)
+
         self.convert_to_all_inequalities()
         non_free_ids = np.nonzero(
             ~(np.isinf(self.lower_bounds) & np.isinf(self.upper_bounds))
@@ -923,11 +931,36 @@ class SparseLP:
             (np.ones(nb_non_free_ids), (np.arange(nb_non_free_ids), non_free_ids)),
             (nb_non_free_ids, self.nb_variables),
         )
-        self.a_inequalities = scipy.sparse.vstack((self.a_inequalities, eye_reduced))
+
+        self.a_inequalities = scipy.sparse.vstack(
+            (self.a_inequalities, eye_reduced)
+        ).tocsr()
+
         self.b_lower = np.hstack((self.b_lower, self.lower_bounds[non_free_ids]))
         self.b_upper = np.hstack((self.b_upper, self.upper_bounds[non_free_ids]))
         self.lower_bounds.fill(-np.inf)
         self.upper_bounds.fill(np.inf)
+
+    def convert_to_single_inequalities_without_bounds(self):
+        """Convert to the form min c.t a_ineq*x<=b_upper by augmenting the size of a_ineq."""
+        self.convert_to_all_inequalities_without_bounds()
+        self.convert_to_one_sided_inequality_system()
+
+    def lexsort_constraints(self):
+        # reorder constraints in lexicographic order
+        if self.a_inequalities is not None:
+            row_order = np.lexsort(np.fliplr(self.a_inequalities.todense()).T).squeeze(
+                0
+            )
+            self.a_inequalities = self.a_inequalities[row_order, :]
+            if self.b_upper is not None:
+                self.b_upper = self.b_upper[row_order]
+            if self.b_lower is not None:
+                self.b_lower = self.b_lower[row_order]
+        if self.a_equalities is not None:
+            row_order = np.lexsort(np.fliplr(self.a_equalities.todense()).T).squeeze(0)
+            self.a_inequalities = self.a_inequalities[row_order, :]
+            self.b_equalities = self.b_equalities[row_order]
 
     def convert_to_cvxpy(self):
 
@@ -995,12 +1028,13 @@ class SparseLP:
         get_timing=True,
         x0=None,
         nb_iter=10000,
-        max_time=None,
+        max_duration=None,
         callback_func=None,
         nb_iter_plot=10,
         plot_solution=None,
         ground_truth=None,
         ground_truth_indices=None,
+        method_options=None,
     ):
 
         if not (self.a_inequalities is None) and self.a_inequalities.shape[0] > 0:
@@ -1095,11 +1129,10 @@ class SparseLP:
                 plot_solution(niter, solution, is_active_variable=is_active_variable)
 
         if method not in solving_methods:
-            print("method %s not valid" % method)
-            print("avalaible method are")
-            for vmethod in solving_methods:
-                print(vmethod)
-            raise
+            raise BaseException(
+                f"method {method} not valid. Avalaible method are {', '.join(solving_methods)}"
+            )
+
         if method in ["scipy_simplex", "scipy_interior_point"]:
 
             if not (self.b_lower is None) and not (
@@ -1205,7 +1238,7 @@ class SparseLP:
                 nb_iter=nb_iter,
                 x0=x0,
                 callback_func=callback_func,
-                max_time=max_time,
+                max_duration=max_duration,
                 nb_iter_plot=nb_iter_plot,
             )
 
@@ -1223,7 +1256,7 @@ class SparseLP:
                 nb_iter_plot=nb_iter_plot,
                 x0=x0,
                 callback_func=callback_func,
-                max_time=max_time,
+                max_duration=max_duration,
             )
         elif method == "admm2":
             x = lp_admm2(
@@ -1238,7 +1271,7 @@ class SparseLP:
                 nb_iter=nb_iter,
                 x0=x0,
                 callback_func=callback_func,
-                max_time=max_time,
+                max_duration=max_duration,
                 nb_iter_plot=nb_iter_plot,
             )
 
@@ -1283,42 +1316,47 @@ class SparseLP:
                 theta=1,
                 nb_max_iter=nb_iter,
                 callback_func=this_back,
-                max_time=max_time,
+                max_duration=max_duration,
                 save_problem=False,
                 nb_iter_plot=nb_iter_plot,
             )
             x = m_change1 * x - shift1
 
         elif method == "chambolle_pock_linesearch":
-            lp_slack = copy.deepcopy(self)
-            (
-                m_change1,
-                shift1,
-            ) = lp_slack.remove_fixed_variables()  # removed fixed variables
-            m_change2, shift2 = lp_slack.convert_to_slack_form()
 
-            def this_call_back(solution, niter, **kwargs):
-                x = m_change2 * solution - shift2
-                x = m_change1 * x - shift1
+            lp2 = copy.deepcopy(self)
+            lp2.convert_to_single_inequalities_without_bounds()
+
+            # lp2.lexsort_constraints()
+
+            def this_call_back(x, y, niter, **kwargs):
                 self.itrn_curve.append(niter)
-                simplex_call_back(x)
+                # use y instead of x because we are solving dual in chambolle_pock_linesearch
+                simplex_call_back(y)
+
+            # solving the dual
+            # method="standard"
+
+            options = {
+                "method": "activation",
+                "eps": 1e-9,
+                "tol": 1e-9,
+                "nmax": nb_iter,
+                "y_sol": ground_truth,
+            }
+            if method_options is not None:
+                for k, v in method_options.items():
+                    options[k] = v
+
+            options["max_duration"] = max_duration
+            options["callback"] = this_call_back
 
             sol = chambolle_pock_linesearch(
-                lp_slack.a_equalities,
-                lp_slack.b_equalities,
-                lp_slack.costsvector,
-                nmax=20000,
-                eps=1e-6,
-                tol=1e-6,
-                y_sol=None,
-                method="standard",
-                callback=this_call_back,
+                lp2.a_inequalities.T, -lp2.costsvector, lp2.b_upper, **options
             )
-            x = sol["x"]
+            x = sol["y"]
 
-            lp_slack.check_solution(x)
-            x = m_change2 * x - shift2
-            x = m_change1 * x - shift1
+            lp2.check_solution(x)
             self.check_solution(x)
             self.max_constraint_violation(x)
 
@@ -1330,7 +1368,7 @@ class SparseLP:
                 callback_func=callback_func,
                 y_eq=None,
                 y_ineq=None,
-                max_time=max_time,
+                max_duration=max_duration,
                 nb_iter_plot=nb_iter_plot,
             )
         elif method == "dual_coordinate_ascent":
@@ -1367,7 +1405,7 @@ class SparseLP:
                 callback_func=this_back,
                 y_eq=None,
                 y_ineq=None,
-                max_time=max_time,
+                max_duration=max_duration,
                 nb_iter_plot=nb_iter_plot,
             )
             x = m_change1 * x - shift1

@@ -10,7 +10,7 @@ The different algorithms that are implemented here are documented in the [pdf](.
 
 * a dual coordinate ascent method with exact line search 
 * a dual gradient ascent with exact line search
-* a first order primal-dual algorithm adapted from chambolle pock [2]
+* first order primal-dual algorithms adapted from chambolle pock [2]
 * three methods based on the Alternating Direction Method of Multipliers [3]
 
 **Note** These methods are not meant to be efficient methods to solve generic linear programs. They are simple and quite naive methods I  implemented while exploring different possibilities to solve very large sparse linear programs that are too big to be solved using the standard simplex method or standard interior point methods.
@@ -22,7 +22,7 @@ This project also provides:
 * methods to convert between the different common forms of linear programs (slack form, standard form etc), 
 * methods to import and export the linear program from and to standard file formats (MPS), It is used here to run [netlib](http://www.netlib.org/lp/data/) LP problems. Using mps file one can upload and solve LP on the [neos](https://neos-server.org/neos/) servers.
 * a simple constraint propagation method with back-tracking to find feasible integer values solutions (for integer programs)
-* interface to OSQP solver [11]
+* an interface to the OSQP solver [11]
 * interfaces to other solvers (SCS, ECOS, CVXOPT) through CVXPY
 * interfaces to other LP and MILP solvers ([CLP](https://www.coin-or.org/download/binary/Clp/), [CBC](https://www.coin-or.org/download/binary/Cbc/), [MIPLC](http://mipcl-cpp.appspot.com/), [GLPSOL](https://sourceforge.net/projects/winglpk/), [QSOPT](http://www.math.uwaterloo.ca/~bico/qsopt/downloads/downloads.htm)) using mps text files
 
@@ -208,8 +208,8 @@ Random sparse LP problem can be generate using code in *randomLP.py*. The approa
 
 # To Do
 
-* translate from Matlab ot python the ADMM methods from [https://github.com/nmchaves/admm-for-lp](https://github.com/nmchaves/admm-for-lp)
-* test chambolle pock methods with linesearch from  https://github.com/xiamengqi2012/ChambollePockLinesearchtranslate and translate to python
+* translate from Matlab to python the ADMM methods from [https://github.com/nmchaves/admm-for-lp](https://github.com/nmchaves/admm-for-lp)
+* translate from Matlab to pytohn the chambolle pock method from [PDHD](https://www.cs.umd.edu/~tomg/projects/pdhg/)
 * add automatic constraint checking if we provide a feasible solution from the beginning. It will help debugging constraints.
 * convert to python the matlab implementation of the LP solver based on improved version of champolle-pock called [Adaptive Primal-Dual Hybrid Gradient Methods](https://arxiv.org/abs/1305.0546) available [here](https://www.cs.umd.edu/~tomg/projects/pdhg/)
 * create a cython binding for LPsparse [1] using scipy.sparse matrices for the interface and adding the possibility to compute the convergence curve by providing the problem known solution to the solver or by adding the possibility to define a callback to a python function.
@@ -247,7 +247,7 @@ Random sparse LP problem can be generate using code in *randomLP.py*. The approa
 * [Joptimize](http://www.joptimizer.com/linearProgramming.html) implemented in Java. Appache licence
 * [PCx](http://pages.cs.wisc.edu/~swright/PCx/) PCx is an interior-point predictor-corrector linear programming package. Code available here https://github.com/lpoo/PCx. Free but to public domain. Binaries provided for Linux only.
 * [DSDP](http://www.mcs.anl.gov/hs/software/DSDP/) solve semi-definite programs, which are more general than linear programs. It uses the sparsity of the problem and might still be competitive to solve sparse linear programs. Can be called from python through [cvxopt](http://cvxopt.org/)ms. 
-
+* [PDHD](https://www.cs.umd.edu/~tomg/projects/pdhg/). Chambolle-Pock method with adaptive stepsize selection rules. Matlab code. Solve several type of problem incluuding linea programs
 # References
 
 [1] *Sparse Linear Programming via Primal and Dual Augmented Coordinate Descent* Ian En-Hsu Yen, Kai Zhong, Cho-Jui Hsieh, Pradeep K Ravikumar, Inderjit S Dhillon , NIPS 2015. [code](http://ianyen.site/LPsparse/)

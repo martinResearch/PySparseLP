@@ -17,7 +17,7 @@ def trim_length(a, b):
     return a[:min_len], b[:min_len]
 
 
-def test_pott_segmentation(update_results=False):
+def test_pott_segmentation(update_results=False, tol=1e-6):
 
     distance_to_ground_truth_curves = run(display=False)
 
@@ -29,12 +29,18 @@ def test_pott_segmentation(update_results=False):
     with open(curves_json_file, "r") as f:
         distance_to_ground_truth_curves_expected = json.load(f)
 
+    list_failed = []
+
     for k, v1 in distance_to_ground_truth_curves_expected.items():
         v2 = distance_to_ground_truth_curves[k]
         tv1, tv2 = trim_length(v1, v2)
         max_diff = np.max(np.abs(np.array(tv1) - np.array(tv2)))
         print(f"max diff {k} = {max_diff}")
-        numpy.testing.assert_almost_equal(*trim_length(v1, v2))
+        if max_diff > tol:
+            list_failed.append(k)
+
+    if len(list_failed) > 0:
+        raise BaseException(f"Results changed for method(s): {', '.join(list_failed)}")
 
 
 if __name__ == "__main__":

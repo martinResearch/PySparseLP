@@ -1,32 +1,56 @@
+"""Primal dual Chambolle and Pock algorithm with line search
+Translated from matlab code written in 2012 by Mengqi(Mandy) Xia and Kevin Musgrave
+as final project for Cornell's CS6820 Analysis of Algorithms Class
+Oringal code: https://github.com/xiamengqi2012/ChambollePockLinesearch
+This is probably implementing the method described in
+A First-Order Primal-Dual Algorithm with Linesearch. Yura Malitsky and  ThomasPock. SIAM Journal on Optimization. 2018
+https://arxiv.org/abs/1608.08883
+It could probably be accelerated using some preconditioning.
+"""
+import time
+
 import numpy as np
 
 import scipy.sparse as sparse
 
 
-methods = ("standard", "activation", "xyseparate", "without_linesearch", "truth")
+methods = ("standard", "activation", "xyseparate", "without_linesearch")
+
+
+def sparse_matrix_norm(a):
+    return sparse.linalg.svds(a, k=1, which="LM")[1][0]
 
 
 def chambolle_pock_linesearch(
     a,
     b,
     c,
-    nmax=20000,
-    eps=1e-6,
-    tol=1e-6,
+    nmax=10000000,
+    eps=1e-9,
+    tol=1e-9,
     y_sol=None,
     method="standard",
     callback=None,
+    max_duration=np.inf,
+    stage=True,
 ):
-    """ Solve a primal-dual pair min{c'x|Ax=b,x>=0} and max{b'y|A'y<=c} using Chambolle and Pock algorithm.
+    """Solve a primal-dual pair min{c'x|Ax=b,x>=0} and max{b'y|A'y<=c} using Chambolle and Pock algorithm.
     A is a matrix. b and c are column vectors. Input x and y are current x
     and y values. gamma and tau are two user defined parameters for CP algorithm
     Return x and y are updated values after one iteration
-    translating from matlab code https://github.com/xiamengqi2012/ChambollePockLinesearch
-    A first-order primal-dual algorithm with linesearch. Yura Malitsky Thomas Pock. SIAM Journal on Optimization 2018
-    https://arxiv.org/pdf/1608.08883.pdf
+
+    Translated from matlab code written in 2012 by Mengqi(Mandy) Xia and Kevin Musgrave
+    as final project for Cornell's CS6820 Analysis of Algorithms Class
+    oringal code: https://github.com/xiamengqi2012/ChambollePockLinesearch
+    it probably implements the method described in
+    A First-Order Primal-Dual Algorithm with Linesearch.
+    Yura Malitsky and  ThomasPock. SIAM Journal on Optimization. 2018
+    https://arxiv.org/abs/1608.08883
+    It could probably be accelerated using some preconditioning
     """
+    start = time.clock()
     gamma = 1
-    tau = 1 / (2 * (sparse.linalg.norm(a) ** 2) * gamma)
+    tau = 1 / (2 * (sparse_matrix_norm(a) ** 2) * gamma)
     # Restriction: gamma*tau < 1/norm(A)^2
 
     err = np.inf
@@ -47,47 +71,97 @@ def chambolle_pock_linesearch(
     factor = (
         1 / 1.4
     )  # Backtracking linesearch is updated each time using alpha=alpha*factor
+
+    a_t_csr = a.T.tocsr()
+    a = a.tocsr()
+
     q11 = sparse.eye(nr) / gamma
     q12 = -a
     q21 = -a.T
     q22 = sparse.eye(nc) / tau
-    q = sparse.bmat([[q11, q12], [q21, q22]])
+    q = sparse.bmat([[q11, q12], [q21, q22]]).tocsr()
 
-    while err > tol and n_iter < nmax:
-        if n_iter % 1000 == 0:
-            print(f"iteration {n_iter} error ={err}")
+    elapsed = 0
+
+    alpha = alpha_max
+
+    factor_augment = (
+        1.3 / factor
+    )  # not in original implementation , but seem to speed things up
+
+    while err > tol and n_iter < nmax and elapsed < max_duration:
 
         n_iter += 1
         x = xnew
         y = ynew
-        dist_sol = []
+        dist_sol_list = []
 
-        xnew, ynew, vk, num_activate = chambolle_pock_update(
-            a, b, c, x, y, gamma, tau, method, alpha_0, alpha_max, factor, q, eps
+        xnew, ynew, vk, num_activate, alpha = chambolle_pock_update(
+            a,
+            a_t_csr,
+            b,
+            c,
+            x,
+            y,
+            gamma,
+            tau,
+            method,
+            alpha_0,
+            min(alpha * factor_augment, alpha_max),
+            factor,
+            q,
+            eps,
+            stage,
         )
-        values.append(b.T * ynew)
+        value = b.dot(ynew)
+        values.append(value)
         err = np.sqrt(
             np.linalg.norm(a * xnew - b) ** 2
-            + np.linalg.norm(np.maximum(a.T * ynew - c, 0)) ** 2
+            + np.linalg.norm(np.maximum(a_t_csr * ynew - c, 0)) ** 2
         )
+
         if y_sol is not None:
-            dist_sol.append(np.mean(abs(y - y_sol)))
+            dist_sol = np.mean(abs(y - y_sol))
+            dist_sol_list.append(dist_sol)
         errors.append(err)
 
+        if n_iter % 100 == 0:
+            elapsed = time.clock() - start
+            if y_sol is not None:
+                print(
+                    f"iteration {n_iter} time ={elapsed:2.1f} sec value={value} error ={err:1.3e} dist to sol={dist_sol:1.3e}"
+                )
+            else:
+                print(f"iteration {n_iter} time ={elapsed:2.0f} sec error ={err:1.3e}")
+
         if callback is not None:
-            callback(x, n_iter)
+            callback(x, y, n_iter)
 
     return {
         "x": xnew,
         "y": ynew,
         "values": values,
         "errors": errors,
-        "dist_sol": dist_sol,
+        "dist_sol": dist_sol_list,
     }
 
 
 def chambolle_pock_update(
-    a, b, c, x, y, gamma, tau, method, alpha_0, alpha_max, factor, q, eps
+    a,
+    a_t_csr,
+    b,
+    c,
+    x,
+    y,
+    gamma,
+    tau,
+    method,
+    alpha_0,
+    alpha_max,
+    factor,
+    q,
+    eps,
+    stage,
 ):
 
     assert method in methods
@@ -98,18 +172,16 @@ def chambolle_pock_update(
     vk = -gamma_ax_minus_b
     # If number of input arguments is 7 then do CP without linesearch
 
-    x, y = xy_update(x, y, a, c, gamma_ax_minus_b, tau)
+    if method == "without_linesearch":
+        x, y = xy_update(x, y, a, a_t_csr, c, gamma_ax_minus_b, tau)
+        alpha = 1
 
-    use_linesearch = method != "without_linesearch"
-
-    if use_linesearch:
+    elif method == "standard":
 
         alpha, satisfied, x_update2 = initialization(alpha_max, x)
 
-    if method == "standard":
-
         x_temp_next, y_temp_next, x_temp, y_temp = pre_alpha_calculation(
-            alpha_0, x, y, a, b, c, gamma, gamma_ax_minus_b, tau, x_update2
+            alpha_0, x, y, a, a_t_csr, b, c, gamma, gamma_ax_minus_b, tau, x_update2
         )
         while alpha * factor > alpha_0 and not satisfied:
             alpha, satisfied = calculate_alpha(
@@ -119,6 +191,7 @@ def chambolle_pock_update(
                 x_update2,
                 y,
                 a,
+                a_t_csr,
                 b,
                 c,
                 gamma,
@@ -130,24 +203,26 @@ def chambolle_pock_update(
                 x_temp,
                 y_temp,
                 eps,
-                1,
+                stage,
             )
 
-        x, y = xy_update(x, y, a, c, gamma_ax_minus_b, tau, alpha)
+        x, y = xy_update(x, y, a, a_t_csr, c, gamma_ax_minus_b, tau, alpha)
 
     elif method == "activation":
+
+        alpha, satisfied, x_update2 = initialization(alpha_max, x)
 
         eps_hat = 0.03
         # need to test
         vkplus1 = -gamma_ax_minus_b
-        activate = vkplus1.T * vk / (np.linalg.norm(vkplus1) * np.linalg.norm(vk)) > (
+        activate = vkplus1.dot(vk) / (np.linalg.norm(vkplus1) * np.linalg.norm(vk)) > (
             1 - eps_hat
         )
         if activate:
             num_activate = num_activate + 1
 
             x_temp_next, y_temp_next, x_temp, y_temp = pre_alpha_calculation(
-                alpha_0, x, y, a, b, c, gamma, gamma_ax_minus_b, tau, x_update2
+                alpha_0, x, y, a, a_t_csr, b, c, gamma, gamma_ax_minus_b, tau, x_update2
             )
             while alpha * factor > alpha_0 and not satisfied:
                 alpha, satisfied = calculate_alpha(
@@ -157,6 +232,7 @@ def chambolle_pock_update(
                     x_update2,
                     y,
                     a,
+                    a_t_csr,
                     b,
                     c,
                     gamma,
@@ -171,15 +247,18 @@ def chambolle_pock_update(
                     1,
                 )
 
-            x, y = xy_update(x, y, a, c, gamma_ax_minus_b, tau, alpha)
+            x, y = xy_update(x, y, a, a_t_csr, c, gamma_ax_minus_b, tau, alpha)
         else:
-            x, y = xy_update(x, y, a, c, gamma_ax_minus_b, tau)
+            x, y = xy_update(x, y, a, a_t_csr, c, gamma_ax_minus_b, tau)
 
         vk = vkplus1
 
     elif method == "xyseparate":
+
+        alpha, satisfied, x_update2 = initialization(alpha_max, x)
+
         x_temp_next, y_temp_next, x_temp, y_temp = pre_alpha_calculation(
-            alpha_0, x, y, a, b, c, gamma, gamma_ax_minus_b, tau, x_update2
+            alpha_0, x, y, a, a_t_csr, b, c, gamma, gamma_ax_minus_b, tau, x_update2
         )
         while alpha * factor > alpha_0 and not satisfied:
             alpha, satisfied = calculate_alpha(
@@ -189,6 +268,7 @@ def chambolle_pock_update(
                 x_update2,
                 y,
                 a,
+                a_t_csr,
                 b,
                 c,
                 gamma,
@@ -207,7 +287,18 @@ def chambolle_pock_update(
         alpha, satisfied, _ = initialization(alpha_max, x)
 
         x_temp_next, y_temp_next, x_temp, y_temp = pre_alpha_calculation(
-            alpha_0, x, y, a, b, c, gamma, gamma_ax_minus_b, tau, x_update2, y_temp
+            alpha_0,
+            x,
+            y,
+            a,
+            a_t_csr,
+            b,
+            c,
+            gamma,
+            gamma_ax_minus_b,
+            tau,
+            x_update2,
+            y_temp,
         )
         while alpha * factor > alpha_0 and not satisfied:
             alpha, satisfied = calculate_alpha(
@@ -216,7 +307,8 @@ def chambolle_pock_update(
                 x,
                 x_update2,
                 y,
-                alpha,
+                a,
+                a_t_csr,
                 b,
                 c,
                 gamma,
@@ -231,13 +323,13 @@ def chambolle_pock_update(
                 2,
             )
 
-        x_update1 = x + alpha * tau * (a.T * (y - 2 * gamma_ax_minus_b) - c)
+        x_update1 = x + alpha * tau * (a_t_csr * (y - 2 * gamma_ax_minus_b) - c)
         x_update2 = np.zeros((len(x)))
         x = np.maximum(x_update1, x_update2)
     else:
         raise BaseException(f"unknown method {method}")
 
-    return x, y, vk, num_activate
+    return x, y, vk, num_activate, alpha
 
 
 def initialization(alpha_max, x):
@@ -247,26 +339,37 @@ def initialization(alpha_max, x):
     return alpha, satisfied, x_update2
 
 
-def xy_update(x, y, a, c, gamma_ax_minus_b, tau, alpha=1):
+def xy_update(x, y, a, a_t_csr, c, gamma_ax_minus_b, tau, alpha=1):
     y = y + alpha * (-gamma_ax_minus_b)
-    x_update1 = x + tau * (a.T * (y - 2 * gamma_ax_minus_b) - c)
+    x_update1 = x + tau * (a_t_csr * (y - 2 * gamma_ax_minus_b) - c)
     x = np.maximum(x_update1, 0)
     return x, y
 
 
 def pre_alpha_calculation(
-    alpha_0, x, y, a, b, c, gamma, gamma_ax_minus_b, tau, x_update2, y_temp=None
+    alpha_0,
+    x,
+    y,
+    a,
+    a_t_csr,
+    b,
+    c,
+    gamma,
+    gamma_ax_minus_b,
+    tau,
+    x_update2,
+    y_temp=None,
 ):
 
     if y_temp is None:
         y_temp = y + alpha_0 * (-gamma_ax_minus_b)
 
-    x_update1 = x + tau * (a.T * (y - 2 * gamma_ax_minus_b) - c)
+    x_update1 = x + tau * (a_t_csr * (y - 2 * gamma_ax_minus_b) - c)
     x_temp = np.maximum(x_update1, x_update2)
 
     ax_temp_b = a * x_temp - b
     y_temp = y - gamma * ax_temp_b
-    x_update1 = x_temp + tau * (a.T * (y_temp - 2 * gamma * ax_temp_b) - c)
+    x_update1 = x_temp + tau * (a_t_csr * (y_temp - 2 * gamma * ax_temp_b) - c)
     x_temp_next = np.maximum(x_update1, x_update2)
     ax_temp_b_next = a * x_temp_next - b
     y_temp_next = y_temp - gamma * ax_temp_b_next
@@ -281,6 +384,7 @@ def calculate_alpha(
     x_update2,
     y,
     a,
+    a_t_csr,
     b,
     c,
     gamma,
@@ -298,13 +402,13 @@ def calculate_alpha(
         alpha = alpha * factor
 
         y_temp_alpha = y + alpha * (-gamma_ax_minus_b)
-        x_update1 = x + tau * (a.T * (y_temp_alpha - 2 * gamma_ax_minus_b) - c)
+        x_update1 = x + tau * (a_t_csr * (y_temp_alpha - 2 * gamma_ax_minus_b) - c)
         x_temp_alpha = np.maximum(x_update1, x_update2)
 
         ax_temp_alpha_b = a * x_temp_alpha - b
         y_temp_next_alpha = y_temp_alpha - gamma * ax_temp_alpha_b
         x_update1 = x_temp_alpha + tau * (
-            a.T * (y_temp_next_alpha - 2 * gamma * ax_temp_alpha_b) - c
+            a_t_csr * (y_temp_next_alpha - 2 * gamma * ax_temp_alpha_b) - c
         )
         x_temp_next_alpha = np.maximum(x_update1, x_update2)
 
@@ -314,8 +418,8 @@ def calculate_alpha(
 
         r_bark = np.hstack(((y_temp_next - y_temp), (x_temp_next - x_temp)))
 
-        r_kplus1_norm = np.sqrt((q * r_kplus1).T * r_kplus1)
-        r_bark_norm = np.sqrt((q * r_bark).T * r_bark)
+        r_kplus1_norm = np.sqrt((q * r_kplus1).dot(r_kplus1))
+        r_bark_norm = np.sqrt((q * r_bark).dot(r_bark))
         satisfied = r_kplus1_norm <= (1 - eps) * r_bark_norm  # Q norm
 
     else:
@@ -326,19 +430,19 @@ def calculate_alpha(
         y_temp_alpha = y - gamma * ax_temp_alpha_b
 
         x_update1 = x_temp_alpha + tau * (
-            a.T * (y_temp_alpha - 2 * gamma * ax_temp_alpha_b) - c
+            a_t_csr * (y_temp_alpha - 2 * gamma * ax_temp_alpha_b) - c
         )
         x_temp_next_alpha = np.maximum(x_update1, x_update2)
         y_temp_next_alpha = y_temp_alpha - gamma * (a * x_temp_next_alpha - b)
 
-        r_kplus1 = hstack(
+        r_kplus1 = np.hstack(
             ((y_temp_next_alpha - y_temp_alpha), (x_temp_next_alpha - x_temp_alpha))
         )
 
         r_bark = np.hstack(((y_temp_next - y_temp), (x_temp_next - x_temp)))
 
-        r_kplus1_norm = np.sqrt((q * r_kplus1).T * r_kplus1)
-        r_bark_norm = np.sqrt((q * r_bark).T * r_bark)
+        r_kplus1_norm = np.sqrt((q * r_kplus1).dot(r_kplus1))
+        r_bark_norm = np.sqrt((q * r_bark).dot(r_bark))
         satisfied = r_kplus1_norm <= (1 - eps) * r_bark_norm
         # Q norm
 

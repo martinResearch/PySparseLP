@@ -110,9 +110,7 @@ def mps_parser(f, fsol=None):
                 var["UP"] = np.inf
                 var[
                     "LO"
-                ] = (
-                    0
-                )  # Variables not mentioned in a given BOUNDS set are taken to be non-negative (lower bound zero, no upper bound)
+                ] = 0  # Variables not mentioned in a given BOUNDS set are taken to be non-negative (lower bound zero, no upper bound)
                 var["cost"] = 0
                 v_id_to_var[nb_var] = var
                 nb_var += 1

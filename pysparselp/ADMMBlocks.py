@@ -55,7 +55,7 @@ def lp_admm_block_decomposition(
     gamma_ineq=0.7,
     nb_iter=100,
     callback_func=None,
-    max_time=None,
+    max_duration=None,
     use_preconditioning=True,
     use_lu=True,
     nb_iter_plot=10,
@@ -310,7 +310,7 @@ def lp_admm_block_decomposition(
         if i % nb_iter_plot == 0:
 
             elapsed = time.clock() - start
-            if elapsed > max_time:
+            if elapsed > max_duration:
                 break
 
             energy1 = energy(x, xp, lambda_ineq)

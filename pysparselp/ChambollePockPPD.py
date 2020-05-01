@@ -47,13 +47,14 @@ def chambolle_pock_ppd(
     theta=1,
     nb_max_iter=100,
     callback_func=None,
-    max_time=None,
+    max_duration=None,
     save_problem=False,
     force_integer=False,
     nb_iter_plot=10,
 ):
-    """ method adapted from
-    Diagonal preconditioning for first order primal-dual algorithms in convex optimization
+    """Solve linear programming problem using chambolle-pock first order primal dual-method with preconditioning.
+
+    Method adapted from Diagonal preconditioning for first order primal-dual algorithms in convex optimization
     by Thomas Pack and Antonin Chambolle
     the adaptation makes the code able to handle a more flexible specification of the LP problem
     (we could transform generic LPs into the equality form, but i am not sure the convergence would be the same)
@@ -63,7 +64,6 @@ def chambolle_pock_ppd(
     b_lower<= a_ineq*x<= b_upper
     lb<=x<=ub
     """
-
     assert scipy.sparse.issparse(a_ineq)
     start = time.clock()
     elapsed = start
@@ -241,10 +241,9 @@ def chambolle_pock_ppd(
                 r_ineq = (a_ineq * x3) - b_ineq
 
         if niter % nb_iter_plot == 0:
-            prev_elapsed = elapsed
+
             elapsed = time.clock() - start
-            mean_iter_period = (elapsed - prev_elapsed) / 10
-            if (max_time is not None) and elapsed > max_time:
+            if (max_duration is not None) and elapsed > max_duration:
                 break
             energy1 = c.dot(x)
 
@@ -292,30 +291,10 @@ def chambolle_pock_ppd(
                     best_integer_solution = x_rounded
 
             print(
-                "iter"
-                + str(niter)
-                + ": energy1= "
-                + str(energy1)
-                + " energy2="
-                + str(energy2)
-                + " elapsed "
-                + str(elapsed)
-                + " second"
-                + " max violated inequality:"
-                + str(max_violated_inequality)
-                + " max violated equality:"
-                + str(max_violated_equality)
-                + " x3 has "
-                + str(100 * np.mean(x3 == 0))
-                + " % of zeros "
-                + "diff x3 has "
-                + str(100 * np.mean(diff_x3 == 0))
-                + " % of zeros "
-                + "mean_iter_period="
-                + str(mean_iter_period)
+                f"iter {niter} elapsed {elapsed:2.1f} seconds: energy1={energy1:f} energy2={energy2:f}"
+                f" max_viol_eq={max_violated_inequality:1.3e} max_viol_ineq ={max_violated_equality:1.3e}"
+                f" x3_sparsity ={np.mean(x3 == 0):1.2f} diff_x3_sparsity={np.mean(diff_x3==0):1.2f}"
             )
-            # 'y_eq has '+str(100 * np.mean(y_eq==0))+' % of zeros '+\
-            #    'y_ineq has '+str(100 * np.mean(y_ineq==0))+' % of zeros '+\
 
             if callback_func is not None:
 

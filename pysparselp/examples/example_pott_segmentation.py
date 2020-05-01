@@ -92,7 +92,7 @@ def build_linear_program(image_size, coef_potts, coef_mul):
     return lp, ground_truth, ground_truth_indices, unary_terms
 
 
-def run(display=True, image_size=50, coef_mul=500, coef_potts=0.5, max_time=15):
+def run(display=True, image_size=50, coef_mul=500, coef_potts=0.5, max_duration=15):
 
     lp, ground_truth, ground_truth_indices, unary_terms = build_linear_program(
         image_size, coef_potts, coef_mul
@@ -136,7 +136,7 @@ def run(display=True, image_size=50, coef_mul=500, coef_potts=0.5, max_time=15):
     # simplex much too slow for images larger than 20 by 20
     # LP2=copy.deepcopy(LP)
     # LP2.convert_to_one_sided_inequality_system()
-    # sol1,elapsed=LP2.solve(method='ScipyLinProg',force_integer=False,get_timing=True,nb_iter=100,max_time=10,ground_truth=ground_truth,ground_truth_indices=indices,plot_solution=None)
+    # sol1,elapsed=LP2.solve(method='ScipyLinProg',force_integer=False,get_timing=True,nb_iter=100,max_duration=10,ground_truth=ground_truth,ground_truth_indices=indices,plot_solution=None)
 
     solving_methods2 = list(solving_methods)
     for m in ["scipy_simplex", "scipy_interior_point"]:
@@ -154,7 +154,7 @@ def run(display=True, image_size=50, coef_mul=500, coef_potts=0.5, max_time=15):
             method=method,
             get_timing=True,
             nb_iter=100000,
-            max_time=max_time,
+            max_duration=max_duration,
             ground_truth=ground_truth,
             ground_truth_indices=ground_truth_indices,
             plot_solution=None,

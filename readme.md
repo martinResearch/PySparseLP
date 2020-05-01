@@ -199,7 +199,7 @@ In order to monitor convergence rates, the exact solutions of these problems are
 	from pysparselp.test_netlib import test_netlib
 	test_netlib('SC50A')
 
-![curves](./images/curves_SC50B.png)
+![curves](./images/curves_SC50B.svg)
 Note: since august 2017, numpy files containing the netlib examples are provided with scipy [here] (https://github.com/scipy/scipy/tree/master/benchmarks/benchmarks/linprog_benchmark_files)
 
 ## Random problems 
@@ -247,7 +247,7 @@ Random sparse LP problem can be generate using code in *randomLP.py*. The approa
 * [Joptimize](http://www.joptimizer.com/linearProgramming.html) implemented in Java. Appache licence
 * [PCx](http://pages.cs.wisc.edu/~swright/PCx/) PCx is an interior-point predictor-corrector linear programming package. Code available here https://github.com/lpoo/PCx. Free but to public domain. Binaries provided for Linux only.
 * [DSDP](http://www.mcs.anl.gov/hs/software/DSDP/) solve semi-definite programs, which are more general than linear programs. It uses the sparsity of the problem and might still be competitive to solve sparse linear programs. Can be called from python through [cvxopt](http://cvxopt.org/)ms. 
-* [PDHD](https://www.cs.umd.edu/~tomg/projects/pdhg/). Chambolle-Pock method with adaptive stepsize selection rules. Matlab code. Solve several type of problem incluuding linea programs
+* [PDHD](https://www.cs.umd.edu/~tomg/projects/pdhg/). Chambolle-Pock method with adaptive stepsize selection rules. Matlab code. Solve several type of problem including linear programs
 # References
 
 [1] *Sparse Linear Programming via Primal and Dual Augmented Coordinate Descent* Ian En-Hsu Yen, Kai Zhong, Cho-Jui Hsieh, Pradeep K Ravikumar, Inderjit S Dhillon , NIPS 2015. [code](http://ianyen.site/LPsparse/)

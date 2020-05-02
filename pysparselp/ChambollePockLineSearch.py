@@ -19,8 +19,10 @@ methods = ("standard", "xyseparate", "without_linesearch")
 
 def sparse_matrix_norm(a):
     np.random.seed(0)
-    v0=np.random.rand(a.shape[0])
-    return sparse.linalg.svds(a, k=1, which="LM", v0=v0)[1][0] # intialization is random by default, which mak ethe code non determinisic
+    v0 = np.random.rand(a.shape[0])
+    return sparse.linalg.svds(a, k=1, which="LM", v0=v0)[1][
+        0
+    ]  # intialization is random by default, which mak ethe code non determinisic
 
 
 def chambolle_pock_linesearch(
@@ -50,13 +52,12 @@ def chambolle_pock_linesearch(
     https://arxiv.org/abs/1608.08883
     It could probably be accelerated using some preconditioning
     """
-    
-    print(f'method ={method}')
+
+    print(f"method ={method}")
     start = time.clock()
     gamma = 1
     tau = 1 / (2 * (sparse_matrix_norm(a) ** 2) * gamma)
     # Restriction: gamma*tau < 1/norm(A)^2
-    
 
     err = np.inf
     values = []
@@ -212,7 +213,6 @@ def chambolle_pock_update(
             )
 
         x, y = xy_update(x, y, a, a_t_csr, c, gamma_ax_minus_b, tau, alpha)
-
 
     elif method == "xyseparate":
 

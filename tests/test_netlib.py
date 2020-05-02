@@ -32,28 +32,30 @@ def load_problem(problem_name):
     lp.add_equality_constraints_sparse(lp_dict["a_eq"], lp_dict["b_eq"])
     lp.add_inequality_constraints_sparse(
         lp_dict["a_ineq"], lp_dict["b_lower"], lp_dict["b_upper"]
-    )  
-    return lp,ground_truth
+    )
+    return lp, ground_truth
 
-def run_method(problem_name, method,max_duration_seconds,method_options):
-    lp,ground_truth=load_problem(problem_name)
+
+def run_method(problem_name, method, max_duration_seconds, method_options):
+    lp, ground_truth = load_problem(problem_name)
     lp2 = copy.deepcopy(lp)
     sol1, elapsed = lp2.solve(
         method=method,
         get_timing=True,
         nb_iter=5000000,
         max_duration=max_duration_seconds,
-        ground_truth= copy.deepcopy(ground_truth),
+        ground_truth=copy.deepcopy(ground_truth),
         ground_truth_indices=np.arange(len(ground_truth)),
         plot_solution=None,
         nb_iter_plot=500,
         method_options=method_options,
-    )  
+    )
     return lp2
+
 
 def solve_netlib(problem_name, display=False, max_duration_seconds=30):
 
-    lp,ground_truth=load_problem(problem_name)
+    lp, ground_truth = load_problem(problem_name)
     print("solving")
 
     if display:
@@ -96,11 +98,9 @@ def solve_netlib(problem_name, display=False, max_duration_seconds=30):
                 full_name = f"{method} {options_name}"
             else:
                 full_name = method
-                
-            values=[]
-            
-            lp=run_method(problem_name, method,max_duration_seconds,method_options)
-              
+
+            lp = run_method(problem_name, method, max_duration_seconds, method_options)
+
             print(
                 f"\n\n----------------------------------------------------------\nSolving LP using {full_name}"
             )
@@ -186,5 +186,6 @@ if __name__ == "__main__":
     # problem for which the provide solution seems to violate constraints
     # 'PEROLD','AGG2'
 
-    generic_test_netlib(problems, update_results=False,
-                        display=True, max_duration_seconds=20)
+    generic_test_netlib(
+        problems, update_results=False, display=True, max_duration_seconds=20
+    )

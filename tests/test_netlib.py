@@ -16,8 +16,7 @@ from pysparselp.netlib import get_problem
 __folder__ = os.path.dirname(__file__)
 
 
-def solve_netlib(problem_name, display=False, max_duration_seconds=30):
-
+def load_problem(problem_name):
     lp_dict = get_problem(problem_name)
     ground_truth = lp_dict["solution"]
 
@@ -33,8 +32,28 @@ def solve_netlib(problem_name, display=False, max_duration_seconds=30):
     lp.add_equality_constraints_sparse(lp_dict["a_eq"], lp_dict["b_eq"])
     lp.add_inequality_constraints_sparse(
         lp_dict["a_ineq"], lp_dict["b_lower"], lp_dict["b_upper"]
-    )
+    )  
+    return lp,ground_truth
 
+def run_method(problem_name, method,max_duration_seconds,method_options):
+    lp,ground_truth=load_problem(problem_name)
+    lp2 = copy.deepcopy(lp)
+    sol1, elapsed = lp2.solve(
+        method=method,
+        get_timing=True,
+        nb_iter=5000000,
+        max_duration=max_duration_seconds,
+        ground_truth= copy.deepcopy(ground_truth),
+        ground_truth_indices=np.arange(len(ground_truth)),
+        plot_solution=None,
+        nb_iter_plot=500,
+        method_options=method_options,
+    )  
+    return lp2
+
+def solve_netlib(problem_name, display=False, max_duration_seconds=30):
+
+    lp,ground_truth=load_problem(problem_name)
     print("solving")
 
     if display:
@@ -59,7 +78,7 @@ def solve_netlib(problem_name, display=False, max_duration_seconds=30):
     all_method_options_list = {}
     all_method_options_list["chambolle_pock_linesearch"] = {
         method: {"method": method}
-        for method in ("standard", "activation", "xyseparate")
+        for method in ("standard", "xyseparate", "without_linesearch")
     }
 
     # solving_methods2=['mehrotra']
@@ -77,22 +96,15 @@ def solve_netlib(problem_name, display=False, max_duration_seconds=30):
                 full_name = f"{method} {options_name}"
             else:
                 full_name = method
-
+                
+            values=[]
+            
+            lp=run_method(problem_name, method,max_duration_seconds,method_options)
+              
             print(
                 f"\n\n----------------------------------------------------------\nSolving LP using {full_name}"
             )
 
-            sol1, elapsed = lp.solve(
-                method=method,
-                get_timing=True,
-                nb_iter=5000000,
-                max_duration=max_duration_seconds,
-                ground_truth=ground_truth,
-                ground_truth_indices=np.arange(len(ground_truth)),
-                plot_solution=None,
-                nb_iter_plot=500,
-                method_options=method_options,
-            )
             distance_to_ground_truth[full_name] = lp.distance_to_ground_truth
             if display:
                 ax_arr[0].semilogy(
@@ -141,8 +153,8 @@ def generic_test_netlib(
 
         list_failed = []
 
-        for k, v1 in distance_to_ground_truth_curves_expected.items():
-            v2 = distance_to_ground_truth_curves[k]
+        for k, v1 in distance_to_ground_truth_curves.items():
+            v2 = distance_to_ground_truth_curves_expected[k]
             tv1, tv2 = trim_length(v1, v2)
             if np.all(np.isnan(v1)):
                 assert np.all(np.isnan(v2))
@@ -159,7 +171,7 @@ def generic_test_netlib(
 
 
 def test_sc50b():
-    generic_test_netlib(["SC50B"], update_results=False, display=True)
+    generic_test_netlib(["SC50B"], update_results=False, display=False)
 
 
 if __name__ == "__main__":

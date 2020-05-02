@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "C:\\Python37\\python.exe",
+    "python.pythonPath": "D:\\Projets\\Python\\SmartPython\\SmartPython-3.6.2.0-64bit\\python-3.6.2.amd64\\python.exe",
     "python.linting.pylintEnabled": false,
     "python.linting.flake8Enabled": true,
     "python.linting.enabled": true

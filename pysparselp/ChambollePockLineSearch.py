@@ -14,11 +14,13 @@ import numpy as np
 import scipy.sparse as sparse
 
 
-methods = ("standard", "activation", "xyseparate", "without_linesearch")
+methods = ("standard", "xyseparate", "without_linesearch")
 
 
 def sparse_matrix_norm(a):
-    return sparse.linalg.svds(a, k=1, which="LM")[1][0]
+    np.random.seed(0)
+    v0=np.random.rand(a.shape[0])
+    return sparse.linalg.svds(a, k=1, which="LM", v0=v0)[1][0] # intialization is random by default, which mak ethe code non determinisic
 
 
 def chambolle_pock_linesearch(
@@ -41,17 +43,20 @@ def chambolle_pock_linesearch(
 
     Translated from matlab code written in 2012 by Mengqi(Mandy) Xia and Kevin Musgrave
     as final project for Cornell's CS6820 Analysis of Algorithms Class
-    oringal code: https://github.com/xiamengqi2012/ChambollePockLinesearch
+    original code: https://github.com/xiamengqi2012/ChambollePockLinesearch
     it probably implements the method described in
     A First-Order Primal-Dual Algorithm with Linesearch.
     Yura Malitsky and  ThomasPock. SIAM Journal on Optimization. 2018
     https://arxiv.org/abs/1608.08883
     It could probably be accelerated using some preconditioning
     """
+    
+    print(f'method ={method}')
     start = time.clock()
     gamma = 1
     tau = 1 / (2 * (sparse_matrix_norm(a) ** 2) * gamma)
     # Restriction: gamma*tau < 1/norm(A)^2
+    
 
     err = np.inf
     values = []
@@ -208,50 +213,6 @@ def chambolle_pock_update(
 
         x, y = xy_update(x, y, a, a_t_csr, c, gamma_ax_minus_b, tau, alpha)
 
-    elif method == "activation":
-
-        alpha, satisfied, x_update2 = initialization(alpha_max, x)
-
-        eps_hat = 0.03
-        # need to test
-        vkplus1 = -gamma_ax_minus_b
-        activate = vkplus1.dot(vk) / (np.linalg.norm(vkplus1) * np.linalg.norm(vk)) > (
-            1 - eps_hat
-        )
-        if activate:
-            num_activate = num_activate + 1
-
-            x_temp_next, y_temp_next, x_temp, y_temp = pre_alpha_calculation(
-                alpha_0, x, y, a, a_t_csr, b, c, gamma, gamma_ax_minus_b, tau, x_update2
-            )
-            while alpha * factor > alpha_0 and not satisfied:
-                alpha, satisfied = calculate_alpha(
-                    alpha,
-                    factor,
-                    x,
-                    x_update2,
-                    y,
-                    a,
-                    a_t_csr,
-                    b,
-                    c,
-                    gamma,
-                    gamma_ax_minus_b,
-                    tau,
-                    q,
-                    x_temp_next,
-                    y_temp_next,
-                    x_temp,
-                    y_temp,
-                    eps,
-                    1,
-                )
-
-            x, y = xy_update(x, y, a, a_t_csr, c, gamma_ax_minus_b, tau, alpha)
-        else:
-            x, y = xy_update(x, y, a, a_t_csr, c, gamma_ax_minus_b, tau)
-
-        vk = vkplus1
 
     elif method == "xyseparate":
 

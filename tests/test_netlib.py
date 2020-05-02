@@ -117,8 +117,8 @@ def solve_netlib(problem_name, display=False, max_duration_seconds=30):
                 ax_arr[2].semilogy(lp.opttime_curve, np.abs(lp.pobj_curve - cost_gt))
                 ax_arr[2].set_xlabel("duration in seconds")
                 ax_arr[0].legend(loc="upper right")
-
-    fig.savefig(os.path.join(__folder__, f"curves_{problem_name}.svg"))
+    if display:
+        fig.savefig(os.path.join(__folder__, f"curves_{problem_name}.svg"))
     print("done")
     return distance_to_ground_truth
 

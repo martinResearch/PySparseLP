@@ -52,8 +52,6 @@ def chambolle_pock_linesearch(
     https://arxiv.org/abs/1608.08883
     It could probably be accelerated using some preconditioning
     """
-
-    print(f"method ={method}")
     start = time.clock()
     gamma = 1
     tau = 1 / (2 * (sparse_matrix_norm(a) ** 2) * gamma)

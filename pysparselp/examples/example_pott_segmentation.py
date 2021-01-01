@@ -57,7 +57,7 @@ def build_linear_program(image_size, coef_potts, coef_mul):
 
     size_image = (image_size, image_size, nb_labels)
 
-    # we multiply all term by this constant because the graph cut algorithm take integer weights.
+    # we multiply all terms by this constant because the graph cut algorithm takes integer weights.
 
     unary_terms = np.round(
         coef_mul
@@ -92,7 +92,7 @@ def build_linear_program(image_size, coef_potts, coef_mul):
     return lp, ground_truth, ground_truth_indices, unary_terms
 
 
-def run(display=True, image_size=50, coef_mul=500, coef_potts=0.5, max_time=15):
+def run(display=True, image_size=50, coef_mul=500, coef_potts=0.5, max_time=150):
 
     lp, ground_truth, ground_truth_indices, unary_terms = build_linear_program(
         image_size, coef_potts, coef_mul
@@ -139,9 +139,9 @@ def run(display=True, image_size=50, coef_mul=500, coef_potts=0.5, max_time=15):
     # sol1,elapsed=LP2.solve(method='ScipyLinProg',force_integer=False,get_timing=True,nb_iter=100,max_time=10,ground_truth=ground_truth,ground_truth_indices=indices,plot_solution=None)
 
     solving_methods2 = list(solving_methods)
+
     for m in ["scipy_simplex", "scipy_interior_point"]:
         solving_methods2.remove(m)
-
     distance_to_ground_truth_curves = {}
 
     for i, method in enumerate(solving_methods2):
@@ -162,10 +162,10 @@ def run(display=True, image_size=50, coef_mul=500, coef_potts=0.5, max_time=15):
         )
         if display:
             if len(lp.distance_to_ground_truth) > 0:
-                ax_curves1.semilogy(
+                ax_curves1.loglog(
                     lp.itrn_curve, lp.distance_to_ground_truth, label=method
                 )
-                ax_curves2.semilogy(
+                ax_curves2.loglog(
                     lp.opttime_curve, lp.distance_to_ground_truth, label=method
                 )
             ax_curves1.legend()

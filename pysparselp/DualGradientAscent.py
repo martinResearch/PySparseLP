@@ -145,6 +145,10 @@ def dual_gradient_ascent(
         c_bar, x = get_optim_x(y_eq, y_ineq)
         return x, y_eq, y_ineq
     niter = 0
+    smoothed_grad_y_ineq_sparse = None
+    smoothed_grad_y_eq = None
+    alpha = 0.1
+
     while niter < nb_max_iter:
         c_bar, x = get_optim_x(y_eq, y_ineq)
         if lp2.a_inequalities is not None:
@@ -166,8 +170,14 @@ def dual_gradient_ascent(
             if np.sum(grad_y_ineq < 0) > 0:
 
                 grad_y_ineq_sparse = scipy.sparse.csr.csr_matrix(grad_y_ineq)
+                if smoothed_grad_y_ineq_sparse is None:
+                    smoothed_grad_y_ineq_sparse = grad_y_ineq_sparse
+                else:
+                    smoothed_grad_y_ineq_sparse = scipy.sparse.csr.csr_matrix(
+                        smoothed_grad_y_ineq_sparse * (1-alpha) + alpha * grad_y_ineq_sparse
+                    )
                 coef_length_ineq = exact_dual_line_search(
-                    grad_y_ineq_sparse,
+                    smoothed_grad_y_ineq_sparse,
                     lp2.a_inequalities,
                     lp2.b_upper,
                     c_bar,
@@ -207,10 +217,18 @@ def dual_gradient_ascent(
                 )
 
             grad_y_eq = lp2.a_equalities * x - lp2.b_equalities
-            if np.any(grad_y_eq):
-                grad_y_eq_sparse = scipy.sparse.csr.csr_matrix(grad_y_eq)
+
+            if smoothed_grad_y_eq is None:
+                smoothed_grad_y_eq = grad_y_eq
+            else:
+                smoothed_grad_y_eq = scipy.sparse.csr.csr_matrix(
+                    smoothed_grad_y_eq *(1-alpha) + alpha * grad_y_eq
+                )
+
+            if np.any(smoothed_grad_y_eq):
+                
                 coef_length_eq = exact_dual_line_search(
-                    grad_y_eq_sparse,
+                    smoothed_grad_y_eq,
                     lp2.a_equalities,
                     lp2.b_equalities,
                     c_bar,

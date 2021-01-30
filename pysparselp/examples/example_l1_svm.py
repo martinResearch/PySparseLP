@@ -111,6 +111,7 @@ def run(display=True):
     solving_methods_list = list(solving_methods)
     solving_methods_list.remove("mehrotra")  # too slow
     solving_methods_list.remove("scipy_simplex")
+    solving_methods_list.remove("scipy_revised_simplex")
     solving_methods_list.remove("scipy_interior_point")
     solving_methods_list.remove("dual_gradient_ascent")  # need to debug
     solving_methods_list.remove("dual_coordinate_ascent")  # need to debug

@@ -76,7 +76,10 @@ def solve_netlib(problem_name, display=False, max_duration_seconds=30):
 
     # testing our methods
 
-    solving_methods2 = solving_methods[:6]
+    solving_methods2 = list(solving_methods)
+    for method in ["dual_coordinate_ascent", "dual_gradient_ascent"]:
+        solving_methods2.remove(method)
+
     all_method_options_list = {}
     all_method_options_list["chambolle_pock_linesearch"] = {
         method: {"method": method}

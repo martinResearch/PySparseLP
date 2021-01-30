@@ -50,8 +50,8 @@ solving_methods = (
     "admm",
     "admm2",
     "admm_blocks",
-    "osqp",
     "scipy_simplex",
+    "scipy_revised_simplex",
     "scipy_interior_point",
     "dual_coordinate_ascent",
     "dual_gradient_ascent",
@@ -184,6 +184,7 @@ class SparseLP:
         self.equalityConstraintNames = []
         self.inequalityConstraintNames = []
         self.solution = None
+        self.dual_solution = None
 
     def max_constraint_violation(self, solution):
         types, lb, ub = self.get_variables_bounds()
@@ -1022,6 +1023,35 @@ class SparseLP:
         prob = cvxpy.Problem(objective, constraints)
         return prob, x
 
+    def has_bounds(self):
+        return (not np.all(np.isinf(self.lower_bounds) & (self.lower_bounds < 0))) or (not np.all(np.isinf(self.upper_bounds) & (self.upper_bounds > 0)))
+
+    def all_bounded(self):
+        return not(np.any(np.isinf(self.lower_bounds)) or np.any(np.isinf(self.upper_bounds)))
+
+    def has_single_inequalities_without_bounds(self):
+        return not(self.has_bounds() or(self.a_equalities is not None) or(self.b_lower is not None))
+
+    def get_dual(self):
+        if not self.has_single_inequalities_without_bounds() :
+            raise BaseException(
+                'Please convert your problem using convert_to_single_inequalities_without_bounds')
+
+        # min c.x  s.t. a_ineq*x<=b_upper
+        #  = min_x (max_y (c.x  + y*(a_ineq*x-b_upper) s.t y>=0))
+        #  = max_y (min_x (c.x  + y*(a_ineq*x-b_upper)) s.t y>=0)
+        #  = max_y (min_x (c.x  + y*a_ineq*x-y * b_upper)) s.t y>=0
+        #  = max_y (min_x ((c+y*a_ineq)*x -y * b_upper)) s.t y>=0
+        #  = min_y (max_x (-(c+y*a_ineq)*x + y * b_upper)) s.t y>=0
+        #  = min_y y*b_upper s.t a_ineq.T * y= -c  y>=0
+
+        lp_dual = SparseLP()
+        lp_dual.add_variables_array(
+            (self.a_inequalities.shape[0]), costs=self.b_upper, lower_bounds=0, upper_bounds=None)
+        lp_dual.add_equality_constraints_sparse(
+            self.a_inequalities.T, -self.costsvector)
+        return lp_dual
+
     def solve(
         self,
         method="admm",
@@ -1035,6 +1065,7 @@ class SparseLP:
         ground_truth=None,
         ground_truth_indices=None,
         method_options=None,
+        error_if_fail=False,
     ):
 
         if not (self.a_inequalities is None) and self.a_inequalities.shape[0] > 0:
@@ -1133,28 +1164,34 @@ class SparseLP:
                 f"method {method} not valid. Avalaible method are {', '.join(solving_methods)}"
             )
 
-        if method in ["scipy_simplex", "scipy_interior_point"]:
+        if method in ["scipy_simplex", "scipy_revised_simplex", "scipy_interior_point"]:
 
             if not (self.b_lower is None) and not (
                 np.all(np.isinf(self.b_lower) & (self.b_lower < 0))
             ):
-                print(
-                    "you need to convert your lp to a one side inequality system using convert_to_one_sided_inequality_system"
+
+                raise BaseException(
+                    "you need to convert your lp to a one sided inequality system using convert_to_one_sided_inequality_system"
                 )
-                raise
             if a_eq is None:
                 a_eq = None
                 b_eq = None
             else:
                 a_eq = a_eq.toarray()
                 b_eq = b_eq
+            if a_ineq is None:
+                a_ineq = None
+            else:
+                a_ineq = a_ineq.toarray()
+
             method_map = {
                 "scipy_simplex": "simplex",
+                "scipy_revised_simplex": "revised simplex",
                 "scipy_interior_point": "interior-point",
             }
             sol = scipy.optimize.linprog(
                 self.costsvector,
-                A_ub=a_ineq.toarray(),
+                A_ub=a_ineq,
                 b_ub=self.b_upper,
                 A_eq=a_eq,
                 b_eq=b_eq,
@@ -1162,8 +1199,8 @@ class SparseLP:
                 method=method_map[method],
                 callback=scipy_call_back,
             )
-            # if not sol['success']:
-            # raise BaseException(sol['message'])
+            if error_if_fail and not sol["success"]:
+                raise BaseException(sol["message"])
             x = sol["x"]
 
         elif method == "mehrotra":
@@ -1338,7 +1375,7 @@ class SparseLP:
             # method="standard"
 
             options = {
-                "method": "activation",
+                "method": "standard",
                 "eps": 1e-15,
                 "tol": 1e-15,
                 "nmax": nb_iter,

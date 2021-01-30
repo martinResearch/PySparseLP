@@ -1,6 +1,13 @@
-{
-    "python.pythonPath": "D:\\Projets\\Python\\SmartPython\\SmartPython-3.6.2.0-64bit\\python-3.6.2.amd64\\python.exe",
-    "python.linting.pylintEnabled": false,
+{	
+	"python.linting.pylintEnabled": false,
     "python.linting.flake8Enabled": true,
-    "python.linting.enabled": true
+    "python.linting.enabled": true,
+    "python.linting.mypyEnabled": false,
+    "python.pythonPath": "python_venv\\Scripts\\python.exe",
+    "files.exclude": {
+        "**/*.bak": true,
+        "**/*.pyc": true,
+        "**/__pycache__": true
+    }
 }
+

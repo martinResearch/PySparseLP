@@ -208,7 +208,8 @@ Random sparse LP problem can be generate using code in *randomLP.py*. The approa
 
 # To Do
 
-* translate from Matlab ot python the ADMM methods from [https://github.com/nmchaves/admm-for-lp](https://github.com/nmchaves/admm-for-lp)
+* translate from Matlab to python the ADMM methods from [https://github.com/nmchaves/admm-for-lp](https://github.com/nmchaves/admm-for-lp)
+* translate from ùMatlab to python some adaptive ADMM methods from https://github.com/nightldj/admm_release
 * test mtlab implementatoin of chambolle pock methods with linesearch applied to lp from [here](https://github.com/xiamengqi2012/ChambollePockLinesearch) and translate to python
 * add automatic constraint checking if we provide a feasible solution from the beginning. It will help debugging constraints.
 * convert to python the matlab implementation of the LP solver based on improved version of champolle-pock called [Adaptive Primal-Dual Hybrid Gradient Methods](https://arxiv.org/abs/1305.0546) available [here](https://www.cs.umd.edu/~tomg/projects/pdhg/)

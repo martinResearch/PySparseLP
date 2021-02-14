@@ -228,7 +228,7 @@ def dual_coordinate_ascent(
 
         energy = new_energy
 
-        c_bar, x = get_optim_x(y_eq, y_ineq, x0=x, upate_x_cbar_zero=False)
+        c_bar, x = get_optim_x(y_eq, y_ineq, x0=None, upate_x_cbar_zero=True)
         grad_y_ineq = lp2.a_inequalities * x - lp2.b_upper
         grad_y_ineq[y_ineq <= 0] = np.maximum(grad_y_ineq[y_ineq <= 0], 0)  #
 
@@ -279,7 +279,7 @@ def dual_coordinate_ascent(
             print("not expected")
 
         c_bar, x = get_optim_x(
-            y_eq, y_ineq, tiemethod="center", x0=x, upate_x_cbar_zero=False
+            y_eq, y_ineq, tiemethod="center", x0=None, upate_x_cbar_zero=True
         )
         x[c_bar == 0] = 0.5 * (lp2.lower_bounds + lp2.upper_bounds)[
             c_bar == 0

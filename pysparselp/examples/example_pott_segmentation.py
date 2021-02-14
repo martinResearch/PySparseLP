@@ -64,7 +64,7 @@ def build_linear_program(image_size, coef_potts, coef_mul):
 
     size_image = (image_size, image_size, nb_labels)
 
-    # we multiply all term by this constant because the graph cut algorithm take integer weights.
+    # we multiply all terms by this constant because the graph cut algorithm takes integer weights.
 
     unary_terms = np.round(
         coef_mul

@@ -50,8 +50,9 @@ solving_methods = (
     "admm",
     "admm2",
     "admm_blocks",
-    "scipy_simplex",
-    "scipy_revised_simplex",
+    "scipy_highs-ds",
+    "scipy_highs-ipm",
+    "scipy_highs",
     "scipy_interior_point",
     "dual_coordinate_ascent",
     "dual_gradient_ascent",
@@ -428,7 +429,7 @@ class SparseLP:
         if isinstance(shape, type(0)):
             shape = (shape,)
 
-        nb_variables_added = np.prod(shape)
+        nb_variables_added = int(np.prod(shape))
         indices = np.arange(nb_variables_added).reshape(shape) + self.nb_variables
         self.nb_variables = self.nb_variables + nb_variables_added
 
@@ -1024,18 +1025,27 @@ class SparseLP:
         return prob, x
 
     def has_bounds(self):
-        return (not np.all(np.isinf(self.lower_bounds) & (self.lower_bounds < 0))) or (not np.all(np.isinf(self.upper_bounds) & (self.upper_bounds > 0)))
+        return (not np.all(np.isinf(self.lower_bounds) & (self.lower_bounds < 0))) or (
+            not np.all(np.isinf(self.upper_bounds) & (self.upper_bounds > 0))
+        )
 
     def all_bounded(self):
-        return not(np.any(np.isinf(self.lower_bounds)) or np.any(np.isinf(self.upper_bounds)))
+        return not (
+            np.any(np.isinf(self.lower_bounds)) or np.any(np.isinf(self.upper_bounds))
+        )
 
     def has_single_inequalities_without_bounds(self):
-        return not(self.has_bounds() or(self.a_equalities is not None) or(self.b_lower is not None))
+        return not (
+            self.has_bounds()
+            or (self.a_equalities is not None)
+            or (self.b_lower is not None)
+        )
 
     def get_dual(self):
-        if not self.has_single_inequalities_without_bounds() :
+        if not self.has_single_inequalities_without_bounds():
             raise BaseException(
-                'Please convert your problem using convert_to_single_inequalities_without_bounds')
+                "Please convert your problem using convert_to_single_inequalities_without_bounds"
+            )
 
         # min c.x  s.t. a_ineq*x<=b_upper
         #  = min_x (max_y (c.x  + y*(a_ineq*x-b_upper) s.t y>=0))
@@ -1047,9 +1057,14 @@ class SparseLP:
 
         lp_dual = SparseLP()
         lp_dual.add_variables_array(
-            (self.a_inequalities.shape[0]), costs=self.b_upper, lower_bounds=0, upper_bounds=None)
+            (self.a_inequalities.shape[0]),
+            costs=self.b_upper,
+            lower_bounds=0,
+            upper_bounds=None,
+        )
         lp_dual.add_equality_constraints_sparse(
-            self.a_inequalities.T, -self.costsvector)
+            self.a_inequalities.T, -self.costsvector
+        )
         return lp_dual
 
     def solve(
@@ -1067,7 +1082,8 @@ class SparseLP:
         method_options=None,
         error_if_fail=False,
     ):
-
+        if ground_truth_indices is None and ground_truth is not None:
+            ground_truth_indices = np.arange(ground_truth.size)
         if not (self.a_inequalities is None) and self.a_inequalities.shape[0] > 0:
             check_csr_matrix(self.a_inequalities)
             a_ineq = self.a_inequalities
@@ -1107,6 +1123,10 @@ class SparseLP:
                     )
                 )
             duration = time.clock() - start
+            if len(self.itrn_curve) == 0:
+                self.itrn_curve = [0]
+            else:
+                self.itrn_curve.append(self.itrn_curve[-1] + 1)
             self.opttime_curve.append(duration)
             self.pobj_curve.append(self.costsvector.dot(solution["x"].T))
             maxv = self.max_constraint_violation(solution["x"])
@@ -1164,43 +1184,63 @@ class SparseLP:
                 f"method {method} not valid. Avalaible method are {', '.join(solving_methods)}"
             )
 
-        if method in ["scipy_simplex", "scipy_revised_simplex", "scipy_interior_point"]:
+        if method.startswith("scipy_"):
+            force_dense = False
 
             if not (self.b_lower is None) and not (
                 np.all(np.isinf(self.b_lower) & (self.b_lower < 0))
             ):
+                lp_one_sided_ineq = copy.deepcopy(self)
+                lp_one_sided_ineq.convert_to_one_sided_inequality_system()  # removed fixed variables
+                a_ineq = lp_one_sided_ineq.a_inequalities.tocsc().tocoo()
 
-                raise BaseException(
-                    "you need to convert your lp to a one sided inequality system using convert_to_one_sided_inequality_system"
-                )
+            else:
+                lp_one_sided_ineq = self
+
             if a_eq is None:
                 a_eq = None
                 b_eq = None
             else:
-                a_eq = a_eq.toarray()
+                if force_dense:
+                    a_eq = a_eq.toarray()
                 b_eq = b_eq
             if a_ineq is None:
                 a_ineq = None
             else:
-                a_ineq = a_ineq.toarray()
+                if force_dense:
+                    a_ineq = a_ineq.toarray()
 
             method_map = {
-                "scipy_simplex": "simplex",
-                "scipy_revised_simplex": "revised simplex",
                 "scipy_interior_point": "interior-point",
+                "scipy_highs-ds": "highs-ds",
+                "scipy_highs-ipm": "highs-ipm",
+                "scipy_highs": "highs",
             }
+            if "highs" in method:
+                callback = None
+            else:
+                callback = scipy_call_back
+
+            bounds = np.column_stack((self.lower_bounds, self.upper_bounds))
+
+            if callback is None and ground_truth is not None:
+                scipy_call_back({"x": np.zeros_like(ground_truth)})
+
             sol = scipy.optimize.linprog(
-                self.costsvector,
+                c=self.costsvector,
                 A_ub=a_ineq,
-                b_ub=self.b_upper,
+                b_ub=lp_one_sided_ineq.b_upper,
                 A_eq=a_eq,
                 b_eq=b_eq,
-                bounds=np.column_stack((self.lower_bounds, self.upper_bounds)),
+                bounds=bounds,
                 method=method_map[method],
-                callback=scipy_call_back,
+                callback=callback,
             )
+
             if error_if_fail and not sol["success"]:
                 raise BaseException(sol["message"])
+            if sol["success"] and callback is None:
+                scipy_call_back(sol)
             x = sol["x"]
 
         elif method == "mehrotra":
@@ -1379,7 +1419,6 @@ class SparseLP:
                 "eps": 1e-15,
                 "tol": 1e-15,
                 "nmax": nb_iter,
-                "y_sol": ground_truth,
             }
             if method_options is not None:
                 for k, v in method_options.items():
@@ -1467,7 +1506,10 @@ class SparseLP:
                 "check_termination": 1,
                 "warm_start": False,
             }
-
+            self.itrn_curve = []
+            if ground_truth is not None:
+                self.itrn_curve.append(0)
+                simplex_call_back(np.zeros_like(ground_truth))
             model = osqp.OSQP()
             model.setup(
                 p,
@@ -1480,7 +1522,7 @@ class SparseLP:
             res = model.solve()
             x = res.x
             simplex_call_back(x)
-            self.itrn_curve = [res.info.iter]
+            self.itrn_curve.append(res.info.iter)
 
         else:
             print("unkown LP solver method " + method)

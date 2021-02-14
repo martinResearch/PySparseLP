@@ -52,7 +52,7 @@ def lp_admm_block_decomposition(
     lb,
     ub,
     x0=None,
-    gamma_ineq=0.7,
+    gamma_ineq=0.07,
     nb_iter=100,
     callback_func=None,
     max_duration=None,
@@ -60,11 +60,7 @@ def lp_admm_block_decomposition(
     use_lu=True,
     nb_iter_plot=10,
 ):
-    # simple ADMM method with an approximate resolution of a quadratic subproblem using conjugate gradient
-    # inspired by Boyd's paper on ADMM
-    # Distributed Optimization and Statistical Learning via the Alternating Direction Method of Multipliers
-    # the difference with admm_solver is that the linear quality constraints a_eq*beq are enforced during the resolution
-    # of the subproblem instead of beeing enforced through multipliers
+
     n = c.size
     start = time.clock()
     elapsed = start
@@ -85,7 +81,7 @@ def lp_admm_block_decomposition(
     xp = np.minimum(xp, ub)
 
     # trying some preconditioning
-    # left preconditioning seems not to change anything if not used in combination with use_preconditioning_cols  as each subproblem is solved exactly.
+    # left preconditioning seems not to change anything if not used in combination with use_preconditioning_cols as each subproblem is solved exactly.
     use_preconditioning_rows = False
     if use_preconditioning_rows:
         a_eq, beq = precondition_constraints(a_eq, beq, alpha=2)
@@ -208,7 +204,7 @@ def lp_admm_block_decomposition(
 
             ch.tic()
             lu = scipy.sparse.linalg.splu(m.tocsc())
-            print(ch.toc())
+            print(f"splu for block {id_block} took {ch.toc()} seconds")
         else:
             ch.tic()
             lu = scikits.sparse.cholmod.cholesky(m.tocsc(), mode="simplicial")

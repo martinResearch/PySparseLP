@@ -167,10 +167,10 @@ def generic_test_netlib(
             if max_diff > tol:
                 list_failed.append(k)
 
-            if len(list_failed) > 0:
-                raise BaseException(
-                    f"Results changed for method(s): {', '.join(list_failed)}"
-                )
+        if len(list_failed) > 0:
+            raise BaseException(
+                f"Results changed for method(s): {', '.join(list_failed)}"
+            )
 
 
 def test_sc50b():

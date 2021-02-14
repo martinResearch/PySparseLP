@@ -124,9 +124,6 @@ def chambolle_pock_linesearch(
             + np.linalg.norm(np.maximum(a_t_csr * ynew - c, 0)) ** 2
         )
 
-        if y_sol is not None:
-            dist_sol = np.mean(abs(y - y_sol))
-            dist_sol_list.append(dist_sol)
         errors.append(err)
 
         if n_iter % 100 == 0:

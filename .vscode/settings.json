@@ -8,6 +8,7 @@
         "**/*.bak": true,
         "**/*.pyc": true,
         "**/__pycache__": true
-    }
+    },
+    "python.formatting.provider": "black"
 }
 

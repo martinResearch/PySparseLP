@@ -1,9 +1,5 @@
 """Example using a pott image model that can be exactly solved with graphcut."""
 
-import matplotlib.pyplot as plt
-
-import maxflow  # pip install PyMaxflow
-
 import numpy as np
 
 from pysparselp.SparseLP import SparseLP, solving_methods

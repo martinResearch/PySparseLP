@@ -1,11 +1,10 @@
 """Example using L1-regularized multi-class Support	Vector Machine."""
 
-import matplotlib.pyplot as plt
 
 import numpy as np
 
-from pysparselp.examples.benchmark_methods import benchmark_methods
 from pysparselp.SparseLP import SparseLP, solving_methods
+from pysparselp.examples.benchmark_methods import benchmark_methods
 
 
 class L1SVM(SparseLP):

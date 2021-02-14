@@ -32,7 +32,6 @@ def chambolle_pock_linesearch(
     nmax=10000000,
     eps=1e-9,
     tol=1e-9,
-    y_sol=None,
     method="standard",
     callback=None,
     max_duration=np.inf,
@@ -128,12 +127,7 @@ def chambolle_pock_linesearch(
 
         if n_iter % 100 == 0:
             elapsed = time.clock() - start
-            if y_sol is not None:
-                print(
-                    f"iteration {n_iter} time ={elapsed:2.1f} sec value={value} error ={err:1.3e} dist to sol={dist_sol:1.3e}"
-                )
-            else:
-                print(f"iteration {n_iter} time ={elapsed:2.0f} sec error ={err:1.3e}")
+            print(f"iteration {n_iter} time ={elapsed:2.0f} sec error ={err:1.3e}")
 
         if callback is not None:
             callback(x, y, n_iter)

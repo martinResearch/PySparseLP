@@ -372,13 +372,12 @@ class SparseLP:
 
     def save_ian_e_h_yen(self, folder):
         if self.b_lower is not None:
-            print(
+            raise ValueError(
                 "self.b_lower is not None, you should convert your problem with convert_to_one_sided_inequality_system first"
             )
-            raise
+
         if not np.all(self.lower_bounds == 0):
-            print("lower bound constraint on variables should at 0")
-            raise
+            raise ValueError("lower bound constraint on variables should at 0")
 
         import os
 
@@ -679,7 +678,6 @@ class SparseLP:
         return m_change, shift
 
     def convert_to_slack_form(self):
-
         """Convert to the form min_y c.ty Ay=b y>=0 by adding slack variables and shift on x
         the solution of the original problem is obtained using
             x = m_change*y+ shift
@@ -991,16 +989,15 @@ class SparseLP:
         if np.all(np.isinf(self.lower_bounds)):
             pass
         elif np.any(np.isinf(self.lower_bounds)):
-            print("not code yet")
-            raise
+            raise BaseException("not code yet")
+
         else:
             constraints.append(self.lower_bounds <= x)
 
         if np.all(np.isinf(self.upper_bounds)):
             pass
         elif np.any(np.isinf(self.upper_bounds)):
-            print("not code yet")
-            raise
+            raise BaseException("not code yet")
         else:
             constraints.append(x <= self.upper_bounds)
 
@@ -1009,16 +1006,14 @@ class SparseLP:
                 if np.all(np.isinf(self.b_upper)):
                     pass
                 elif np.any(np.isinf(self.b_upper)):
-                    print("not yet coded")
-                    raise
+                    raise BaseException("not code yet")
                 else:
                     constraints.append(a_ineq * x <= self.b_upper)
             if self.b_lower is not None:
                 if np.all(np.isinf(self.b_lower)):
                     pass
                 elif np.any(np.isinf(self.b_lower)):
-                    print("not yet coded")
-                    raise
+                    raise BaseException("not code yet")
                 else:
                     constraints.append(self.b_lower <= a_ineq * x)
         if a_eq is not None:
@@ -1527,8 +1522,8 @@ class SparseLP:
             self.itrn_curve.append(res.info.iter)
 
         else:
-            print("unkown LP solver method " + method)
-            raise
+            raise ValueError("unkown LP solver method " + method)
+
         elapsed = time.clock() - start
 
         if get_timing:

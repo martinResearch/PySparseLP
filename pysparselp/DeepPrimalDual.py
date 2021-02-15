@@ -11,7 +11,7 @@ from pysparselp.randomLP import generate_random_lp
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+import torch.nn.functional as functional
 from torch._six import inf
 
 
@@ -165,7 +165,7 @@ class DeepPrimalDual(nn.Module):
                 if i == 0:
                     y_h = torch.cat((y_h, a_t_x_h.T), 0)
                 y_h = torch.cat((y_h, y.T, r.T), 0)
-                y_h = F.relu(self.dual_convs[i](y_h[None, :, :])).squeeze(dim=0)
+                y_h = functional.relu(self.dual_convs[i](y_h[None, :, :])).squeeze(dim=0)
 
             y_h2 = torch.cat((y_h, y.T, r.T), 0)
 
@@ -183,7 +183,7 @@ class DeepPrimalDual(nn.Module):
                 else:
                     x_h = torch.cat((x_h, x.T, d.T))
 
-                x_h = F.relu(self.primal_convs[i](x_h[None, :, :])).squeeze(dim=0)
+                x_h = functional.relu(self.primal_convs[i](x_h[None, :, :])).squeeze(dim=0)
 
             if self.has_bounds:
                 x_h2 = torch.cat((x_h, x.T, d.T, lb.T, ub.T))

@@ -77,13 +77,13 @@ def generate_random_lp(nbvar, n_eq, n_ineq, sparsity, tol=1e-10, seed=None):
         assert lp.check_solution(feasible_x)
         try:
             scipy_sol_interior_point, elapsed = lp.solve(
-                method="scipy_interior_point",
+                method="scipy_highs-ds",
                 get_timing=True,
                 nb_iter=100000,
                 error_if_fail=True,
             )
             scipy_sol_revised_simplex, elapsed = lp.solve(
-                method="scipy_revised_simplex",
+                method="scipy_highs-ipm",
                 get_timing=True,
                 nb_iter=100000,
                 error_if_fail=True,

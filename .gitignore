@@ -19,6 +19,6 @@ pysparselp/gaussSiedel.cpp
 pysparselp/gaussSiedel.html
 pysparselp/*.pyc
 pysparselp/SparseLP.pyc
-
-pysparselp.egg-info
 python_venv
+pysparselp.egg-info/
+

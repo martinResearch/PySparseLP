@@ -21,8 +21,15 @@ def test_example_l1_svm(update_results=False):
     with open(curves_json_file, "r") as f:
         percent_valid_expected = json.load(f)
 
+    list_failed = []
     for k, v1 in percent_valid_expected.items():
         v2 = percent_valid[k]
+
+        if not v1 == v2:
+            list_failed.append(k)
+
+    if len(list_failed) > 0:
+        raise BaseException(f"Results changed for method(s): {', '.join(list_failed)}")
         assert v1 == v2
 
 

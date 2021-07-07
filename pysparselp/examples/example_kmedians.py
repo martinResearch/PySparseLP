@@ -43,7 +43,7 @@ def clustering(points, k, n_center_candidates):
     )
     lp.add_inequality_constraints(columns, values, lower_bounds=None, upper_bounds=0)
 
-    s = lp.solve(method="admm", nb_iter=1000, max_time=np.inf, nb_iter_plot=500)[0]
+    s = lp.solve(method="admm", nb_iter=1000, max_duration=np.inf, nb_iter_plot=500)[0]
 
     print(lp.costsvector.dot(s))
     x = s[labeling]

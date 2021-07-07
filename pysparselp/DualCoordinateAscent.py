@@ -43,7 +43,7 @@ def dual_coordinate_ascent(
     callback_func=None,
     y_eq=None,
     y_ineq=None,
-    max_time=None,
+    max_duration=None,
     nb_iter_plot=1,
 ):
     """Solve LP using coordinate ascend in the dual.
@@ -188,7 +188,7 @@ def dual_coordinate_ascent(
         for i in list_i:
             if i % 100 == 0:
                 elapsed = time.clock() - start
-                if (max_time is not None) and elapsed > max_time:
+                if (max_duration is not None) and elapsed > max_duration:
                     timeout = True
                     break
 
@@ -235,7 +235,7 @@ def dual_coordinate_ascent(
         for i in np.nonzero(grad_y_ineq)[0]:
             if i % 100 == 0:
                 elapsed = time.clock() - start
-                if (max_time is not None) and elapsed > max_time:
+                if (max_duration is not None) and elapsed > max_duration:
                     timeout = True
                     break
 
@@ -349,7 +349,7 @@ def dual_coordinate_ascent(
             # y_ineq=np.maximum(y_ineq, 0)
             print("iter %d energy %f" % (niter, evaluate(y_eq, y_ineq)))
 
-        if (max_time is not None) and elapsed > max_time:
+        if (max_duration is not None) and elapsed > max_duration:
             timeout = True
             break
         niter += 1

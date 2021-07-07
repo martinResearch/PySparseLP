@@ -58,7 +58,7 @@ def lp_admm(
     gamma_ineq=3,
     nb_iter=100,
     callback_func=None,
-    max_time=None,
+    max_duration=None,
     use_preconditioning=True,
     nb_iter_plot=10,
 ):
@@ -101,8 +101,13 @@ def lp_admm(
     m = m.tocsr()
     lambda_eq = np.zeros(a_eq.shape[0])
     lambda_ineq = np.zeros(x.shape)
+
+    chrono = Chrono()
+
     if use_lu:
+        chrono.tic()
         lu_m = scipy.sparse.linalg.splu(m)
+        print(f"splu for block took {chrono.toc()} seconds")
         # luM = scipy.sparse.linalg.spilu(M,drop_tol=0.01)
     elif use_cholesky:
         import scikits.sparse
@@ -213,7 +218,7 @@ def lp_admm(
         if i % nb_iter_plot == 0:
 
             elapsed = time.clock() - start
-            if max_time is not None and elapsed > max_time:
+            if max_duration is not None and elapsed > max_duration:
                 break
             energy1 = energy(x, xp, lambda_eq, lambda_ineq)
             energy2 = energy1
@@ -222,19 +227,9 @@ def lp_admm(
             max_violated_inequality = max(0, -np.min(x))
 
             print(
-                "iter"
-                + str(i)
-                + ": energy1= "
-                + str(energy1)
-                + " energy2="
-                + str(energy2)
-                + " elapsed "
-                + str(elapsed)
-                + " second"
-                + " max violated inequality:"
-                + str(max_violated_inequality)
-                + " max violated equality:"
-                + str(max_violated_equality)
+                f"iter {i} elapsed={elapsed:1.2f}: energy1={energy1} energy2={energy2}"
+                f"max violated inequality:{max_violated_inequality:1.3e}"
+                f"max violated max_violated_equality:{max_violated_equality:1.3e}"
             )
             if callback_func is not None:
                 callback_func(
@@ -282,7 +277,7 @@ def lp_admm2(
     gamma_ineq=0.7,
     nb_iter=100,
     callback_func=None,
-    max_time=None,
+    max_duration=None,
     use_preconditioning=False,
     nb_iter_plot=10,
 ):
@@ -291,6 +286,7 @@ def lp_admm2(
     # Distributed Optimization and Statistical Learning via the Alternating Direction Method of Multipliers
     # the difference with admm_solver is that the linear equality constraints a_eq*x=beq are enforced during the resolution
     # of the subproblem instead of beeing enforced through multipliers
+    print("Solving LP with ADMM v2")
     use_lu = True
     use_amg = False
     use_cholesky = False
@@ -339,13 +335,16 @@ def lp_admm2(
         )
     ).tocsr()
     if use_lu:
+        ch.tic()
+        print("sparse lu factorization...", end="")
         lu_m = scipy.sparse.linalg.splu(m.tocsc())
+        print("splu took " + str(ch.toc()) + " seconds")
         nb_cg_iter = 1
     elif use_cholesky:
         import scikits.sparse
 
         ch.tic()
-        # not that it will work only if M is positive definite which nto garantied the way it is constructed
+        # not that it will work only if M is positive definite which not garantied the way it is constructed
         # unfortunately i'm not able to catch the error to fall back on LU decomposition if
         # cholesky fails because the matrix is not positive definite
         chol = scikits.sparse.cholmod.cholesky(
@@ -435,7 +434,7 @@ def lp_admm2(
         xp = np.minimum(xp, ub)
         if niter % nb_iter_plot == 0:
             elapsed = time.clock() - start
-            if not (max_time is None) and elapsed > max_time:
+            if not (max_duration is None) and elapsed > max_duration:
                 break
             energy1 = energy(x, xp, lambda_ineq)
             energy2 = energy1

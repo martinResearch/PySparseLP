@@ -10,7 +10,7 @@ The different algorithms that are implemented here are documented in the [pdf](.
 
 * a dual coordinate ascent method with exact line search 
 * a dual gradient ascent with exact line search
-* a first order primal-dual algorithm adapted from chambolle pock [2]
+* first order primal-dual algorithms adapted from chambolle pock [2]
 * three methods based on the Alternating Direction Method of Multipliers [3]
 
 **Note** These methods are not meant to be efficient methods to solve generic linear programs. They are simple and quite naive methods I implemented while exploring different possibilities to solve very large sparse linear programs that are too big to be solved using the standard simplex method or standard interior point methods.
@@ -199,8 +199,10 @@ In order to monitor convergence rates, the exact solutions of these problems are
 	from pysparselp.test_netlib import test_netlib
 	test_netlib('SC50A')
 
-![curves](./images/libnetSC50A.png)
-Note: since august 2017, numpy files containing the netlib examples are provided with scipy [here](https://github.com/scipy/scipy/tree/master/benchmarks/benchmarks/linprog_benchmark_files)
+
+![curves](./images/curves_SC50B.svg)
+Note: since august 2017, numpy files containing the netlib examples are provided with scipy [here] (https://github.com/scipy/scipy/tree/master/benchmarks/benchmarks/linprog_benchmark_files)
+
 
 ## Random problems 
 
@@ -209,8 +211,7 @@ Random sparse LP problem can be generate using code in *randomLP.py*. The approa
 # To Do
 
 * translate from Matlab to python the ADMM methods from [https://github.com/nmchaves/admm-for-lp](https://github.com/nmchaves/admm-for-lp)
-* translate from ùMatlab to python some adaptive ADMM methods from https://github.com/nightldj/admm_release
-* test mtlab implementatoin of chambolle pock methods with linesearch applied to lp from [here](https://github.com/xiamengqi2012/ChambollePockLinesearch) and translate to python
+* translate from Matlab to python some adaptive ADMM methods from https://github.com/nightldj/admm_release
 * add automatic constraint checking if we provide a feasible solution from the beginning. It will help debugging constraints.
 * convert to python the matlab implementation of the LP solver based on improved version of champolle-pock called [Adaptive Primal-Dual Hybrid Gradient Methods](https://arxiv.org/abs/1305.0546) available [here](https://www.cs.umd.edu/~tomg/projects/pdhg/)
 * create a cython binding for LPsparse [1] using scipy.sparse matrices for the interface and adding the possibility to compute the convergence curve by providing the problem known solution to the solver or by adding the possibility to define a callback to a python function.
@@ -248,7 +249,7 @@ Random sparse LP problem can be generate using code in *randomLP.py*. The approa
 * [Joptimize](http://www.joptimizer.com/linearProgramming.html) implemented in Java. Appache licence
 * [PCx](http://pages.cs.wisc.edu/~swright/PCx/) PCx is an interior-point predictor-corrector linear programming package. Code available here https://github.com/lpoo/PCx. Free but to public domain. Binaries provided for Linux only.
 * [DSDP](http://www.mcs.anl.gov/hs/software/DSDP/) solve semi-definite programs, which are more general than linear programs. It uses the sparsity of the problem and might still be competitive to solve sparse linear programs. Can be called from python through [cvxopt](http://cvxopt.org/)ms. 
-
+* [PDHD](https://www.cs.umd.edu/~tomg/projects/pdhg/). Chambolle-Pock method with adaptive stepsize selection rules. Matlab code. Solve several type of problem including linear programs
 # References
 
 [1] *Sparse Linear Programming via Primal and Dual Augmented Coordinate Descent* Ian En-Hsu Yen, Kai Zhong, Cho-Jui Hsieh, Pradeep K Ravikumar, Inderjit S Dhillon , NIPS 2015. [code](http://ianyen.site/LPsparse/)

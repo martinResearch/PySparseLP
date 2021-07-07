@@ -124,6 +124,9 @@ def convert_to_standard_form_with_bounds(
         epsilon0 = a_ineq * x0
         x0 = np.hstack((x0, epsilon0))
         c = np.hstack((c, np.zeros(ni)))
+    else:
+        a_eq2 = a_eq
+        b_eq2 = beq
     return c, a_eq2, b_eq2, lb, ub, x0
 
 
@@ -309,3 +312,57 @@ def precondition_lp_right(c, a_eq, beq, lb, ub, x0, alpha=2):
     a_eq2.__dict__["blocks"] = a_eq.blocks
 
     return r, c2, a_eq2, b_eq2, lb2, ub2, x02
+
+
+def compare_methods(
+    lp, solving_methods, ground_truth=None, display=True, max_duration=2
+):
+    if display:
+        import matplotlib.pyplot as plt
+
+    if ground_truth is None:
+        scipy_sol, elapsed = lp.solve(
+            method="scipy_interior_point", get_timing=True, nb_iter=100000
+        )
+        maxv = lp.max_constraint_violation(scipy_sol)
+        if maxv > 1e-8:
+            print("not expected")
+            raise
+        ground_truth = scipy_sol
+
+    cost_ground_truth = ground_truth.dot(lp.costsvector.T)
+
+    if display:
+        f, ax_arr = plt.subplots(3, sharex=True)
+        ax_arr[0].set_title("mean absolute distance to solution")
+        ax_arr[1].set_title("maximum constraint violation")
+        ax_arr[2].set_title("difference with optimum value")
+
+    summary = ["method                      final     max viol  dist to gt  "]
+    for method in solving_methods:
+        sol1, elapsed = lp.solve(
+            method=method, max_duration=max_duration, ground_truth=ground_truth
+        )
+        if display:
+            ax_arr[0].semilogy(
+                lp.opttime_curve,
+                np.maximum(lp.distance_to_ground_truth, 1e-18),
+                label=method,
+            )
+            ax_arr[1].semilogy(
+                lp.opttime_curve, np.maximum(lp.max_violated_constraint, 1e-18)
+            )
+            ax_arr[2].semilogy(
+                lp.opttime_curve, np.maximum(lp.pobj_curve - cost_ground_truth, 1e-18)
+            )
+            ax_arr[0].legend()
+            ax_arr[2].set_xlabel("duration in seconds")
+            summary.append(
+                f"{method:26s} {lp.pobj_curve[-1]:9.2e} {lp.max_violated_constraint[-1]:9.2e} {lp.distance_to_ground_truth[-1]:9.2e}"
+            )
+
+    for s in summary:
+        print(s)
+
+    if display:
+        plt.show()

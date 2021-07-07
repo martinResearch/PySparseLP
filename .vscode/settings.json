@@ -1,7 +1,15 @@
-{
-    "python.pythonPath": "python_venv\\Scripts\\python.exe",
-    "python.linting.pylintEnabled": false,
+
+{	
+	"python.linting.pylintEnabled": false,
     "python.linting.flake8Enabled": true,
     "python.linting.enabled": true,
+    "python.linting.mypyEnabled": false,
+    "python.pythonPath": "python_venv\\Scripts\\python.exe",
+    "files.exclude": {
+        "**/*.bak": true,
+        "**/*.pyc": true,
+        "**/__pycache__": true
+    },
     "python.formatting.provider": "black"
 }
+

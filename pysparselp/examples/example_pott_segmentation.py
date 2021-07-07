@@ -1,12 +1,9 @@
 """Example using a pott image model that can be exactly solved with graphcut."""
 
-import matplotlib.pyplot as plt
-
-import maxflow  # pip install PyMaxflow
-
 import numpy as np
 
 from pysparselp.SparseLP import SparseLP, solving_methods
+from pysparselp.examples.benchmark_methods import benchmark_methods
 
 
 class ImageLP(SparseLP):
@@ -50,6 +47,12 @@ class ImageLP(SparseLP):
         self.add_pott_horizontal(indices, coef_penalization)
         self.add_pott_vertical(indices, coef_penalization)
 
+    def set_pixel_indices(self, indices):
+        self.pixel_indices = indices
+
+    def display_solution(self, ax, sol):
+        ax.imshow(sol[self.pixel_indices].squeeze(axis=2))
+
 
 def build_linear_program(image_size, coef_potts, coef_mul):
     nb_labels = 1
@@ -65,134 +68,39 @@ def build_linear_program(image_size, coef_potts, coef_mul):
     )
     coef_potts = round(coef_potts * coef_mul)
 
-    g = maxflow.Graph[int](0, 0)
-    nodeids = g.add_grid_nodes(unary_terms.shape)
-
-    alpha = coef_potts
-    g.add_grid_edges(nodeids, alpha)
-    # Add the terminal edges.
-    g.add_grid_tedges(nodeids, unary_terms * 0, unary_terms)
-
-    print("calling maxflow")
-    g.maxflow()
-    sgm = g.get_grid_segments(nodeids)
-    img2 = np.int_(np.logical_not(sgm))
-    plt.imshow(img2[:, :, 0], cmap=plt.cm.gray, interpolation="nearest")
-
     lp = ImageLP()
 
     indices = lp.add_variables_array(
         shape=size_image, lower_bounds=0, upper_bounds=1, costs=unary_terms / coef_mul
     )
-
-    ground_truth = img2
-    ground_truth_indices = indices
+    lp.set_pixel_indices(indices)
 
     lp.add_pott_model(indices, coef_potts / coef_mul)
-    return lp, ground_truth, ground_truth_indices, unary_terms
+    return lp
 
 
-def run(display=True, image_size=50, coef_mul=500, coef_potts=0.5, max_time=150):
+def run(
+    display=True,
+    image_size=50,
+    coef_mul=500,
+    coef_potts=0.5,
+    max_duration=5,
+    nb_iter_plot=100,
+):
 
-    lp, ground_truth, ground_truth_indices, unary_terms = build_linear_program(
-        image_size, coef_potts, coef_mul
-    )
-
-    print("solving")
-
-    if display:
-        fig = plt.figure()
-        ax_image = fig.add_subplot(111)
-        im = ax_image.imshow(
-            unary_terms[:, :, 0] / coef_mul,
-            cmap=plt.cm.Greys_r,
-            interpolation="nearest",
-            vmin=0,
-            vmax=1,
-        )
-        fig_curves1 = plt.figure()
-        ax_curves1 = fig_curves1.add_subplot(111)
-        ax_curves1.set_xlabel("nb of iteration")
-        ax_curves1.set_ylabel("distance_to_ground_truth")
-        fig_curves2 = plt.figure()
-        ax_curves2 = fig_curves2.add_subplot(111)
-        ax_curves2.set_xlabel("duration")
-        ax_curves2.set_ylabel("distance_to_ground_truth")
-
-    def plot_solution(niter, solution, is_active_variable=None):
-        image = solution[ground_truth_indices]
-        # imwrite('ter%05d.png'%niter,solution[indices][:,:,0])
-        # imwrite('diff_iter%05d.png'%niter,np.diff(solution[indices][:,:,0]))
-        im.set_array(image[:, :, 0])
-        # im.set_array(np.diff(image[:,:,0]))
-        plt.draw()
-
-    if display:
-        fig = plt.figure()
-        ax = fig.add_subplot(2, 5, 1, title="graph cut")
-        ax.imshow(ground_truth[:, :, 0], cmap=plt.cm.Greys_r, interpolation="none")
-        ax.axis("off")
-
-    # simplex much too slow for images larger than 20 by 20
-    # LP2=copy.deepcopy(LP)
-    # LP2.convert_to_one_sided_inequality_system()
-    # sol1,elapsed=LP2.solve(method='ScipyLinProg',force_integer=False,get_timing=True,nb_iter=100,max_time=10,ground_truth=ground_truth,ground_truth_indices=indices,plot_solution=None)
+    lp = build_linear_program(image_size, coef_potts, coef_mul)
 
     solving_methods2 = list(solving_methods)
+    solving_methods2.remove("scipy_interior_point")  # too slow
 
-    for m in ["scipy_simplex", "scipy_interior_point"]:
-        solving_methods2.remove(m)
-    distance_to_ground_truth_curves = {}
-
-    for i, method in enumerate(solving_methods2):
-        print(
-            "\n\n----------------------------------------------------------\nSolving LP using %s"
-            % method
-        )
-
-        sol1, elapsed = lp.solve(
-            method=method,
-            get_timing=True,
-            nb_iter=100000,
-            max_time=max_time,
-            ground_truth=ground_truth,
-            ground_truth_indices=ground_truth_indices,
-            plot_solution=None,
-            nb_iter_plot=500,
-        )
-        if display:
-            if len(lp.distance_to_ground_truth) > 0:
-                ax_curves1.loglog(
-                    lp.itrn_curve, lp.distance_to_ground_truth, label=method
-                )
-                ax_curves2.loglog(
-                    lp.opttime_curve, lp.distance_to_ground_truth, label=method
-                )
-            ax_curves1.legend()
-            plt.gca().invert_yaxis()
-            ax_curves2.legend()
-            ax = fig.add_subplot(2, 5, i + 2, title=method)
-            ax.imshow(
-                sol1[ground_truth_indices][:, :, 0],
-                cmap=plt.cm.Greys_r,
-                interpolation="none",
-                vmin=0,
-                vmax=1,
-            )
-            ax.axis("off")
-            plt.draw()
-
-        distance_to_ground_truth_curves[method] = lp.distance_to_ground_truth
-
-    if display:
-        plt.tight_layout()
-        # plt.figure()
-        # plt.plot(LP.itrn_curve,LP.dopttime_curve,'g',label='admm')
-        # plt.draw()
-        # plt.show()
-        print("done")
-        plt.show()
-
+    distance_to_ground_truth_curves = benchmark_methods(
+        lp,
+        solving_methods2,
+        display_solution_func=lp.display_solution,
+        max_duration=max_duration,
+        nb_iter_plot=nb_iter_plot,
+        display=display,
+    )
     return distance_to_ground_truth_curves
 
 

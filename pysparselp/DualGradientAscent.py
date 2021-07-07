@@ -72,7 +72,7 @@ def dual_gradient_ascent(
     callback_func=None,
     y_eq=None,
     y_ineq=None,
-    max_time=None,
+    max_duration=None,
     nb_iter_plot=1,
 ):
     """Gradient ascent in the dual."""
@@ -237,7 +237,7 @@ def dual_gradient_ascent(
         if callback_func is not None and niter % 100 == 0:
             callback_func(niter, x, 0, 0, elapsed, 0, 0)
 
-        if (max_time is not None) and elapsed > max_time:
+        if (max_duration is not None) and elapsed > max_duration:
             break
         niter += 1
 

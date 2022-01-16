@@ -204,7 +204,8 @@ Note: since august 2017, numpy files containing the netlib examples are provided
 
 ## Random problems 
 
-Random sparse LP problem can be generate using code in *randomLP.py*. The approach used to generate random problem is very simple and could be improved in order to generate harder sparse LPs. We could implement the approach used in section 6.2.1 in https://arxiv.org/pdf/1404.6770v3.pdf to generate random problems with the matlab code available [here](https://github.com/YimingYAN/pipm-lp/tree/master/Tests/Ultilities)
+Random sparse LP problem can be generate using code in *randomLP.py*. The approach used to generate random problem is very simple and could be improved in order to generate harder sparse LPs. We could implement the approach used in section 6.2.1 in https://arxiv.org/pdf/1404.6770v3.pdf to generate random problems with the matlab code available [here](https://github.com/YimingYAN/pipm-lp/tree/master/Tests/Ultilities).
+We could alsoi use the approached described in section 5.1 in  *ADMM-Based Interior-Point Method for Large-Scale Linear Programming* [12].
 
 # To Do
 
@@ -225,6 +226,7 @@ Random sparse LP problem can be generate using code in *randomLP.py*. The approa
 	* https://github.com/YimingYAN/cppipm (c++)
 	* https://github.com/pkhuong/cholesky-is-magic (lisp) described here https://www.pvk.ca/Blog/2013/12/19/so-you-want-to-write-an-lp-solver/	
 * implement some presolve methods to avoid singular matrices in the interior point methods (for example http://www.davi.ws/doc/gondzio94presolve.pdf). For example detect constraints on singletons, duplicated rows etc.
+* see if [ABIP-LP](https://github.com/leavesgrp/ABIP-LP) can be interfaced with python.
 
 # Alternatives
 
@@ -248,6 +250,7 @@ Random sparse LP problem can be generate using code in *randomLP.py*. The approa
 * [Joptimize](http://www.joptimizer.com/linearProgramming.html) implemented in Java. Appache licence
 * [PCx](http://pages.cs.wisc.edu/~swright/PCx/) PCx is an interior-point predictor-corrector linear programming package. Code available here https://github.com/lpoo/PCx. Free but to public domain. Binaries provided for Linux only.
 * [DSDP](http://www.mcs.anl.gov/hs/software/DSDP/) solve semi-definite programs, which are more general than linear programs. It uses the sparsity of the problem and might still be competitive to solve sparse linear programs. Can be called from python through [cvxopt](http://cvxopt.org/)ms. 
+* [ABIP-LP](https://github.com/leavesgrp/ABIP-LP) Interior point method that uses ADMM to solve the inner problem in order to scale to large problems describes in [12]. C++ and Matlab interfaces only.
 
 # References
 
@@ -273,7 +276,7 @@ paper [here](http://papers.nips.cc/paper/6746-a-new-alternating-direction-method
 
 [11] *OSQP: An Operator Splitting Solver for Quadratic Programs*. B.Stellato, G. Banjac, P. Goulart, A. Bemporad and S. Boyd. ArXiv e-prints 2017 
 
-[12] *An ADMM-Based Interior-Point Method for Large-Scale Linear Programming*.Tianyi Lin, Shiqian Ma, Yinyu Ye and Shuzhong Zhang. Optimization Methods and Software 2020.
+[12] *An ADMM-Based Interior-Point Method for Large-Scale Linear Programming*.Tianyi Lin, Shiqian Ma, Yinyu Ye and Shuzhong Zhang. Optimization Methods and Software 2020. [paper](http://www.optimization-online.org/DB_FILE/2018/05/6643.pdf). [code](https://github.com/leavesgrp/ABIP-LP)
 
 
 

@@ -5,7 +5,7 @@ flake8-builtins==1.5.2
 flake8-docstrings==1.5.0
 flake8-import-order==0.18.1
 matplotlib==3.1.1
-numpy==1.18.2
+numpy==1.22.0
 osqp==0.6.1
 PyMaxflow==1.2.12
 scikit-learn==0.22.2

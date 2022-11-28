@@ -147,7 +147,7 @@ We relax it into an continuous variables LP.
 	from pysparselp.example_bipartite_matching import run
 	run()
 
-## K-medians
+## K-medoids
 
 Given *n* points we want to cluster them into *k* set by minimizing
 

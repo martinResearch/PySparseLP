@@ -228,6 +228,12 @@ We could also use the approached described in section 5.1 in  *ADMM-Based Interi
 * implement some presolve methods to avoid singular matrices in the interior point methods (for example http://www.davi.ws/doc/gondzio94presolve.pdf). For example detect constraints on singletons, duplicated rows etc.
 * see if [ABIP-LP](https://github.com/leavesgrp/ABIP-LP) can be interfaced with python.
 
+# Prjects that use PySparseLP
+
+* [InteriorPointTransportation](https://github.com/Coloquinte/InteriorPointTransportation)
+
+Please add a comment [here](https://github.com/martinResearch/PySparseLP/issues/5) if you used PySparseLP in your project. I would be very interested in knowning what it has been used for.
+
 # Alternatives
 
 ## Linear Program solvers with a python interface
